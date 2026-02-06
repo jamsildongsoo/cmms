@@ -1,0 +1,18 @@
+/build/
+/.gradle/
+/out/
+!gradle-wrapper.jar
+
+# IDE (IntelliJ, VS Code)
+/.idea/
+/*.iml
+/.vscode/
+.DS_Store
+
+# Environment & Secrets (Supabase 키 등 보안용)
+.env
+.env.local
+/src/main/resources/application-local.yml
+
+# Log files
+*.log
