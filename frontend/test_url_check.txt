@@ -1,0 +1,67 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete
+[1A[2K[chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete
+PAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: No data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KPAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: No data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KPAGE LOG: [InspectionService] Saving to storage, count: 4
+
+[1A[2KPAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: Found data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KCurrent URL: http://localhost:5173/pm/inspection
+
+[1A[2KPAGE LOG: [vite] hot updated: /@fs/C:/projects/cmms/frontend/src/index.css
+
+[1A[2KPAGE LOG: [vite] hot updated: /@fs/C:/projects/cmms/frontend/src/index.css
+
+[1A[2K  1) [chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete › Start Result Input 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('tab', { name: '계획 (Plan)' })[22m
+
+
+      52 |
+      53 |         // Click "Plan" tab to see the button
+    > 54 |         await page.getByRole('tab', { name: '계획 (Plan)' }).click();
+         |                                                            ^
+      55 |
+      56 |         // Click "Result Input" on the newly created plan
+      57 |         // We filter by name 'E2E Unified Test'
+        at C:\projects\cmms\frontend\tests\inspection.spec.ts:54:60
+        at C:\projects\cmms\frontend\tests\inspection.spec.ts:48:5
+
+    Error Context: test-results\inspection-Inspection-Work-c0ed3-Confirm---Result---Complete-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete 

@@ -1,0 +1,70 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\inspection.spec.ts:5:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete
+[1A[2K[chromium] › tests\inspection.spec.ts:5:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete
+PAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: No data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KPAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: No data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=3
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=3
+
+[1A[2KPAGE LOG: [InspectionService] Saving to storage, count: 4
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=4
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=4
+
+[1A[2KPAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: Found data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KCurrent URL: http://localhost:5173/pm/inspection
+
+[1A[2KPAGE LOG: [vite] connecting...
+
+[1A[2KPAGE LOG: [vite] connected.
+
+[1A[2KPAGE LOG: %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2KPAGE LOG: [InspectionService] Loading from storage: Found data
+
+[1A[2KPAGE LOG: Restoring App...
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=4
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=4
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=PLN, count=4
+
+[1A[2KPAGE LOG: [InspectionService] Saving to storage, count: 5
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=5
+
+[1A[2KPAGE LOG: [InspectionService] getAll filter=ALL, count=5
+
+[1A[2K  1 passed (7.7s)

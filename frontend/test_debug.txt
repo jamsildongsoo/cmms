@@ -1,0 +1,28 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete
+[1A[2K  1) [chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete › Start Result Input 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('tab', { name: '계획 (Plan)' })[22m
+
+
+      49 |         // Navigate to List (should already be there)
+      50 |         await page.goto('/pm/inspection');
+    > 51 |
+         | ^
+      52 |         // Click "Plan" tab to see the button
+      53 |         await page.getByRole('tab', { name: '계획 (Plan)' }).click();
+      54 |
+        at C:\projects\cmms\frontend\tests\inspection.spec.ts:51:60
+        at C:\projects\cmms\frontend\tests\inspection.spec.ts:46:5
+
+    Error Context: test-results\inspection-Inspection-Work-c0ed3-Confirm---Result---Complete-chromium\error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests\inspection.spec.ts:4:1 › Inspection Workflow: Plan -> Confirm -> Result -> Complete 

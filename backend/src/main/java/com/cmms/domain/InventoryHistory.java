@@ -1,0 +1,53 @@
+package com.cmms.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "inventory_history")
+@IdClass(InventoryHistoryId.class)
+public class InventoryHistory {
+
+    @Id
+    @Column(name = "company_id", length = 20, nullable = false)
+    private String companyId;
+
+    @Id
+    @Column(name = "storage_id", length = 20, nullable = false)
+    private String storageId;
+
+    @Id
+    @Column(name = "inventory_id", length = 20, nullable = false)
+    private String inventoryId;
+
+    @Id
+    @Column(name = "history_id", length = 20, nullable = false)
+    private String historyId;
+
+    @Column(name = "tx_type", length = 20)
+    private String txType;
+
+    @Column(name = "tx_date")
+    private LocalDateTime txDate;
+
+    @Column(name = "qty", precision = 18, scale = 4)
+    private BigDecimal qty;
+
+    @Column(name = "amount", precision = 18, scale = 2)
+    private BigDecimal amount;
+
+    @Column(name = "ref_entity", length = 20)
+    private String refEntity;
+
+    @Column(name = "ref_id", length = 20)
+    private String refId;
+}

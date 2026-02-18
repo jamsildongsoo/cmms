@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+    --color-primary: var(--color-blue-600);
+    --color-primary-foreground: var(--color-white);
+}
+
+@layer base {
+
+    html,
+    body,
+    #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        @apply bg-slate-50 text-slate-900;
+    }
+}

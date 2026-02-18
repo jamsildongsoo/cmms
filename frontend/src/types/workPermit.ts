@@ -1,0 +1,36 @@
+
+export interface WorkPermit {
+    permit_id: string;
+    wp_types: string[]; // HOT, CONF, ELEC, etc. (Multi-select)
+    name: string;
+    start_dt: string;
+    end_dt: string;
+    person_name: string;
+    status: 'T' | 'A' | 'C'; // Temp, Approved, Completed(Closed)
+
+    // Dynamic Form Data (JSON)
+    checksheet_json_com?: Record<string, any>; // Common (Mandatory)
+    checksheet_json_hot?: Record<string, any>;
+    checksheet_json_conf?: Record<string, any>;
+    checksheet_json_elec?: Record<string, any>;
+    checksheet_json_high?: Record<string, any>;
+
+    description?: string;
+    location?: string;
+
+    // Risk Assessment
+    work_summary?: string;
+    hazard_factor?: string;
+    safety_factor?: string;
+
+    // Additional Fields for UI Spec
+    equipment_id?: string;
+    equipment_name?: string;
+    dept_id?: string;
+
+    // Result Mode Fields
+    stage?: 'PLN' | 'ACT'; // Plan / Actual
+    ref_entity?: string;
+    ref_id?: string;
+
+}
