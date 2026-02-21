@@ -8,19 +8,23 @@ import { cn } from "@/utils/cn"
  * that mimics the shadcn/ui API structure as much as possible for compatibility.
  */
 
-const Select = ({ children, onValueChange, defaultValue }: any) => {
-    const [value, setValue] = React.useState(defaultValue || "");
-
-    // We need to pass down props to children.
-    // This is tricky with native select.
-    // For now, let's create a context or just use a simpler approach:
-    // We will render a native <select> but hide it and show custom UI? NO, too complex.
-    // Let's implement a Context-based custom dropdown.
+const Select = ({ children, onValueChange, defaultValue, value: propValue }: any) => {
+    const [internalValue, setInternalValue] = React.useState(defaultValue || "");
+    const isControlled = propValue !== undefined;
+    const value = isControlled ? propValue : internalValue;
 
     const [open, setOpen] = React.useState(false);
 
+    const handleSetValue = (v: string) => {
+        if (!isControlled) {
+            setInternalValue(v);
+        }
+        onValueChange?.(v);
+        setOpen(false);
+    };
+
     return (
-        <SelectContext.Provider value={{ value, setValue: (v: string) => { setValue(v); onValueChange?.(v); setOpen(false); }, open, setOpen }}>
+        <SelectContext.Provider value={{ value, setValue: handleSetValue, open, setOpen }}>
             <div className="relative inline-block w-full">{children}</div>
         </SelectContext.Provider>
     );

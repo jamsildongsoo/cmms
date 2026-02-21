@@ -1,6 +1,5 @@
 package com.cmms.domain;
 
-import com.cmms.common.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -14,7 +13,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "code")
 @IdClass(CodeId.class)
-public class Code extends BaseEntity {
+public class Code {
 
     @Id
     @Column(name = "company_id", length = 20, nullable = false)
@@ -26,4 +25,7 @@ public class Code extends BaseEntity {
 
     @Column(name = "name", length = 100, nullable = false)
     private String name;
+
+    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String deleteMark = "N";
 }

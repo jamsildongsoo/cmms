@@ -27,13 +27,14 @@ public class InventoryService {
         return stockRepository.findAll();
     }
 
-    public Optional<InventoryStock> getStockById(String companyId, String storageId, String inventoryId) {
-        return stockRepository.findById(new InventoryStockId(companyId, storageId, inventoryId));
+    public Optional<InventoryStock> getStockById(String companyId, String storageId, String binId, String locationId,
+            String inventoryId) {
+        return stockRepository.findById(new InventoryStockId(companyId, storageId, binId, locationId, inventoryId));
     }
 
     @Transactional
-    public void deleteStock(String companyId, String storageId, String inventoryId) {
-        stockRepository.deleteById(new InventoryStockId(companyId, storageId, inventoryId));
+    public void deleteStock(String companyId, String storageId, String binId, String locationId, String inventoryId) {
+        stockRepository.deleteById(new InventoryStockId(companyId, storageId, binId, locationId, inventoryId));
     }
 
     @Transactional
@@ -45,18 +46,30 @@ public class InventoryService {
         return historyRepository.findAll();
     }
 
-    public Optional<InventoryHistory> getHistoryById(String companyId, String storageId, String inventoryId,
+    public Optional<InventoryHistory> getHistoryById(String companyId, String storageId, String binId,
+            String locationId, String inventoryId,
             String historyId) {
-        return historyRepository.findById(new InventoryHistoryId(companyId, storageId, inventoryId, historyId));
+        return historyRepository
+                .findById(new InventoryHistoryId(companyId, storageId, binId, locationId, inventoryId, historyId));
     }
 
     @Transactional
-    public void deleteHistory(String companyId, String storageId, String inventoryId, String historyId) {
-        historyRepository.deleteById(new InventoryHistoryId(companyId, storageId, inventoryId, historyId));
+    public void deleteHistory(String companyId, String storageId, String binId, String locationId, String inventoryId,
+            String historyId) {
+        historyRepository
+                .deleteById(new InventoryHistoryId(companyId, storageId, binId, locationId, inventoryId, historyId));
     }
 
     @Transactional
     public InventoryClosing saveClosing(InventoryClosing closing) {
+        closingRepository
+                .findById(new InventoryClosingId(closing.getCompanyId(), closing.getStorageId(),
+                        closing.getInventoryId(), closing.getYyyymm()))
+                .ifPresent(existing -> {
+                    if ("C".equals(existing.getStatus())) {
+                        throw new IllegalStateException("확정된 마감 데이터는 수정할 수 없습니다.");
+                    }
+                });
         return closingRepository.save(closing);
     }
 
@@ -71,20 +84,32 @@ public class InventoryService {
 
     @Transactional
     public void deleteClosing(String companyId, String storageId, String inventoryId, String yyyymm) {
-        closingRepository.deleteById(new InventoryClosingId(companyId, storageId, inventoryId, yyyymm));
+        closingRepository.findById(new InventoryClosingId(companyId, storageId, inventoryId, yyyymm))
+                .ifPresent(closing -> {
+                    if ("C".equals(closing.getStatus())) {
+                        throw new IllegalStateException("확정된 마감 데이터는 삭제할 수 없습니다.");
+                    }
+                    closingRepository.delete(closing);
+                });
     }
 
     @Transactional
     public void processTransaction(com.cmms.dto.InventoryTransactionRequest request) {
         for (com.cmms.dto.InventoryTransactionRequest.TransactionItem item : request.getItems()) {
+            // Default bin/location if not provided
+            String binId = item.getBinId() != null ? item.getBinId() : "DEFAULT";
+            String locId = item.getLocationId() != null ? item.getLocationId() : "DEFAULT";
+
             // 1. Update Stock
-            InventoryStockId stockId = new InventoryStockId(request.getCompanyId(), item.getStorageId(),
+            InventoryStockId stockId = new InventoryStockId(request.getCompanyId(), item.getStorageId(), binId, locId,
                     item.getInventoryId());
             InventoryStock stock = stockRepository.findById(stockId)
                     .orElseGet(() -> {
                         InventoryStock newStock = new InventoryStock();
                         newStock.setCompanyId(request.getCompanyId());
                         newStock.setStorageId(item.getStorageId());
+                        newStock.setBinId(binId);
+                        newStock.setLocationId(locId);
                         newStock.setInventoryId(item.getInventoryId());
                         newStock.setQty(java.math.BigDecimal.ZERO);
                         newStock.setAmount(java.math.BigDecimal.ZERO);
@@ -110,6 +135,8 @@ public class InventoryService {
             InventoryHistory history = new InventoryHistory();
             history.setCompanyId(request.getCompanyId());
             history.setStorageId(item.getStorageId());
+            history.setBinId(binId);
+            history.setLocationId(locId);
             history.setInventoryId(item.getInventoryId());
             // Generate History ID - utilizing timestamp for uniqueness in this scope or
             // SystemService if available.

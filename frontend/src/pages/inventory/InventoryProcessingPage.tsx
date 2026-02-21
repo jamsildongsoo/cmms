@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { inventoryService } from '@/services/inventoryService';
 import type { Material, TransactionType, TransactionItem } from '@/services/inventoryService';
-import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { standardService, type Warehouse } from '@/services/standardService';
 
 interface ProcessingForm {
@@ -28,11 +27,11 @@ export default function InventoryProcessingPage() {
     const { register, control, handleSubmit, setValue, watch } = useForm<ProcessingForm>({
         defaultValues: {
             type: 'IN',
-            items: [{ inventory_id: '', storage: '', current_stock: 0, qty: 0, ref: '' }]
+            items: [{ inventory_id: '', storage_id: '', current_stock: 0, qty: 0, ref: '' }]
         }
     });
 
-    const { fields, append, remove, update } = useFieldArray({
+    const { fields, append, remove } = useFieldArray({
         control,
         name: "items"
     });
@@ -47,19 +46,12 @@ export default function InventoryProcessingPage() {
     const handleMaterialChange = (index: number, inventoryId: string) => {
         const material = materials.find(m => m.inventory_id === inventoryId);
         if (material) {
-            update(index, {
-                inventory_id: inventoryId,
-                storage: '',
-                current_stock: 0,
-                qty: 0,
-                ref: ''
-            });
+            // We use standard 'update' from useFieldArray, or just setValue
+            // However, update replaces the whole item. Let's use setValue for specific fields to avoid resetting unrelated ones if we want, 
+            // but here we are initializing the row with material data, so replacing is fine or just setting the ID.
+            // Actually, we should just set the value.
+            setValue(`items.${index}.inventory_id`, inventoryId);
         }
-    };
-
-    // Helper for updating fields in the array
-    const createItemHandler = (index: number, field: keyof TransactionItem, value: any) => {
-        setValue(`items.${index}.${field}`, value);
     };
 
     const onSubmit = async (data: ProcessingForm) => {
@@ -152,7 +144,7 @@ export default function InventoryProcessingPage() {
                             <thead className="bg-slate-50 border-b">
                                 <tr>
                                     <th className="h-10 px-4 font-medium text-slate-500 w-[30%]">자재 번호</th>
-                                    <th className="h-10 px-4 font-medium text-slate-500 w-[20%]">창고 (위치)</th>
+                                    <th className="h-10 px-4 font-medium text-slate-500 w-[20%]">창고</th>
                                     <th className="h-10 px-4 font-medium text-slate-500 w-[15%] text-right">수량</th>
                                     <th className="h-10 px-4 font-medium text-slate-500 w-[25%]">참조 번호</th>
                                     <th className="h-10 px-4 font-medium text-slate-500 w-[10%]"></th>
@@ -179,14 +171,21 @@ export default function InventoryProcessingPage() {
                                             </Select>
                                         </td>
                                         <td className="p-2">
-                                            <SearchableSelect
-                                                items={warehouses.map(w => ({ ...w, id: w.id }))}
-                                                value={watch(`items.${index}.storage`) || ''}
-                                                onChange={(id) => createItemHandler(index, 'storage', id)}
-                                                placeholder="창고 선택"
-                                                displayFormat={(item) => item.name}
-                                                className="h-9"
-                                            />
+                                            <Select
+                                                value={watch(`items.${index}.storage_id`)}
+                                                onValueChange={(val: string) => setValue(`items.${index}.storage_id`, val)}
+                                            >
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="창고 선택" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {warehouses.map(w => (
+                                                        <SelectItem key={w.id} value={w.id}>
+                                                            {w.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </td>
                                         <td className="p-2">
                                             <Input
@@ -217,7 +216,7 @@ export default function InventoryProcessingPage() {
                                 variant="outline"
                                 size="sm"
                                 className="w-full border-dashed"
-                                onClick={() => append({ inventory_id: '', storage: '', current_stock: 0, qty: 0, ref: '' })}
+                                onClick={() => append({ inventory_id: '', storage_id: '', current_stock: 0, qty: 0, ref: '' })}
                             >
                                 <Plus className="mr-2 h-4 w-4" /> 품목 추가
                             </Button>

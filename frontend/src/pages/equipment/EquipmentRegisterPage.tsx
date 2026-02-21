@@ -20,6 +20,7 @@ export default function EquipmentRegisterPage() {
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [actionType, setActionType] = useState<'T' | 'C'>('T');
     const isEditMode = !!id;
 
     // Department data for SearchableSelect
@@ -31,7 +32,7 @@ export default function EquipmentRegisterPage() {
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Equipment>({
         defaultValues: {
-            status: 'OPERATING',
+            status: 'T',
             inspection_yn: 'Y',
             psm_yn: 'N',
             workpermit_yn: 'N',
@@ -48,6 +49,9 @@ export default function EquipmentRegisterPage() {
             equipmentService.getById(id)
                 .then(data => {
                     if (data) {
+                        if (data.status === 'C') {
+                            toast({ title: "안내", description: "확정된 건은 수정할 수 없습니다.", variant: "destructive" });
+                        }
                         // Reset form with data
                         Object.keys(data).forEach(key => {
                             setValue(key as keyof Equipment, data[key as keyof Equipment]);
@@ -66,21 +70,24 @@ export default function EquipmentRegisterPage() {
     const onSubmit = async (data: Equipment) => {
         try {
             setLoading(true);
+            data.status = actionType;
             if (isEditMode && id) {
                 await equipmentService.update(id, data);
-                toast({ title: "성공", description: "설비 정보가 수정되었습니다." });
+                toast({ title: "성공", description: actionType === 'C' ? "설비 정보가 확정되었습니다." : "설비 정보가 수정되었습니다." });
             } else {
                 await equipmentService.create(data);
-                toast({ title: "성공", description: "신규 설비가 등록되었습니다." });
+                toast({ title: "성공", description: actionType === 'C' ? "신규 설비가 확정 등록되었습니다." : "신규 설비가 임시 저장되었습니다." });
             }
             navigate('/master/equipment');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast({ title: "오류", description: "저장 중 오류가 발생했습니다.", variant: "destructive" });
+            toast({ title: "오류", description: error.response?.data?.message || "저장 중 오류가 발생했습니다.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
     };
+
+    const isConfirmed = watch('status') === 'C';
 
     if (loading && isEditMode) {
         return <div className="p-8 text-center">로딩 중...</div>;
@@ -104,16 +111,36 @@ export default function EquipmentRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" type="button" onClick={() => navigate('/master/equipment')}>
-                        취소
+                        목록
                     </Button>
-                    <Button type="submit" form="equipment-form" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-                        <Save className="mr-2 h-4 w-4" />
-                        {isEditMode ? '수정 저장' : '저장'}
-                    </Button>
+                    {!isConfirmed && (
+                        <>
+                            <Button
+                                type="submit"
+                                form="equipment-form"
+                                disabled={loading}
+                                variant="secondary"
+                                onClick={() => setActionType('T')}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                임시 저장
+                            </Button>
+                            <Button
+                                type="submit"
+                                form="equipment-form"
+                                disabled={loading}
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => setActionType('C')}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                확정
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
-            <form id="equipment-form" onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+            <form id="equipment-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* 1. Basic Info */}
                 <Card>
                     <CardHeader>
@@ -122,14 +149,14 @@ export default function EquipmentRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Row 1: ID(1) / Name(3) */}
                         <div className="space-y-2">
-                            <Label htmlFor="equipment_id">설비 코드 <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="equipment_id">설비 코드</Label>
                             <Input
                                 id="equipment_id"
-                                {...register('equipment_id', { required: '설비 코드는 필수입니다.' })}
-                                placeholder={isEditMode ? "" : "자동 생성 또는 직접 입력"}
-                                disabled={isEditMode}
+                                {...register('equipment_id')}
+                                placeholder="저장 시 자동 생성"
+                                disabled={true}
+                                className="bg-slate-50"
                             />
-                            {errors.equipment_id && <span className="text-xs text-red-500">{errors.equipment_id.message}</span>}
                         </div>
                         <div className="space-y-2 md:col-span-3">
                             <Label htmlFor="name">설비명 <span className="text-red-500">*</span></Label>

@@ -1,5 +1,4 @@
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -16,6 +15,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/use-toast"
 
 const loginSchema = z.object({
     employeeId: z.string().min(1, "사번을 입력해주세요."),
@@ -29,28 +30,61 @@ export default function LoginPage() {
     const navigate = useNavigate()
     const login = useAuthStore((state) => state.login)
     const [isLoading, setIsLoading] = useState(false)
+    const { toast } = useToast()
+    const [saveInfo, setSaveInfo] = useState(false);
 
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
             employeeId: "",
             password: "",
-            companyCode: "1000", // Default value
+            companyCode: "",
         },
     })
+
+    // Load saved info on mount
+    useEffect(() => {
+        const savedCompanyCode = localStorage.getItem('savedCompanyCode');
+        const savedEmployeeId = localStorage.getItem('savedEmployeeId');
+
+        if (savedCompanyCode && savedEmployeeId) {
+            setValue('companyCode', savedCompanyCode);
+            setValue('employeeId', savedEmployeeId);
+            setSaveInfo(true);
+        }
+    }, [setValue]);
 
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true)
         try {
-            await login(data.employeeId, data.password);
+            await login(data.companyCode, data.employeeId, data.password);
+
+            // Handle save info
+            if (saveInfo) {
+                localStorage.setItem('savedCompanyCode', data.companyCode);
+                localStorage.setItem('savedEmployeeId', data.employeeId);
+            } else {
+                localStorage.removeItem('savedCompanyCode');
+                localStorage.removeItem('savedEmployeeId');
+            }
+
+            toast({
+                title: "로그인 성공",
+                description: "환영합니다!",
+            });
             navigate("/")
         } catch (error) {
             console.error(error);
-            // Handle error (show toast etc)
+            toast({
+                variant: "destructive",
+                title: "로그인 실패",
+                description: "회사코드, 사번 또는 비밀번호를 확인해주세요."
+            });
         } finally {
             setIsLoading(false)
         }
@@ -71,7 +105,7 @@ export default function LoginPage() {
                             <Label htmlFor="companyCode">회사 코드</Label>
                             <Input
                                 id="companyCode"
-                                placeholder="1000"
+                                placeholder="예: 1000"
                                 {...register("companyCode")}
                             />
                             {errors.companyCode && (
@@ -82,7 +116,7 @@ export default function LoginPage() {
                             <Label htmlFor="employeeId">사번</Label>
                             <Input
                                 id="employeeId"
-                                placeholder="20230001"
+                                placeholder="예: 20230001"
                                 {...register("employeeId")}
                             />
                             {errors.employeeId && (
@@ -100,6 +134,21 @@ export default function LoginPage() {
                                 <p className="text-sm text-red-500">{errors.password.message}</p>
                             )}
                         </div>
+
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="saveInfo"
+                                checked={saveInfo}
+                                onCheckedChange={(checked) => setSaveInfo(checked as boolean)}
+                            />
+                            <Label
+                                htmlFor="saveInfo"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                사용자 정보 저장
+                            </Label>
+                        </div>
+
                         <Button type="submit" className="w-full" disabled={isLoading}>
                             {isLoading ? "로그인 중..." : "로그인"}
                         </Button>

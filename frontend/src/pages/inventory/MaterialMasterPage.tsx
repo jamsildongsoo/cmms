@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { inventoryService } from '@/services/inventoryService';
 import type { Material } from '@/services/inventoryService';
+import { Badge } from '@/components/ui/badge';
 
 export default function MaterialMasterPage() {
     const navigate = useNavigate();
@@ -13,6 +14,16 @@ export default function MaterialMasterPage() {
     useEffect(() => {
         inventoryService.getAllMaterials().then(setMaterials);
     }, []);
+
+    const getStatusBadge = (status?: string) => {
+        switch (status) {
+            case 'T': return <Badge variant="secondary">임시저장</Badge>;
+            case 'A': return <Badge variant="outline" className="text-blue-600 border-blue-600">결재중</Badge>;
+            case 'C': return <Badge className="bg-green-600 hover:bg-green-700">확정</Badge>;
+            case 'R': return <Badge variant="destructive">반려</Badge>;
+            default: return <Badge variant="secondary">임시저장</Badge>;
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -33,6 +44,7 @@ export default function MaterialMasterPage() {
                                 <tr>
                                     <th className="h-12 px-4 font-medium text-slate-500">자재코드</th>
                                     <th className="h-12 px-4 font-medium text-slate-500">자재명</th>
+                                    <th className="h-12 px-4 font-medium text-slate-500">상태</th>
                                     <th className="h-12 px-4 font-medium text-slate-500">규격</th>
                                     <th className="h-12 px-4 font-medium text-slate-500">단위</th>
                                     <th className="h-12 px-4 font-medium text-slate-500">자재유형</th>
@@ -41,7 +53,7 @@ export default function MaterialMasterPage() {
                             </thead>
                             <tbody>
                                 {materials.length === 0 ? (
-                                    <tr><td colSpan={6} className="text-center py-4 text-slate-500">데이터가 없습니다.</td></tr>
+                                    <tr><td colSpan={7} className="text-center py-4 text-slate-500">데이터가 없습니다.</td></tr>
                                 ) : (
                                     materials.map((item) => (
                                         <tr
@@ -51,6 +63,7 @@ export default function MaterialMasterPage() {
                                         >
                                             <td className="h-12 px-4 font-mono text-xs">{item.inventory_id}</td>
                                             <td className="h-12 px-4 font-medium">{item.name}</td>
+                                            <td className="h-12 px-4">{getStatusBadge(item.status)}</td>
                                             <td className="h-12 px-4 text-slate-600">{item.spec || '-'}</td>
                                             <td className="h-12 px-4">{item.unit}</td>
                                             <td className="h-12 px-4">{item.code_item || '-'}</td>

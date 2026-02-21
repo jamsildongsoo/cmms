@@ -1,13 +1,14 @@
-import axios from 'axios';
+import api from '@/utils/api';
 import type { WorkOrder } from '@/types/workOrder';
-
-const COMPANY_ID = 'COM-001';
+import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export const workOrderService = {
     getAll: async (filter?: 'ALL' | 'REQ' | 'ACT'): Promise<WorkOrder[]> => {
         try {
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
             // Backend doesn't support filter param in GET yet, we filter client side
-            const response = await axios.get<WorkOrder[]>('/api/tx/work-orders');
+            const response = await api.get<WorkOrder[]>(`/api/tx/work-orders?companyId=${companyId}`);
             let data = response.data;
 
             if (filter && filter !== 'ALL') {
@@ -30,7 +31,9 @@ export const workOrderService = {
 
     getById: async (id: string): Promise<WorkOrder | undefined> => {
         try {
-            const response = await axios.get<WorkOrder>(`/api/tx/work-orders/${COMPANY_ID}/${id}`);
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<WorkOrder>(`/api/tx/work-orders/${companyId}/${id}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch work order", error);
@@ -39,21 +42,13 @@ export const workOrderService = {
     },
 
     create: async (data: WorkOrder): Promise<WorkOrder> => {
-        // WorkOrder interface has items? No, WorkOrder types definition in view_file earlier didn't show items list.
-        // Let's check WorkOrder type definition again if needed.
-        // The Entity has transient items.
-        // The DTO has items list.
-        // Does frontend WorkOrder type have items?
-        // I should check. If not, I can't send items easily.
-        // Assuming it matches backend Inspection pattern (interface has items).
-        // If WorkOrder type doesn't have items, I need to add it or pass it separately.
-        // Let's assume it does or I'll fix it.
-
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
         const payload = {
-            workOrder: { ...data, company_id: COMPANY_ID },
+            workOrder: { ...data, company_id: companyId },
             items: (data as any).items // Type assertion in case it's missing in type
         };
-        const response = await axios.post<WorkOrder>('/api/tx/work-orders', payload);
+        const response = await api.post<WorkOrder>('/api/tx/work-orders', payload);
         return response.data;
     },
 
@@ -67,7 +62,7 @@ export const workOrderService = {
                 workOrder: merged,
                 items: (merged as any).items
             };
-            const response = await axios.post<WorkOrder>('/api/tx/work-orders', payload);
+            const response = await api.post<WorkOrder>('/api/tx/work-orders', payload);
             return response.data;
         } catch (error) {
             throw error;
@@ -75,6 +70,8 @@ export const workOrderService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        await axios.delete(`/api/tx/work-orders/${COMPANY_ID}/${id}`);
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        await api.delete(`/api/tx/work-orders/${companyId}/${id}`);
     }
 };

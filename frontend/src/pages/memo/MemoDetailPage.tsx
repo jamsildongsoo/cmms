@@ -1,13 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Trash, Calendar, User, Eye, X } from 'lucide-react';
+import { ArrowLeft, Trash, Calendar, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { FileAttachmentList, type AttachedFileInfo } from '@/components/common/FileAttachmentList';
-import { memoService, type Memo } from '@/services/memoService';
+import { memoService, type Memo, type MemoComment } from '@/services/memoService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 import { systemService } from '@/services/systemService';
 
@@ -19,19 +18,21 @@ export default function MemoDetailPage() {
     const [memo, setMemo] = useState<Memo | null>(null);
     const [files, setFiles] = useState<AttachedFileInfo[]>([]);
 
-    // Comments State (Mock for now as backend support isn't explicit in basic Requirement)
-    const [comments, setComments] = useState([
-        { id: 1, author: '김철수', content: '확인했습니다.', date: '2024-03-15 14:30' },
-    ]);
+    const [comments, setComments] = useState<MemoComment[]>([]);
     const [newComment, setNewComment] = useState('');
 
     useEffect(() => {
-        const fetchMemo = async () => {
+        const fetchMemoData = async () => {
             if (!id) return;
             const companyId = user?.company_id || 'COM-001';
             try {
+                // Fetch Memo
                 const data = await memoService.getMemoById(companyId, id);
                 setMemo(data);
+
+                // Fetch Comments
+                const commentsData = await memoService.getComments(id);
+                setComments(commentsData);
 
                 // Fetch files if group id exists
                 if (data.file_group_id) {
@@ -41,38 +42,64 @@ export default function MemoDetailPage() {
                             id: item.file_item_id.line_no.toString(),
                             name: item.original_name,
                             size: item.size,
-                            // Store full item for download
                             raw: item
                         } as any)));
                     }
                 }
             } catch (error) {
-                console.error("Failed to fetch memo", error);
+                console.error("Failed to fetch memo details", error);
             }
         };
-        fetchMemo();
+        fetchMemoData();
     }, [id, user]);
 
-    const handleAddComment = () => {
-        if (!newComment.trim()) return;
-        const comment = {
-            id: Date.now(),
-            author: user?.name || '익명',
-            content: newComment,
-            date: new Date().toISOString().slice(0, 16).replace('T', ' ')
-        };
-        setComments([...comments, comment]);
-        setNewComment('');
+    const handleAddComment = async () => {
+        if (!newComment.trim() || !id) return;
+        try {
+            const added = await memoService.addComment(id, newComment);
+            // author_name is typically attached by joining person table on backend, or we can mock it here temporarily if missing.
+            setComments([...comments, { ...added, author_name: user?.name || user?.person_id }]);
+            setNewComment('');
+        } catch (error) {
+            console.error("Failed to add comment", error);
+            toast({
+                title: "오류",
+                description: "댓글 등록에 실패했습니다.",
+                variant: "destructive"
+            });
+        }
     };
 
-    const handleDeleteComment = (id: number) => {
-        setComments(comments.filter(c => c.id !== id));
+    const handleDeleteComment = async (commentId: number, authorId: string) => {
+        if (!id) return;
+        if (user?.person_id !== authorId) {
+            toast({ title: "권한 오류", description: "본인이 작성한 댓글만 삭제할 수 있습니다.", variant: "destructive" });
+            return;
+        }
+
+        if (confirm('댓글을 정말 삭제하시겠습니까?')) {
+            try {
+                await memoService.deleteComment(id, commentId);
+                setComments(comments.filter(c => c.comment_id !== commentId));
+            } catch (error) {
+                console.error("Failed to delete comment", error);
+                toast({ title: "오류", description: "댓글 삭제에 실패했습니다.", variant: "destructive" });
+            }
+        }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
+        if (!id) return;
         if (confirm('정말 삭제하시겠습니까?')) {
-            toast({ title: "삭제 완료", description: "메모가 삭제되었습니다." });
-            navigate('/memo');
+            try {
+                // Call delete API
+                await memoService.deleteMemo(id, user?.person_id || '');
+                toast({ title: "삭제 완료", description: "메모가 삭제되었습니다." });
+                navigate('/memo');
+            } catch (error: any) {
+                console.error(error);
+                toast({ title: "삭제 실패", description: error.response?.data?.message || "메모 삭제 중 오류가 발생했습니다.", variant: "destructive" });
+            }
         }
     };
 
@@ -82,13 +109,13 @@ export default function MemoDetailPage() {
             const fileGroupId = file.raw.file_item_id.file_group_id;
             const lineNo = file.raw.file_item_id.line_no;
             const url = systemService.getDownloadUrl(companyId, fileGroupId, lineNo);
-
-            // Trigger download via new window or anchor
             window.open(url, '_blank');
         }
     };
 
     if (!memo) return <div>Loading...</div>;
+
+    const canDelete = memo.status === 'T' && user?.person_id === memo.created_by;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -100,21 +127,22 @@ export default function MemoDetailPage() {
                     </Button>
                     <h2 className="text-2xl font-bold tracking-tight">메모 상세</h2>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => navigate(`/memo/${id}/edit`)}>
-                        <Edit className="mr-2 h-4 w-4" /> 수정
+                {canDelete && (
+                    <Button variant="destructive" size="sm" onClick={handleDelete}>
+                        <Trash className="h-4 w-4 mr-2" /> 삭제
                     </Button>
-                    <Button variant="destructive" onClick={handleDelete}>
-                        <Trash className="mr-2 h-4 w-4" /> 삭제
-                    </Button>
-                </div>
+                )}
             </div>
 
             {/* Content Viewer */}
             <Card>
                 <CardHeader className="pb-4">
                     <div className="space-y-4">
-                        <CardTitle className="text-xl">{memo.title}</CardTitle>
+                        <CardTitle className="text-xl">
+                            {memo.status === 'T' && <span className="text-purple-600 mr-2">[임시저장]</span>}
+                            {memo.is_notice === 'Y' && <span className="text-red-500 mr-2">[공지]</span>}
+                            {memo.title}
+                        </CardTitle>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                                 <User className="h-4 w-4" /> {memo.author_name || memo.created_by}
@@ -122,10 +150,6 @@ export default function MemoDetailPage() {
                             <div className="h-3 w-px bg-slate-300 mx-2" />
                             <div className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" /> {memo.created_at?.split('T')[0]}
-                            </div>
-                            <div className="h-3 w-px bg-slate-300 mx-2" />
-                            <div className="flex items-center gap-1">
-                                <Eye className="h-4 w-4" /> {memo.views || 0}
                             </div>
                         </div>
                     </div>
@@ -158,20 +182,22 @@ export default function MemoDetailPage() {
                     {/* Comment List */}
                     <div className="space-y-4">
                         {comments.map((comment) => (
-                            <div key={comment.id} className="flex gap-3">
+                            <div key={comment.comment_id} className="flex gap-3">
                                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">
-                                    {(comment.author || '익')[0]}
+                                    {(comment.author_name || comment.author_id || '익')[0]}
                                 </div>
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-sm">{comment.author}</span>
-                                        <span className="text-xs text-muted-foreground">{comment.date}</span>
+                                        <span className="font-bold text-sm">{comment.author_name || comment.author_id}</span>
+                                        <span className="text-xs text-muted-foreground">{comment.date ? new Date(comment.date).toLocaleString() : ''}</span>
                                     </div>
                                     <p className="text-sm text-slate-700">{comment.content}</p>
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-500" onClick={() => handleDeleteComment(comment.id)}>
-                                    <X className="h-3 w-3" />
-                                </Button>
+                                {user?.person_id === comment.author_id && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-500" onClick={() => handleDeleteComment(comment.comment_id, comment.author_id)}>
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                )}
                             </div>
                         ))}
                     </div>

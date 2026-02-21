@@ -1,6 +1,5 @@
 package com.cmms.domain;
 
-import com.cmms.common.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -15,7 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "person")
 @IdClass(PersonId.class)
-public class Person extends BaseEntity {
+public class Person {
 
     @Id
     @Column(name = "company_id", length = 20, nullable = false)
@@ -57,4 +56,7 @@ public class Person extends BaseEntity {
 
     @Column(name = "last_login_ip", length = 50)
     private String lastLoginIp;
+
+    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    private String deleteMark = "N";
 }

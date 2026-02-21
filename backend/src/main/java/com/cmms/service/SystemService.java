@@ -143,6 +143,8 @@ public class SystemService {
             case "WORK_ORDER" -> "WO";
             case "WORK_PERMIT" -> "WP";
             case "FILE_GROUP" -> "FG";
+            case "MEMO" -> "MM";
+            case "APPROVAL" -> "AP";
             default -> "XX";
         };
 

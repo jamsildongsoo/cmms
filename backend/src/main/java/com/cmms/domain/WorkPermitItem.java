@@ -7,6 +7,7 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -27,9 +28,18 @@ public class WorkPermitItem {
     @Column(name = "line_no", nullable = false)
     private Integer lineNo;
 
+    @Column(name = "sign_type", length = 20, nullable = false)
+    private String signType;
+
+    @Column(name = "person_id", length = 20)
+    private String personId;
+
     @Column(name = "name", length = 100)
     private String name;
 
     @Column(name = "signature", columnDefinition = "TEXT")
     private String signature;
+
+    @Column(name = "signed_at")
+    private LocalDateTime signedAt;
 }

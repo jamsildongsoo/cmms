@@ -1,0 +1,4 @@
+﻿2026-02-21T21:44:58.885+09:00  INFO 15388 --- [cmms-backend] [nio-8080-exec-1] com.cmms.service.AuthService             : Valid Bcrypt for 1234: $2a$10$7yC0urP.xRDm1rJLps/DaOKh5xll1RmZ2.Fbd6voR5.LYSr4EveaC
+2026-02-21T21:45:46.529+09:00  INFO 15388 --- [cmms-backend] [nio-8080-exec-3] com.cmms.service.AuthService             : Valid Bcrypt for 1234: $2a$10$69t9N4IVtsgRKaNfSBVSFulQGBVgrlJdsZT3XZ0ZtQR6ARYeHEyJm
+2026-02-21T21:48:07.890+09:00  INFO 15388 --- [cmms-backend] [nio-8080-exec-2] com.cmms.service.AuthService             : Valid Bcrypt for 1234: $2a$10$hd4OLiLMbwtAJktwyL46pOpuIdf5tq30LLJYJq9Qp5A58TKvzzDsW
+2026-02-21T21:49:08.731+09:00  INFO 15388 --- [cmms-backend] [nio-8080-exec-4] com.cmms.service.AuthService             : Valid Bcrypt for 1234: $2a$10$CYfcCwk1TDWn.9y1zTuhv.MEycMVvyMBwWpYNwoMpzYrM1oEtsaBi

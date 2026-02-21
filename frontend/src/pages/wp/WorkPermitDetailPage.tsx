@@ -108,7 +108,7 @@ export default function WorkPermitDetailPage() {
                         <div className="md:col-span-2 space-y-1">
                             <Label className="text-muted-foreground">작업 내용</Label>
                             <div className="bg-slate-50 p-3 rounded-md text-sm whitespace-pre-wrap min-h-[60px]">
-                                {permit.description || "내용 없음"}
+                                {permit.work_summary || "내용 없음"}
                             </div>
                         </div>
 
@@ -116,15 +116,12 @@ export default function WorkPermitDetailPage() {
                         <div className="md:col-span-2 border-t pt-4 mt-2 border-b pb-4">
                             <h3 className="font-semibold mb-3">위험성 평가</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">작업 개요</span>
-                                    <span>{permit.work_summary || '-'}</span>
-                                </div>
+                                {/* Work Summary removed from here to avoid duplication */}
                                 <div>
                                     <span className="text-muted-foreground block text-xs">위험 요인</span>
                                     <span>{permit.hazard_factor || '-'}</span>
                                 </div>
-                                <div className="md:col-span-2">
+                                <div>
                                     <span className="text-muted-foreground block text-xs">안전 대책</span>
                                     <span>{permit.safety_factor || '-'}</span>
                                 </div>

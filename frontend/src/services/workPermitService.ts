@@ -1,12 +1,13 @@
-import axios from 'axios';
+import api from '@/utils/api';
 import type { WorkPermit } from '@/types/workPermit';
-
-const COMPANY_ID = 'COM-001';
+import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export const workPermitService = {
     getAll: async (filter?: 'ALL' | 'REQ' | 'APR'): Promise<WorkPermit[]> => {
         try {
-            const response = await axios.get<WorkPermit[]>('/api/tx/work-permits');
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<WorkPermit[]>(`/api/tx/work-permits?companyId=${companyId}`);
             let data = response.data;
             if (filter && filter !== 'ALL') {
                 // REQ = Request (T), APR = Approved (A, C)
@@ -25,7 +26,9 @@ export const workPermitService = {
 
     getById: async (id: string): Promise<WorkPermit | undefined> => {
         try {
-            const response = await axios.get<WorkPermit>(`/api/tx/work-permits/${COMPANY_ID}/${id}`);
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<WorkPermit>(`/api/tx/work-permits/${companyId}/${id}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch work permit", error);
@@ -34,17 +37,13 @@ export const workPermitService = {
     },
 
     create: async (data: Omit<WorkPermit, "permit_id">): Promise<WorkPermit> => {
-        // Data might not have permit_id, but backend generates it.
-        // Frontend Type has items?
-        // WorkPermit type doesn't explicitly have items in the view I saw earlier.
-        // It has `checksheet_json` etc.
-        // I'll cast to any for items to be safe if it's missing in type but present in object.
-
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
         const payload = {
-            workPermit: { ...data, company_id: COMPANY_ID },
+            work_permit: { ...data, company_id: companyId },
             items: (data as any).items
         };
-        const response = await axios.post<WorkPermit>('/api/tx/work-permits', payload);
+        const response = await api.post<WorkPermit>('/api/tx/work-permits', payload);
         return response.data;
     },
 
@@ -55,10 +54,10 @@ export const workPermitService = {
 
             const merged = { ...existing, ...updates };
             const payload = {
-                workPermit: merged,
+                work_permit: merged,
                 items: (merged as any).items
             };
-            const response = await axios.post<WorkPermit>('/api/tx/work-permits', payload);
+            const response = await api.post<WorkPermit>('/api/tx/work-permits', payload);
             return response.data;
         } catch (error) {
             throw error;
@@ -66,6 +65,8 @@ export const workPermitService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        await axios.delete(`/api/tx/work-permits/${COMPANY_ID}/${id}`);
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        await api.delete(`/api/tx/work-permits/${companyId}/${id}`);
     }
 };

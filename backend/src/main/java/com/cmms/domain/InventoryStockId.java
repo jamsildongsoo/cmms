@@ -15,5 +15,7 @@ import java.io.Serializable;
 public class InventoryStockId implements Serializable {
     private String companyId;
     private String storageId;
+    private String binId;
+    private String locationId;
     private String inventoryId;
 }

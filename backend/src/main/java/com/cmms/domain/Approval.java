@@ -41,4 +41,10 @@ public class Approval extends BaseEntity {
 
     @Column(name = "ref_id", length = 20)
     private String refId;
+
+    @Column(name = "requester_id", length = 20)
+    private String requesterId;
+
+    @Column(name = "current_step")
+    private Integer currentStep;
 }

@@ -11,6 +11,10 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
 @Getter
 @Setter
 @Entity
@@ -32,14 +36,27 @@ public class WorkPermit extends BaseEntity {
     @Column(name = "equipment_id", length = 20)
     private String equipmentId;
 
+    @Column(name = "order_id", length = 20)
+    private String orderId;
+
     @Column(name = "name", length = 100)
     private String name;
 
     @Column(name = "stage", length = 20)
     private String stage;
 
-    @Column(name = "code_item", length = 20)
-    private String codeItem;
+    @Column(name = "wp_types", length = 100)
+    @jakarta.persistence.Convert(converter = com.cmms.common.converter.StringListConverter.class)
+    private List<String> wpTypes;
+
+    @Column(name = "start_dt")
+    private LocalDateTime startDt;
+
+    @Column(name = "end_dt")
+    private LocalDateTime endDt;
+
+    @Column(name = "location", length = 100)
+    private String location;
 
     @Column(name = "dept_id", length = 20)
     private String deptId;
@@ -56,9 +73,29 @@ public class WorkPermit extends BaseEntity {
     @Column(name = "safety_factor", columnDefinition = "TEXT")
     private String safetyFactor;
 
-    @Column(name = "checksheet_json", columnDefinition = "JSONB")
+    @Column(name = "checksheet_json_com", columnDefinition = "JSON")
     @JdbcTypeCode(SqlTypes.JSON)
-    private String checksheetJson;
+    private Map<String, Object> checksheetJsonCom;
+
+    @Column(name = "checksheet_json_hot", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> checksheetJsonHot;
+
+    @Column(name = "checksheet_json_conf", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> checksheetJsonConf;
+
+    @Column(name = "checksheet_json_elec", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> checksheetJsonElec;
+
+    @Column(name = "checksheet_json_high", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> checksheetJsonHigh;
+
+    @Column(name = "checksheet_json_dig", columnDefinition = "JSON")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> checksheetJsonDig;
 
     @Column(name = "file_group_id", length = 100)
     private String fileGroupId;
@@ -66,16 +103,12 @@ public class WorkPermit extends BaseEntity {
     @Column(name = "status", length = 1)
     private String status;
 
-    @Column(name = "ref_id", length = 20)
-    private String refId;
+    @Column(name = "parent_permit_id", length = 20)
+    private String parentPermitId;
 
     @Column(name = "approval_id", length = 20)
     private String approvalId;
 
-    @Column(name = "wp_types", length = 100)
-    @jakarta.persistence.Convert(converter = com.cmms.common.converter.StringListConverter.class)
-    private java.util.List<String> wpTypes;
-
     @jakarta.persistence.Transient
-    private java.util.List<WorkPermitItem> items;
+    private List<WorkPermitItem> items;
 }

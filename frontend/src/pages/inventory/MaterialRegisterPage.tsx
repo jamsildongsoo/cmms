@@ -21,6 +21,7 @@ export default function MaterialRegisterPage() {
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [actionType, setActionType] = useState<'T' | 'C'>('T');
     const isEditMode = !!id;
     const user = useAuthStore((state) => state.user);
 
@@ -45,6 +46,9 @@ export default function MaterialRegisterPage() {
             inventoryService.getMaterialById(id)
                 .then((data) => {
                     if (data) {
+                        if (data.status === 'C') {
+                            toast({ title: "안내", description: "확정된 건은 수정할 수 없습니다.", variant: "destructive" });
+                        }
                         Object.keys(data).forEach(key => {
                             setValue(key as keyof Material, data[key as keyof Material]);
                         });
@@ -62,21 +66,24 @@ export default function MaterialRegisterPage() {
     const onSubmit = async (data: Material) => {
         try {
             setLoading(true);
+            data.status = actionType;
             if (isEditMode && id) {
                 await inventoryService.updateMaterial(id, data);
-                toast({ title: "성공", description: "자재 정보가 수정되었습니다." });
+                toast({ title: "성공", description: actionType === 'C' ? "자재 정보가 확정되었습니다." : "자재 정보가 수정되었습니다." });
             } else {
                 await inventoryService.createMaterial(data);
-                toast({ title: "성공", description: "자재가 등록되었습니다." });
+                toast({ title: "성공", description: actionType === 'C' ? "신규 자재가 확정 등록되었습니다." : "신규 자재가 임시 저장되었습니다." });
             }
             navigate('/master/inventory');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast({ title: "오류", description: "저장 중 오류가 발생했습니다.", variant: "destructive" });
+            toast({ title: "오류", description: error.response?.data?.message || "저장 중 오류가 발생했습니다.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
     };
+
+    const isConfirmed = watch('status') === 'C';
 
     if (loading && isEditMode) {
         return <div className="p-8 text-center">로딩 중...</div>;
@@ -95,11 +102,31 @@ export default function MaterialRegisterPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" type="button" onClick={() => navigate('/master/inventory')}>취소</Button>
-                    <Button type="submit" form="material-form" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-                        <Save className="mr-2 h-4 w-4" />
-                        {isEditMode ? '수정 저장' : '저장'}
-                    </Button>
+                    <Button variant="outline" type="button" onClick={() => navigate('/master/inventory')}>목록</Button>
+                    {!isConfirmed && (
+                        <>
+                            <Button
+                                type="submit"
+                                form="material-form"
+                                disabled={loading}
+                                variant="secondary"
+                                onClick={() => setActionType('T')}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                임시 저장
+                            </Button>
+                            <Button
+                                type="submit"
+                                form="material-form"
+                                disabled={loading}
+                                className="bg-blue-600 hover:bg-blue-700"
+                                onClick={() => setActionType('C')}
+                            >
+                                <Save className="mr-2 h-4 w-4" />
+                                확정
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -118,9 +145,9 @@ export default function MaterialRegisterPage() {
                             <Label>자재 코드</Label>
                             <Input
                                 {...register('inventory_id')}
-                                placeholder="자동 생성"
-                                disabled={isEditMode}
-                                className={isEditMode ? 'bg-slate-50' : ''}
+                                placeholder="저장 시 자동 생성"
+                                disabled={true}
+                                className="bg-slate-50"
                             />
                         </div>
                         <div className="space-y-2 md:col-span-3">

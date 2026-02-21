@@ -82,7 +82,7 @@ export default function WorkOrderDetailPage() {
                         </div>
                         <div className="space-y-1">
                             <Label className="text-muted-foreground">작업 유형</Label>
-                            <div>{workOrder.type || '-'}</div>
+                            <div>{workOrder.code_item || '-'}</div>
                         </div>
                         <div className="space-y-1">
                             <Label className="text-muted-foreground">관리 부서</Label>
@@ -105,7 +105,7 @@ export default function WorkOrderDetailPage() {
                         <div className="md:col-span-2 space-y-1">
                             <Label className="text-muted-foreground">요청 내용</Label>
                             <div className="bg-slate-50 p-3 rounded-md text-sm whitespace-pre-wrap min-h-[60px]">
-                                {workOrder.description || "내용 없음"}
+                                {workOrder.note || "내용 없음"}
                             </div>
                         </div>
                     </CardContent>

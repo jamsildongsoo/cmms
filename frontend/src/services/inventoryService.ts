@@ -1,6 +1,5 @@
-import axios from 'axios';
-
-const COMPANY_ID = 'COM-001';
+import api from '@/utils/api';
+import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export interface Material {
     company_id?: string;
@@ -15,7 +14,7 @@ export interface Material {
     serial?: string;
     note?: string;
     file_group_id?: string;
-    status?: string;
+    status?: 'T' | 'A' | 'C' | 'R' | string;
     delete_mark?: string;
 }
 
@@ -23,22 +22,21 @@ export type TransactionType = 'IN' | 'OUT' | 'MOVE' | 'ADJUST';
 
 export interface InventoryTransaction {
     history_id: string; // Backend: history_id
-    tx_type: TransactionType;
-    tx_date: string;
+    type: TransactionType; // Renamed from tx_type to match usage
+    date: string; // Renamed from tx_date
     inventory_id: string;
-    // extended fields for UI if joined, but backend returns History entity which has IDs.
-    // UI might need join with Material to show name.
-    // For now, let's match backend response.
     qty: number;
     amount?: number;
     ref_entity?: string;
     ref_id?: string;
 
-    // UI convenience fields (might be missing in raw response unless joined)
-    name?: string;
+    // UI convenience fields
+    name: string; // Made required to fix usage
     spec?: string;
     unit?: string;
-    storage_id?: string;
+    storage?: string; // storage name
+    user?: string; // user name
+    ref?: string; // reference string
     company_id?: string;
 }
 
@@ -49,12 +47,18 @@ export interface TransactionItem {
     qty: number;
     unit_price?: number;
     ref?: string;
+    name?: string; // Added for UI display
+    spec?: string; // Added for UI display
+    unit?: string; // Added for UI display
+    storage?: string; // Added for UI display
 }
 
 export const inventoryService = {
     getAllMaterials: async (): Promise<Material[]> => {
         try {
-            const response = await axios.get<Material[]>('/api/master/inventory');
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<Material[]>(`/api/master/inventory?companyId=${companyId}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch materials", error);
@@ -64,7 +68,9 @@ export const inventoryService = {
 
     getMaterialById: async (id: string): Promise<Material | undefined> => {
         try {
-            const response = await axios.get<Material>(`/api/master/inventory/${COMPANY_ID}/${id}`);
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<Material>(`/api/master/inventory/${companyId}/${id}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch material", error);
@@ -73,8 +79,10 @@ export const inventoryService = {
     },
 
     createMaterial: async (material: Material): Promise<Material> => {
-        const payload = { ...material, company_id: COMPANY_ID };
-        const response = await axios.post<Material>('/api/master/inventory', payload);
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        const payload = { ...material, company_id: companyId };
+        const response = await api.post<Material>('/api/master/inventory', payload);
         return response.data;
     },
 
@@ -83,7 +91,11 @@ export const inventoryService = {
             const existing = await inventoryService.getMaterialById(id);
             if (!existing) throw new Error("Material not found");
             const merged = { ...existing, ...updates };
-            const response = await axios.post<Material>('/api/master/inventory', merged);
+            // Ensure company_id is present
+            if (!merged.company_id) merged.company_id = useAuthStore.getState().user?.company_id;
+            if (!merged.company_id) throw new Error("User not authenticated");
+
+            const response = await api.post<Material>('/api/master/inventory', merged);
             return response.data;
         } catch (error) {
             throw error;
@@ -93,7 +105,9 @@ export const inventoryService = {
     // Transaction Support
     getAllTransactions: async (): Promise<InventoryTransaction[]> => {
         try {
-            const response = await axios.get<InventoryTransaction[]>('/api/inv/history');
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<InventoryTransaction[]>(`/api/inv/history?companyId=${companyId}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch transactions", error);
@@ -102,16 +116,20 @@ export const inventoryService = {
     },
 
     processTransaction: async (type: TransactionType, items: TransactionItem[]): Promise<void> => {
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        const userId = useAuthStore.getState().user?.person_id || 'SYSTEM';
+
         const payload = {
-            company_id: COMPANY_ID,
+            company_id: companyId,
             type: type,
             date: new Date().toISOString(),
-            ref_entity: 'MANUAL', // Default or pass in?
+            ref_entity: 'MANUAL',
             ref_id: items[0]?.ref || '',
-            user: 'CurrentUser', // Should come from Auth
+            user: userId,
             items: items.map(item => ({
                 inventory_id: item.inventory_id,
-                storage_id: item.storage_id || 'STR-001', // Default storage if missing? UI should provide.
+                storage_id: item.storage_id || 'STR-001',
                 qty: item.qty,
                 unit_price: item.unit_price || 0
             }))

@@ -118,7 +118,13 @@ export default function WorkPermitListPage() {
                                                 onClick={() => navigate(`/wp/work-permit/${wp.permit_id}`)}
                                             >
                                                 <td className="px-4 py-3 font-medium">{wp.permit_id}</td>
-                                                <td className="px-4 py-3">{getWpTypeBadge(wp.wp_type)}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {wp.wp_types && wp.wp_types.map(t => (
+                                                            <span key={t}>{getWpTypeBadge(t)}</span>
+                                                        ))}
+                                                    </div>
+                                                </td>
                                                 <td className="px-4 py-3">{wp.name}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-600">
                                                     <div>{wp.start_dt ? wp.start_dt.split(' ')[0] : '-'}</div>

@@ -20,6 +20,8 @@ public class InventoryTransactionRequest {
     public static class TransactionItem {
         private String inventoryId;
         private String storageId;
+        private String binId;
+        private String locationId;
         private BigDecimal qty;
         private BigDecimal unitPrice;
     }

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { equipmentService } from "@/services/equipmentService";
 import type { Equipment } from "@/types/equipment";
+import { Badge } from "@/components/ui/badge";
 
 export default function EquipmentListPage() {
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
@@ -35,6 +36,15 @@ export default function EquipmentListPage() {
         item.equipment_id.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const getStatusBadge = (status?: string) => {
+        switch (status) {
+            case 'T': return <Badge variant="secondary">임시저장</Badge>;
+            case 'A': return <Badge variant="outline" className="text-blue-600 border-blue-600">결재중</Badge>;
+            case 'C': return <Badge className="bg-green-600 hover:bg-green-700">확정</Badge>;
+            case 'R': return <Badge variant="destructive">반려</Badge>;
+            default: return <Badge variant="secondary">임시저장</Badge>;
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -69,6 +79,7 @@ export default function EquipmentListPage() {
                                 <tr className="border-b">
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">코드</th>
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">설비명</th>
+                                    <th className="h-12 px-4 text-left font-medium text-slate-500">상태</th>
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">유형</th>
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">위치</th>
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">메이커</th>
@@ -79,13 +90,13 @@ export default function EquipmentListPage() {
                             <tbody>
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={7} className="h-24 text-center">
+                                        <td colSpan={8} className="h-24 text-center">
                                             로딩 중...
                                         </td>
                                     </tr>
                                 ) : filteredList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="h-24 text-center text-slate-500">
+                                        <td colSpan={8} className="h-24 text-center text-slate-500">
                                             등록된 설비가 없습니다.
                                         </td>
                                     </tr>
@@ -94,6 +105,7 @@ export default function EquipmentListPage() {
                                         <tr key={item.equipment_id} className="border-b transition-colors hover:bg-slate-50/50 cursor-pointer" onClick={() => navigate(`/master/equipment/${item.equipment_id}`)}>
                                             <td className="p-4 font-medium">{item.equipment_id}</td>
                                             <td className="p-4">{item.name}</td>
+                                            <td className="p-4">{getStatusBadge(item.status)}</td>
                                             <td className="p-4">{item.code_item}</td>
                                             <td className="p-4">{item.install_location || '-'}</td>
                                             <td className="p-4">{item.maker_name || '-'}</td>

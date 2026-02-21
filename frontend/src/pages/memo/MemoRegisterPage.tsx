@@ -12,7 +12,7 @@ import { FileAttachment, type AttachedFile } from '@/components/common/FileAttac
 import { Checkbox } from '@/components/ui/checkbox';
 import { memoService } from '@/services/memoService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
-import axios from 'axios';
+import api from '@/utils/api';
 
 export default function MemoRegisterPage() {
     const navigate = useNavigate();
@@ -23,7 +23,7 @@ export default function MemoRegisterPage() {
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
     const user = useAuthStore((state) => state.user);
 
-    const handleSave = async () => {
+    const handleSave = async (status: 'T' | 'C') => {
         if (!title.trim() || !content.trim()) {
             toast({
                 title: "입력 오류",
@@ -34,17 +34,12 @@ export default function MemoRegisterPage() {
         }
 
         try {
-            const companyId = user?.company_id || 'COM-001';
+            const companyId = user?.company_id;
+            if (!companyId) throw new Error("로그인 정보가 없습니다.");
             let fileGroupId = null;
 
-            // Upload files if any
+            // ... file upload logic remains unchanged
             if (attachedFiles.length > 0) {
-                // Determine fileGroupId if multiple files need to go to same group
-                // Typically first upload creates group, subsequent can add to it?
-                // Or backend handles it? 
-                // SystemController upload takes: file, companyId, optional fileGroupId.
-                // Returns FileGroup.
-
                 for (const f of attachedFiles) {
                     if (f.file) {
                         const formData = new FormData();
@@ -54,22 +49,12 @@ export default function MemoRegisterPage() {
                             formData.append('fileGroupId', fileGroupId);
                         }
 
-                        const response = await axios.post('/api/sys/files/upload', formData, {
+                        const response = await api.post('/api/sys/files/upload', formData, {
                             headers: { 'Content-Type': 'multipart/form-data' }
                         });
 
-                        // First file upload returns the new FileGroup ID
                         if (!fileGroupId) {
-                            fileGroupId = response.data.fileGroupId; // Assuming snake case might be file_group_id? Check controller return.
-                            // Controller returns FileGroup entity.
-                            // Let's assume it has fileGroupId property.
-                            // PropertyNamingStrategy is SNAKE_CASE, so likely file_group_id.
-                            if (response.data.file_group_id) {
-                                fileGroupId = response.data.file_group_id;
-                            } else if (response.data.fileGroupId) {
-                                // Fallback check
-                                fileGroupId = response.data.fileGroupId;
-                            }
+                            fileGroupId = response.data.file_group_id || response.data.fileGroupId;
                         }
                     }
                 }
@@ -77,15 +62,17 @@ export default function MemoRegisterPage() {
 
             await memoService.createMemo({
                 company_id: companyId,
-                title: title, // isNotice logic handled by title prefix?
+                title: title,
                 content: content,
+                is_notice: isNotice ? 'Y' : 'N',
+                status: status,
                 file_group_id: fileGroupId,
                 created_by: user?.person_id || 'SYSTEM'
             });
 
             toast({
                 title: "저장 완료",
-                description: "메모가 성공적으로 저장되었습니다.",
+                description: status === 'T' ? "메모가 임시 저장되었습니다." : "메모가 확정되어 공유되었습니다.",
             });
             navigate('/memo');
         } catch (error) {
@@ -110,8 +97,11 @@ export default function MemoRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate(-1)}>취소</Button>
-                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                        <Save className="mr-2 h-4 w-4" /> 저장
+                    <Button variant="secondary" onClick={() => handleSave('T')}>
+                        <Save className="mr-2 h-4 w-4" /> 임시 저장
+                    </Button>
+                    <Button onClick={() => handleSave('C')} className="bg-blue-600 hover:bg-blue-700">
+                        <Save className="mr-2 h-4 w-4" /> 확정 (공유)
                     </Button>
                 </div>
             </div>

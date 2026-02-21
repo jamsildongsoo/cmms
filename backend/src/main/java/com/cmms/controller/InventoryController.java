@@ -25,18 +25,18 @@ public class InventoryController {
         return inventoryService.getAllStocks();
     }
 
-    @GetMapping("/stocks/{companyId}/{storageId}/{inventoryId}")
+    @GetMapping("/stocks/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}")
     public ResponseEntity<InventoryStock> getStock(@PathVariable String companyId, @PathVariable String storageId,
-            @PathVariable String inventoryId) {
-        return inventoryService.getStockById(companyId, storageId, inventoryId)
+            @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId) {
+        return inventoryService.getStockById(companyId, storageId, binId, locationId, inventoryId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/stocks/{companyId}/{storageId}/{inventoryId}")
+    @DeleteMapping("/stocks/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}")
     public ResponseEntity<Void> deleteStock(@PathVariable String companyId, @PathVariable String storageId,
-            @PathVariable String inventoryId) {
-        inventoryService.deleteStock(companyId, storageId, inventoryId);
+            @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId) {
+        inventoryService.deleteStock(companyId, storageId, binId, locationId, inventoryId);
         return ResponseEntity.ok().build();
     }
 
@@ -50,18 +50,20 @@ public class InventoryController {
         return inventoryService.getAllHistories();
     }
 
-    @GetMapping("/history/{companyId}/{storageId}/{inventoryId}/{historyId}")
+    @GetMapping("/history/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}/{historyId}")
     public ResponseEntity<InventoryHistory> getHistory(@PathVariable String companyId, @PathVariable String storageId,
-            @PathVariable String inventoryId, @PathVariable String historyId) {
-        return inventoryService.getHistoryById(companyId, storageId, inventoryId, historyId)
+            @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId,
+            @PathVariable String historyId) {
+        return inventoryService.getHistoryById(companyId, storageId, binId, locationId, inventoryId, historyId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/history/{companyId}/{storageId}/{inventoryId}/{historyId}")
+    @DeleteMapping("/history/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}/{historyId}")
     public ResponseEntity<Void> deleteHistory(@PathVariable String companyId, @PathVariable String storageId,
-            @PathVariable String inventoryId, @PathVariable String historyId) {
-        inventoryService.deleteHistory(companyId, storageId, inventoryId, historyId);
+            @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId,
+            @PathVariable String historyId) {
+        inventoryService.deleteHistory(companyId, storageId, binId, locationId, inventoryId, historyId);
         return ResponseEntity.ok().build();
     }
 

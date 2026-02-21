@@ -31,4 +31,37 @@ public class MemoController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMemo(@PathVariable String id, @RequestParam String companyId,
+            @RequestParam String personId) {
+        memoService.deleteMemo(companyId, id, personId);
+        return ResponseEntity.ok().build();
+    }
+
+    // Memo Comments
+    @GetMapping("/{id}/comments")
+    public List<com.cmms.domain.MemoComment> getComments(@PathVariable String id, @RequestParam String companyId) {
+        return memoService.getComments(companyId, id);
+    }
+
+    @PostMapping("/{id}/comments")
+    public com.cmms.domain.MemoComment addComment(
+            @PathVariable String id,
+            @RequestParam String companyId,
+            @RequestBody java.util.Map<String, String> payload) {
+        String authorId = payload.get("authorId");
+        String content = payload.get("content");
+        return memoService.addComment(companyId, id, authorId, content);
+    }
+
+    @DeleteMapping("/{id}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable String id,
+            @PathVariable Integer commentId,
+            @RequestParam String companyId,
+            @RequestParam String personId) {
+        memoService.deleteComment(companyId, id, commentId, personId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -40,7 +40,7 @@ public class TransactionService {
 
         if (inspection.getInspectionId() == null || inspection.getInspectionId().isBlank()) {
             inspection.setInspectionId(systemService.generateId(inspection.getCompanyId(), "INSPECTION",
-                    getMonthKey(inspection.getDate())));
+                    getMonthKey(java.time.LocalDate.now())));
 
             // For new items, set the generated ID
             if (items != null) {
@@ -49,6 +49,14 @@ public class TransactionService {
                 }
             }
         } else {
+            // Validation: Block update if already confirmed
+            inspectionRepository.findById(new InspectionId(inspection.getCompanyId(), inspection.getInspectionId()))
+                    .ifPresent(existing -> {
+                        if ("C".equals(existing.getStatus())) {
+                            throw new IllegalStateException("확정된 점검 데이터는 수정할 수 없습니다.");
+                        }
+                    });
+
             // For update, delete existing items first (simple replacement strategy)
             inspectionItemRepository.deleteByCompanyIdAndInspectionId(inspection.getCompanyId(),
                     inspection.getInspectionId());
@@ -113,6 +121,9 @@ public class TransactionService {
     @Transactional
     public void deleteInspection(String companyId, String inspectionId) {
         inspectionRepository.findById(new InspectionId(companyId, inspectionId)).ifPresent(inspection -> {
+            if ("C".equals(inspection.getStatus())) {
+                throw new IllegalStateException("확정된 점검 데이터는 삭제할 수 없습니다.");
+            }
             inspection.setDeleteMark("Y");
             inspectionRepository.save(inspection);
         });
@@ -128,13 +139,22 @@ public class TransactionService {
 
         if (order.getOrderId() == null || order.getOrderId().isBlank()) {
             order.setOrderId(
-                    systemService.generateId(order.getCompanyId(), "WORK_ORDER", getMonthKey(order.getDate())));
+                    systemService.generateId(order.getCompanyId(), "WORK_ORDER",
+                            getMonthKey(java.time.LocalDate.now())));
             if (items != null) {
                 for (WorkOrderItem item : items) {
                     item.setOrderId(order.getOrderId());
                 }
             }
         } else {
+            // Validation: Block update if already confirmed
+            workOrderRepository.findById(new WorkOrderId(order.getCompanyId(), order.getOrderId()))
+                    .ifPresent(existing -> {
+                        if ("C".equals(existing.getStatus())) {
+                            throw new IllegalStateException("확정된 작업 데이터는 수정할 수 없습니다.");
+                        }
+                    });
+
             workOrderItemRepository.deleteByCompanyIdAndOrderId(order.getCompanyId(), order.getOrderId());
         }
 
@@ -174,6 +194,9 @@ public class TransactionService {
     @Transactional
     public void deleteWorkOrder(String companyId, String orderId) {
         workOrderRepository.findById(new WorkOrderId(companyId, orderId)).ifPresent(order -> {
+            if ("C".equals(order.getStatus())) {
+                throw new IllegalStateException("확정된 작업 데이터는 삭제할 수 없습니다.");
+            }
             order.setDeleteMark("Y");
             workOrderRepository.save(order);
         });
@@ -199,6 +222,14 @@ public class TransactionService {
                 }
             }
         } else {
+            // Validation: Block update if already confirmed
+            workPermitRepository.findById(new WorkPermitId(permit.getCompanyId(), permit.getPermitId()))
+                    .ifPresent(existing -> {
+                        if ("C".equals(existing.getStatus())) {
+                            throw new IllegalStateException("확정된 작업허가 데이터는 수정할 수 없습니다.");
+                        }
+                    });
+
             workPermitItemRepository.deleteByCompanyIdAndPermitId(permit.getCompanyId(), permit.getPermitId());
         }
 
@@ -238,6 +269,9 @@ public class TransactionService {
     @Transactional
     public void deleteWorkPermit(String companyId, String permitId) {
         workPermitRepository.findById(new WorkPermitId(companyId, permitId)).ifPresent(permit -> {
+            if ("C".equals(permit.getStatus())) {
+                throw new IllegalStateException("확정된 작업허가 데이터는 삭제할 수 없습니다.");
+            }
             permit.setDeleteMark("Y");
             workPermitRepository.save(permit);
         });

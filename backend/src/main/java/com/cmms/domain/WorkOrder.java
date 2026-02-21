@@ -50,6 +50,9 @@ public class WorkOrder extends BaseEntity {
     @Column(name = "date")
     private LocalDate date;
 
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     @Column(name = "cost", precision = 18, scale = 2)
     private BigDecimal cost;
 
@@ -61,6 +64,9 @@ public class WorkOrder extends BaseEntity {
 
     @Column(name = "status", length = 1)
     private String status;
+
+    @Column(name = "ref_entity", length = 20)
+    private String refEntity;
 
     @Column(name = "ref_id", length = 20)
     private String refId;

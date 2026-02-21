@@ -24,7 +24,7 @@ export default function ApprovalOutboxPage() {
 
     useEffect(() => {
         if (user?.company_id && user?.id) {
-            approvalService.getList(user.company_id, user.id, 'outbox').then(setOutboxData);
+            approvalService.getList(user.id, 'outbox').then(setOutboxData);
         }
     }, [user]);
 

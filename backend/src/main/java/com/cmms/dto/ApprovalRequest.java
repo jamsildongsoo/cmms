@@ -12,4 +12,5 @@ import java.util.List;
 public class ApprovalRequest {
     private Approval approval;
     private List<ApprovalStep> steps;
+    private String status; // T for Temporary, C for Confirm
 }

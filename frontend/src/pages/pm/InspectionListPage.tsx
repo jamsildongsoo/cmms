@@ -102,7 +102,7 @@ export default function InspectionListPage() {
                                                 <td className="px-4 py-3 font-medium">{plan.inspection_id}</td>
                                                 <td className="px-4 py-3">{plan.name}</td>
                                                 <td className="px-4 py-3 text-slate-600">{plan.equipment_name}</td>
-                                                <td className="px-4 py-3 text-slate-600">{plan.plan_date}</td>
+                                                <td className="px-4 py-3 text-slate-600">{plan.date}</td>
                                                 <td className="px-4 py-3 text-slate-600">{plan.person_name}</td>
                                                 <td className="px-4 py-3 text-center">{getStatusBadge(plan.status)}</td>
                                                 <td className="px-4 py-3 text-center">

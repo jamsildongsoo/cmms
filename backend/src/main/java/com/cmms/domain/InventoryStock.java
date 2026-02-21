@@ -26,6 +26,14 @@ public class InventoryStock {
     private String storageId;
 
     @Id
+    @Column(name = "bin_id", length = 20, nullable = false)
+    private String binId;
+
+    @Id
+    @Column(name = "location_id", length = 20, nullable = false)
+    private String locationId;
+
+    @Id
     @Column(name = "inventory_id", length = 20, nullable = false)
     private String inventoryId;
 

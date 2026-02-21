@@ -1,6 +1,9 @@
 package com.cmms.controller;
 
 import com.cmms.domain.Approval;
+import com.cmms.domain.ApprovalStep;
+import com.cmms.dto.ApprovalRequest;
+import com.cmms.dto.DecisionRequest;
 import com.cmms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +19,11 @@ public class ApprovalController {
     private final ApprovalService approvalService;
 
     @GetMapping("/inbox")
-    public List<Approval> getInbox(@RequestParam String companyId, @RequestParam String personId) {
-        return approvalService.getInbox(companyId, personId);
+    public List<Approval> getInbox(
+            @RequestParam String companyId,
+            @RequestParam String personId,
+            @RequestParam(required = false, defaultValue = "pending") String type) {
+        return approvalService.getInbox(companyId, personId, type);
     }
 
     @GetMapping("/outbox")
@@ -32,8 +38,24 @@ public class ApprovalController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{id}/steps")
+    public List<ApprovalStep> getSteps(@PathVariable String id, @RequestParam String companyId) {
+        return approvalService.getApprovalSteps(companyId, id);
+    }
+
     @PostMapping
-    public Approval createApproval(@RequestBody com.cmms.dto.ApprovalRequest request) {
-        return approvalService.createApproval(request.getApproval(), request.getSteps());
+    public Approval saveApproval(@RequestBody ApprovalRequest request) {
+        return approvalService.saveApproval(request.getApproval(), request.getSteps(), request.getStatus());
+    }
+
+    @PostMapping("/decision")
+    public ResponseEntity<Void> processDecision(@RequestBody DecisionRequest request) {
+        approvalService.processDecision(
+                request.getCompanyId(),
+                request.getApprovalId(),
+                request.getPersonId(),
+                request.getDecision(),
+                request.getComment());
+        return ResponseEntity.ok().build();
     }
 }

@@ -1,0 +1,6 @@
+﻿
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+src/pages/memo/MemoDetailPage.tsx(4,21): error TS6133: 'Edit' is declared but its value is never read.
+src/pages/pm/InspectionRegisterPage.tsx(49,12): error TS6133: 'actionType' is declared but its value is never read.

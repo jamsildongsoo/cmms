@@ -23,7 +23,20 @@ public class MasterDataService {
     public Equipment saveEquipment(Equipment equipment) {
         if (equipment.getEquipmentId() == null || equipment.getEquipmentId().isBlank()) {
             equipment.setEquipmentId(systemService.generateId(equipment.getCompanyId(), "EQUIPMENT", "GLOBAL"));
+        } else {
+            // Check existing for status 'C'
+            equipmentRepository.findById(new EquipmentId(equipment.getCompanyId(), equipment.getEquipmentId()))
+                    .ifPresent(existing -> {
+                        if ("C".equals(existing.getStatus()) && !"C".equals(equipment.getStatus())) {
+                            throw new IllegalStateException("확정된 마스터 데이터는 수정할 수 없습니다.");
+                        }
+                    });
         }
+
+        if (equipment.getStatus() == null) {
+            equipment.setStatus("T");
+        }
+
         return equipmentRepository.save(equipment);
     }
 
@@ -49,7 +62,19 @@ public class MasterDataService {
     public Inventory saveInventory(Inventory inventory) {
         if (inventory.getInventoryId() == null || inventory.getInventoryId().isBlank()) {
             inventory.setInventoryId(systemService.generateId(inventory.getCompanyId(), "INVENTORY", "GLOBAL"));
+        } else {
+            inventoryRepository.findById(new InventoryId(inventory.getCompanyId(), inventory.getInventoryId()))
+                    .ifPresent(existing -> {
+                        if ("C".equals(existing.getStatus()) && !"C".equals(inventory.getStatus())) {
+                            throw new IllegalStateException("확정된 자재 마스터 데이터는 수정할 수 없습니다.");
+                        }
+                    });
         }
+
+        if (inventory.getStatus() == null) {
+            inventory.setStatus("T");
+        }
+
         return inventoryRepository.save(inventory);
     }
 

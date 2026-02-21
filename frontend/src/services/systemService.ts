@@ -1,5 +1,5 @@
 
-import axios from 'axios';
+import api from '@/utils/api';
 
 export interface FileItem {
     file_item_id: {
@@ -25,7 +25,7 @@ export const systemService = {
     // Get File Group with Items
     getFileGroup: async (companyId: string, fileGroupId: string): Promise<FileGroup | null> => {
         try {
-            const response = await axios.get(`/api/sys/files/${fileGroupId}?companyId=${companyId}`);
+            const response = await api.get(`/api/sys/files/${fileGroupId}?companyId=${companyId}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch file group", error);

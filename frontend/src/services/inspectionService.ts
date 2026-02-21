@@ -1,12 +1,13 @@
-import axios from 'axios';
+import api from '@/utils/api';
 import type { Inspection } from '@/types/inspection';
-
-const COMPANY_ID = 'COM-001';
+import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export const inspectionService = {
     getAll: async (filter?: 'ALL' | 'PLN' | 'ACT'): Promise<Inspection[]> => {
         try {
-            const response = await axios.get<Inspection[]>('/api/tx/inspections');
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<Inspection[]>(`/api/tx/inspections?companyId=${companyId}`);
             let data = response.data;
             if (filter && filter !== 'ALL') {
                 data = data.filter(i => i.stage === filter);
@@ -20,7 +21,9 @@ export const inspectionService = {
 
     getById: async (id: string): Promise<Inspection | undefined> => {
         try {
-            const response = await axios.get<Inspection>(`/api/tx/inspections/${COMPANY_ID}/${id}`);
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<Inspection>(`/api/tx/inspections/${companyId}/${id}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch inspection", error);
@@ -29,11 +32,13 @@ export const inspectionService = {
     },
 
     create: async (data: Inspection): Promise<Inspection> => {
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
         const payload = {
-            inspection: { ...data, company_id: COMPANY_ID },
+            inspection: { ...data, company_id: companyId },
             items: data.items
         };
-        const response = await axios.post<Inspection>('/api/tx/inspections', payload);
+        const response = await api.post<Inspection>('/api/tx/inspections', payload);
         return response.data;
     },
 
@@ -52,7 +57,7 @@ export const inspectionService = {
                 inspection: merged,
                 items: merged.items
             };
-            const response = await axios.post<Inspection>('/api/tx/inspections', payload);
+            const response = await api.post<Inspection>('/api/tx/inspections', payload);
             return response.data;
         } catch (error) {
             console.error("Failed to update inspection", error);
@@ -61,6 +66,8 @@ export const inspectionService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        await axios.delete(`/api/tx/inspections/${COMPANY_ID}/${id}`);
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        await api.delete(`/api/tx/inspections/${companyId}/${id}`);
     }
 };

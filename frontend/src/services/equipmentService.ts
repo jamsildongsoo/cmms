@@ -1,12 +1,16 @@
-import axios from 'axios';
+import api from '@/utils/api';
 import type { Equipment } from "@/types/equipment";
 
-const COMPANY_ID = 'COM-001';
+
+
+import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export const equipmentService = {
     getAll: async (): Promise<Equipment[]> => {
         try {
-            const response = await axios.get<Equipment[]>('/api/master/equipment');
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<Equipment[]>(`/api/master/equipment?companyId=${companyId}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch equipment", error);
@@ -16,7 +20,9 @@ export const equipmentService = {
 
     getById: async (id: string): Promise<Equipment | undefined> => {
         try {
-            const response = await axios.get<Equipment>(`/api/master/equipment/${COMPANY_ID}/${id}`);
+            const companyId = useAuthStore.getState().user?.company_id;
+            if (!companyId) throw new Error("User not authenticated");
+            const response = await api.get<Equipment>(`/api/master/equipment/${companyId}/${id}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch equipment", error);
@@ -25,8 +31,10 @@ export const equipmentService = {
     },
 
     create: async (equipment: Omit<Equipment, "equipment_id">): Promise<Equipment> => {
-        const payload = { ...equipment, company_id: COMPANY_ID };
-        const response = await axios.post<Equipment>('/api/master/equipment', payload);
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        const payload = { ...equipment, company_id: companyId };
+        const response = await api.post<Equipment>('/api/master/equipment', payload);
         return response.data;
     },
 
@@ -38,7 +46,7 @@ export const equipmentService = {
             // Ensure ID is set if missing in updates
             if (!merged.equipment_id) merged.equipment_id = id;
 
-            const response = await axios.post<Equipment>('/api/master/equipment', merged);
+            const response = await api.post<Equipment>('/api/master/equipment', merged);
             return response.data;
         } catch (error) {
             throw error;
@@ -46,6 +54,8 @@ export const equipmentService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        await axios.delete(`/api/master/equipment/${COMPANY_ID}/${id}`);
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        await api.delete(`/api/master/equipment/${companyId}/${id}`);
     }
 };

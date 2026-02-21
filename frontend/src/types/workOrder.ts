@@ -10,12 +10,12 @@ export interface WorkOrder {
     ref_entity?: string; // WO, IN
     ref_id?: string;
     cost?: number;
-    description?: string;
+    note?: string; // description -> note
     priority?: string; // High, Medium, Low
     due_date?: string;
 
-    // New fields for UI Specs
-    type?: string; // Work Type (e.g., 'Regular', 'Breakdown')
+    // Backend mapped fields
+    code_item?: string; // type -> code_item
     dept_id?: string; // Department
     person_id?: string; // Manager/Person in charge
     time?: number; // Estimated Man-Day
@@ -27,4 +27,13 @@ export interface WorkOrder {
     action_desc?: string;
     labor_cost?: number;
     material_cost?: number;
+
+    items?: any[]; // Allow any for now to avoid strict type issues with flexible item structure, or define interface
+}
+
+export interface WorkOrderItem {
+    line_no: number;
+    name: string; // Task Name
+    method: string;
+    result?: string;
 }

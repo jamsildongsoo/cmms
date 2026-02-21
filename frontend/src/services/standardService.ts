@@ -1,5 +1,5 @@
 
-import axios from 'axios';
+import api from '@/utils/api';
 
 // 기준정보 (Company, Plant, Dept, User, Code) 인터페이스
 export interface BaseStandard {
@@ -58,9 +58,13 @@ export interface Person extends BaseStandard {
 // Standard entity type
 export type StandardType = 'company' | 'plant' | 'dept' | 'person' | 'code' | 'warehouse';
 
+import { useAuthStore } from "@/features/auth/useAuthStore";
+
 export const standardService = {
   // List
   getAll: async (type: StandardType): Promise<any[]> => {
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -71,19 +75,33 @@ export const standardService = {
     };
 
     let url = `/api/${pathMap[type]}`;
-    const companyId = 'COM-001';
 
     if (type !== 'company') {
       url += `?companyId=${companyId}`;
     }
 
-    const response = await axios.get(url);
-    return response.data;
+    const response = await api.get(url);
+    const data = response.data;
+
+    // Map backend specific ID fields to universal 'id' field for frontend
+    return data.map((item: any) => {
+      let id = item.id;
+      if (!id) {
+        if (type === 'company') id = item.company_id;
+        if (type === 'plant') id = item.plant_id;
+        if (type === 'dept') id = item.dept_id;
+        if (type === 'person') id = item.person_id;
+        if (type === 'code') id = item.code_id;
+        if (type === 'warehouse') id = item.storage_id;
+      }
+      return { ...item, id };
+    });
   },
 
   // Get by ID
   getById: async (type: StandardType, id: string): Promise<any | undefined> => {
-    const companyId = 'COM-001';
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -101,8 +119,20 @@ export const standardService = {
     }
 
     try {
-      const response = await axios.get(url);
-      return response.data;
+      const response = await api.get(url);
+      const item = response.data;
+      if (!item) return undefined;
+
+      let id = item.id;
+      if (!id) {
+        if (type === 'company') id = item.company_id;
+        if (type === 'plant') id = item.plant_id;
+        if (type === 'dept') id = item.dept_id;
+        if (type === 'person') id = item.person_id;
+        if (type === 'code') id = item.code_id;
+        if (type === 'warehouse') id = item.storage_id;
+      }
+      return { ...item, id };
     } catch (e) {
       return undefined;
     }
@@ -110,6 +140,8 @@ export const standardService = {
 
   // Create
   create: async (type: StandardType, data: any): Promise<any> => {
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -118,20 +150,36 @@ export const standardService = {
       code: 'std/codes',
       warehouse: 'std/storages'
     };
+
+    // Inject company_id if not present
+    if (type !== 'company' && !data.company_id) {
+      data.company_id = companyId;
+    }
+
+    // Map frontend 'id' back to backend specific ID fields
+    if (data.id) {
+      if (type === 'company' && !data.company_id) data.company_id = data.id;
+      if (type === 'plant' && !data.plant_id) data.plant_id = data.id;
+      if (type === 'dept' && !data.dept_id) data.dept_id = data.id;
+      if (type === 'person' && !data.person_id) data.person_id = data.id;
+      if (type === 'code' && !data.code_id) data.code_id = data.id;
+      if (type === 'warehouse' && !data.storage_id) data.storage_id = data.id;
+    }
+
     const url = `/api/${pathMap[type]}`;
-    const response = await axios.post(url, data);
+    const response = await api.post(url, data);
     return response.data;
   },
 
   // Update
-  update: async (type: StandardType, id: string, data: any): Promise<any> => {
-    // Currently relying on create (save) for updates as backend typically handles upsert
+  update: async (type: StandardType, _id: string, data: any): Promise<any> => {
     return standardService.create(type, data);
   },
 
   // Delete
   delete: async (type: StandardType, id: string): Promise<void> => {
-    const companyId = 'COM-001';
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -148,7 +196,7 @@ export const standardService = {
       url += `/${companyId}/${id}`;
     }
 
-    await axios.delete(url);
+    await api.delete(url);
   },
 
   // Legacy alias
@@ -158,24 +206,31 @@ export const standardService = {
 
   // Code Item specific methods
   getCodeItems: async (groupId: string): Promise<CodeItem[]> => {
-    const companyId = 'COM-001';
-    const response = await axios.get(`/api/std/codes/${companyId}/${groupId}/items`);
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
+    const response = await api.get(`/api/std/codes/${companyId}/${groupId}/items`);
     return response.data;
   },
 
   getCodeItem: async (groupId: string, id: string): Promise<CodeItem | undefined> => {
-    const companyId = 'COM-001';
-    const response = await axios.get(`/api/std/code-items/${companyId}/${groupId}/${id}`);
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
+    const response = await api.get(`/api/std/code-items/${companyId}/${groupId}/${id}`);
     return response.data;
   },
 
   saveCodeItem: async (item: CodeItem): Promise<CodeItem> => {
-    const response = await axios.post('/api/std/code-items', item);
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
+    // Inject company_id manually as CodeItem interface doesn't have it explicitly but backend needs it
+    const payload = { ...item, company_id: companyId };
+    const response = await api.post('/api/std/code-items', payload);
     return response.data;
   },
 
   deleteCodeItem: async (groupId: string, id: string): Promise<void> => {
-    const companyId = 'COM-001';
-    await axios.delete(`/api/std/code-items/${companyId}/${groupId}/${id}`);
+    const companyId = useAuthStore.getState().user?.company_id;
+    if (!companyId) throw new Error("User not authenticated");
+    await api.delete(`/api/std/code-items/${companyId}/${groupId}/${id}`);
   },
 };

@@ -212,6 +212,7 @@ CREATE TABLE work_order (
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
+    ref_entity VARCHAR(20),
     ref_id VARCHAR(20),
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -238,6 +239,7 @@ CREATE TABLE work_permit (
     equipment_id VARCHAR(20),
     order_id VARCHAR(20), -- 연관된 작업지시(WO)와 직접 연결
     name VARCHAR(100),
+    stage VARCHAR(20),
     wp_types VARCHAR(100), -- HOT(화기), CONF(밀폐), ELEC(정전), DIG(굴착), HIGH(고소), HEVY(중량물), GEN(일반)
     
     -- 작업 기간 (PDF 서식의 '시 부터 시 까지' 반영)
@@ -253,12 +255,12 @@ CREATE TABLE work_permit (
     safety_factor TEXT, -- 안전조치
     
     -- 특별 작업 유형 (다중 선택 가능 공통 : COM, 화기 : HOT, 밀폐 : CONF, 전기 : ELEC, 고소 : HIGH, 굴착 : DIG 등)
-    checksheet_json_com JSONB,
-    checksheet_json_hot JSONB,
-    checksheet_json_conf JSONB,
-    checksheet_json_elec JSONB,
-    checksheet_json_high JSONB,
-    checksheet_json_dig JSONB,
+    checksheet_json_com JSON,
+    checksheet_json_hot JSON,
+    checksheet_json_conf JSON,
+    checksheet_json_elec JSON,
+    checksheet_json_high JSON,
+    checksheet_json_dig JSON,
     
     file_group_id VARCHAR(100), -- 굴착 작업 스케치나 현장 사진 [cite: 80]
     delete_mark CHAR(1) DEFAULT 'N',
@@ -361,12 +363,22 @@ CREATE TABLE memo (
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
     ref_id VARCHAR(20),
+    isNotice CHAR(1) DEFAULT 'N',
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(20),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(20),
     CONSTRAINT pk_memo PRIMARY KEY (company_id, memo_id)
+);
+
+CREATE TABLE memo_comment (
+    company_id VARCHAR(20) NOT NULL,
+    memo_id VARCHAR(20) NOT NULL,
+    comment_id INTEGER NOT NULL,
+    author_id VARCHAR(20),
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    content TEXT    
 );
 
 CREATE TABLE approval (

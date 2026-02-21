@@ -46,13 +46,12 @@ export default function InspectionRegisterPage() {
     const [items, setItems] = useState<InspectionItem[]>([
         { seq: 1, check_item: '', method: '', criteria: '', unit: '' },
     ]);
-    const [status, setStatus] = useState<'T' | 'S' | 'P' | 'C'>('T');
 
-    const { register, setValue, getValues } = useForm<Inspection>({
+    const { register, setValue, getValues, watch } = useForm<Inspection>({
         defaultValues: {
             status: 'T',
             stage: isResultMode ? 'ACT' : 'PLN', // Force stage based on mode
-            plan_date: new Date().toISOString().split('T')[0],
+            date: new Date().toISOString().split('T')[0],
             ref_entity: refEntityParam || undefined,
             ref_id: refIdParam || undefined,
         }
@@ -67,7 +66,6 @@ export default function InspectionRegisterPage() {
                         setValue(key as keyof Inspection, data[key as keyof Inspection]);
                     });
                     setItems(data.items || []);
-                    setStatus(data.status);
                 }
             });
         }
@@ -79,7 +77,7 @@ export default function InspectionRegisterPage() {
                     setValue('name', planData.name + ' (실적)');
                     setValue('equipment_name', planData.equipment_name);
                     setValue('person_name', planData.person_name);
-                    setValue('description', planData.description);
+                    setValue('note', planData.note);
                     setValue('equipment_id', planData.equipment_id);
 
                     // Copy items (reset results just in case, though they should be empty in plan)
@@ -89,9 +87,6 @@ export default function InspectionRegisterPage() {
                         remarks: undefined
                     }));
                     setItems(planItems);
-
-                    // Set Status to Progress for new result
-                    setStatus('P');
                 }
             });
         }
@@ -110,13 +105,12 @@ export default function InspectionRegisterPage() {
     };
 
     // Save Logic
-    const onSave = async (targetStatus: 'T' | 'S' | 'P' | 'C') => {
+    const onSave = async (targetStatus: 'T' | 'C') => {
         const formData = getValues();
         const dataToSave: Inspection = {
             ...formData,
             status: targetStatus,
             items: items,
-            stage: isResultMode ? 'ACT' : 'PLN'
         };
 
         try {
@@ -126,23 +120,26 @@ export default function InspectionRegisterPage() {
                 await inspectionService.create(dataToSave);
             }
 
-            let message = "저장되었습니다.";
-            if (targetStatus === 'S') message = "점검 계획이 확정되었습니다.";
-            if (targetStatus === 'C') message = "점검이 완료되었습니다.";
+            let message = targetStatus === 'C' ? "정보가 확정되었습니다." : "정보가 임시 저장되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/pm/inspection');
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast({ title: "오류", description: "저장 중 오류가 발생했습니다.", variant: "destructive" });
+            toast({
+                title: "오류",
+                description: error.response?.data?.message || "저장 중 오류가 발생했습니다.",
+                variant: "destructive"
+            });
         }
     };
 
     // UI State Logic
-    const isReadOnly = status === 'S' || status === 'C'; // Fully read-only
-    const isPlanEditable = !isResultMode && status === 'T'; // Plan Draft
-    const isResultEditable = isResultMode && (status === 'P' || status === 'T'); // Result In-Progress
+    const currentStatus = watch('status');
+    const isConfirmed = currentStatus === 'C';
+    const isPlanEditable = !isResultMode && !isConfirmed;
+    const isResultEditable = isResultMode && !isConfirmed;
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
@@ -162,28 +159,23 @@ export default function InspectionRegisterPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" type="button" onClick={() => navigate('/pm/inspection')}>취소</Button>
+                    <Button variant="outline" type="button" onClick={() => navigate('/pm/inspection')}>목록</Button>
 
-                    {/* Plan Mode Actions */}
-                    {!isResultMode && !isReadOnly && (
+                    {!isConfirmed && (
                         <>
-                            <Button type="button" variant="outline" onClick={() => onSave('T')} className="text-slate-600">
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => onSave('T')}
+                            >
                                 <Save className="mr-2 h-4 w-4" /> 임시 저장
                             </Button>
-                            <Button type="button" onClick={() => onSave('S')} className="bg-blue-600 hover:bg-blue-700">
-                                <CheckCircle2 className="mr-2 h-4 w-4" /> 계획 확정
-                            </Button>
-                        </>
-                    )}
-
-                    {/* Result Mode Actions */}
-                    {isResultMode && !isReadOnly && (
-                        <>
-                            <Button type="button" variant="outline" onClick={() => onSave('P')} className="text-slate-600">
-                                <Save className="mr-2 h-4 w-4" /> 임시 저장
-                            </Button>
-                            <Button type="button" onClick={() => onSave('C')} className="bg-green-600 hover:bg-green-700">
-                                <CheckCircle2 className="mr-2 h-4 w-4" /> 점검 완료
+                            <Button
+                                type="button"
+                                onClick={() => onSave('C')}
+                                className="bg-blue-600 hover:bg-blue-700"
+                            >
+                                <CheckCircle2 className="mr-2 h-4 w-4" /> 확정
                             </Button>
                         </>
                     )}
@@ -208,7 +200,7 @@ export default function InspectionRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>{isResultMode ? '실적 일자' : '예정 일자'} <span className="text-red-500">*</span></Label>
-                            <Input type="date" {...register('plan_date', { required: true })} disabled={!isPlanEditable && !isResultEditable} />
+                            <Input type="date" {...register('date', { required: true })} disabled={!isPlanEditable && !isResultEditable} />
                         </div>
 
                         {/* Row 1-1: Ref Info (Visible in Result Mode) */}
@@ -217,13 +209,11 @@ export default function InspectionRegisterPage() {
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">단계</Label>
                                     <Input value="ACT (실적)" disabled className="bg-slate-50 text-slate-500" />
-                                    {/* Hidden input to register value */}
                                     <input type="hidden" {...register('stage')} value="ACT" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">참조 구분</Label>
                                     <Input value="IN (점검)" disabled className="bg-slate-50 text-slate-500" />
-                                    {/* Hidden input to register value */}
                                     <input type="hidden" {...register('ref_entity')} value="IN" />
                                 </div>
                                 <div className="space-y-2">
@@ -231,7 +221,7 @@ export default function InspectionRegisterPage() {
                                     <Input
                                         {...register('ref_id')}
                                         placeholder={id ? '' : '참조할 계획 ID 입력'}
-                                        disabled={!!id} // Read-only if ID exists (navigated from list), Editable if new
+                                        disabled={!!id}
                                         className={!!id ? "bg-slate-50" : ""}
                                     />
                                 </div>
@@ -241,18 +231,17 @@ export default function InspectionRegisterPage() {
                         {/* Row 2: Type, Equipment, Dept, Person */}
                         <div className="space-y-2 lg:col-start-1">
                             <Label>점검 유형 <span className="text-red-500">*</span></Label>
-                            <Input {...register('type', { required: true })} placeholder="예: 정기점검" disabled={!isPlanEditable && !isResultEditable} />
+                            <Input {...register('code_item', { required: true })} placeholder="예: 정기점검" disabled={!isPlanEditable && !isResultEditable} />
                         </div>
                         <div className="space-y-2">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={equipments.map(e => ({ ...e, id: e.equipment_id }))}
                                 value={getValues('equipment_id') || ''}
-                                onChange={(id) => {
-                                    const equipment = equipments.find(e => e.equipment_id === id);
-                                    setValue('equipment_id', id);
+                                onChange={(val) => {
+                                    const equipment = equipments.find(e => e.equipment_id === val);
+                                    setValue('equipment_id', val);
                                     setValue('equipment_name', equipment?.name || '');
-                                    // Optional: Auto-fill dept if equipment has it
                                     if (equipment?.dept_id) {
                                         setValue('dept_id', equipment.dept_id);
                                         const dept = departments.find(d => d.id === equipment.dept_id);
@@ -270,9 +259,9 @@ export default function InspectionRegisterPage() {
                             <SearchableSelect
                                 items={departments}
                                 value={getValues('dept_id') || ''}
-                                onChange={(id) => {
-                                    const dept = departments.find(d => d.id === id);
-                                    setValue('dept_id', id);
+                                onChange={(val) => {
+                                    const dept = departments.find(d => d.id === val);
+                                    setValue('dept_id', val);
                                     setValue('dept_name', dept?.name);
                                 }}
                                 placeholder="부서 검색..."
@@ -286,9 +275,9 @@ export default function InspectionRegisterPage() {
                             <SearchableSelect
                                 items={persons.filter(p => !getValues('dept_id') || p.dept_id === getValues('dept_id'))}
                                 value={getValues('person_id') || ''}
-                                onChange={(id) => {
-                                    const person = persons.find(p => p.person_id === id);
-                                    setValue('person_id', id);
+                                onChange={(val) => {
+                                    const person = persons.find(p => p.person_id === val);
+                                    setValue('person_id', val);
                                     setValue('person_name', person?.name);
                                 }}
                                 placeholder="담당자 검색..."
@@ -301,7 +290,7 @@ export default function InspectionRegisterPage() {
                         {/* Row 3 - Full Width Description */}
                         <div className="space-y-2 lg:col-span-4">
                             <Label>비고 / 특이사항</Label>
-                            <Textarea {...register('description')} placeholder="특이사항 입력" disabled={!isPlanEditable && !isResultEditable} className="min-h-[80px]" />
+                            <Textarea {...register('note')} placeholder="특이사항 입력" disabled={!isPlanEditable && !isResultEditable} className="min-h-[80px]" />
                         </div>
                     </CardContent>
                 </Card>
@@ -326,7 +315,6 @@ export default function InspectionRegisterPage() {
                                         <th className="h-10 px-4 font-medium text-slate-500">점검 방법</th>
                                         <th className="h-10 px-4 font-medium text-slate-500">판정 기준</th>
                                         <th className="h-10 px-4 font-medium text-slate-500 w-20 text-center">단위</th>
-                                        {/* Result columns always visible but disabled in Plan Mode */}
                                         <th className="h-10 px-4 font-medium text-slate-500 w-32 text-center">결과</th>
                                         {isPlanEditable && <th className="h-10 px-4 font-medium text-slate-500 w-16">삭제</th>}
                                     </tr>
@@ -342,7 +330,6 @@ export default function InspectionRegisterPage() {
                                         items.map((item, index) => (
                                             <tr key={item.seq} className="hover:bg-slate-50/50">
                                                 <td className="p-3 text-center text-slate-500 font-mono">{index + 1}</td>
-                                                {/* Item Details - Editable in Plan Mode, Read-only in Result Mode */}
                                                 <td className="p-3">
                                                     <Input
                                                         value={item.check_item}
@@ -379,8 +366,6 @@ export default function InspectionRegisterPage() {
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none text-center" : "text-center"}
                                                     />
                                                 </td>
-
-                                                {/* Result Inputs - Editable in Result Mode */}
                                                 <td className="p-3 text-center">
                                                     {isResultEditable ? (
                                                         <Input

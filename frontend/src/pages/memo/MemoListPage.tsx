@@ -81,13 +81,12 @@ export default function MemoListPage() {
                                 <TableHead>제목</TableHead>
                                 <TableHead className="w-[120px] text-center">작성자</TableHead>
                                 <TableHead className="w-[120px] text-center">작성일</TableHead>
-                                <TableHead className="w-[80px] text-center">조회</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredData.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                                         검색 결과가 없습니다.
                                     </TableCell>
                                 </TableRow>
@@ -99,7 +98,7 @@ export default function MemoListPage() {
                                         onClick={() => navigate(`/memo/${item.memo_id}`)}
                                     >
                                         <TableCell className="text-center font-medium">
-                                            {item.isNotice ? (
+                                            {item.is_notice === 'Y' ? (
                                                 <Badge variant="secondary" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-100">공지</Badge>
                                             ) : (
                                                 // Extract number from ID or just show ID
@@ -108,14 +107,13 @@ export default function MemoListPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <span className={item.isNotice ? "font-bold text-slate-900" : "text-slate-700"}>
+                                                <span className={item.is_notice === 'Y' ? "font-bold text-slate-900" : "text-slate-700"}>
                                                     {item.title}
                                                 </span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center text-muted-foreground">{item.author_name || item.created_by}</TableCell>
                                         <TableCell className="text-center text-muted-foreground">{item.created_at?.split('T')[0]}</TableCell>
-                                        <TableCell className="text-center text-muted-foreground">{item.views || 0}</TableCell>
                                     </TableRow>
                                 ))
                             )}

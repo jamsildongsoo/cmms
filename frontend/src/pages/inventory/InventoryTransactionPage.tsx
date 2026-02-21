@@ -72,7 +72,7 @@ export default function InventoryTransactionPage() {
                             </thead>
                             <tbody>
                                 {filtered.map((tx) => (
-                                    <tr key={tx.id} className="border-b hover:bg-slate-50 transition-colors">
+                                    <tr key={tx.history_id} className="border-b hover:bg-slate-50 transition-colors">
                                         <td className="h-12 px-4 text-slate-600">{tx.date}</td>
                                         <td className="h-12 px-4">
                                             <span className={`px-2 py-0.5 rounded text-xs font-bold ${tx.type === 'IN' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'

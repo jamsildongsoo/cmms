@@ -119,8 +119,8 @@ CREATE TABLE equipment (
     workpermit_yn CHAR(1) DEFAULT 'N',
     inspection_interval INTEGER,
     inspection_unit VARCHAR(10), -- 01:일, 05:월 등
-    last_inspection DATE,
-    next_inspection DATE,
+    last_inspection DATE, -- 실적 확정시 업데이트
+    next_inspection DATE, -- 실적 확정시 업데이트
     note TEXT,
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
@@ -166,6 +166,7 @@ CREATE TABLE inspection (
     dept_id VARCHAR(20),
     person_id VARCHAR(20),
     date DATE,
+    due_date DATE, -- 예정일 (equipment의 next_inspection날짜 가져옴)
     note TEXT,
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
@@ -211,7 +212,9 @@ CREATE TABLE work_order (
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
+    ref_entity VARCHAR(20),
     ref_id VARCHAR(20),
+    isNotice CHAR(1) DEFAULT 'N',
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(20),
@@ -237,12 +240,14 @@ CREATE TABLE work_permit (
     equipment_id VARCHAR(20),
     order_id VARCHAR(20), -- 연관된 작업지시(WO)와 직접 연결
     name VARCHAR(100),
-    wp_type VARCHAR(20), -- HOT(화기), CONF(밀폐), ELEC(정전), DIG(굴착), HIGH(고소), HEVY(중량물), GEN(일반)
+    stage VARCHAR(20),
+    wp_types VARCHAR(100), -- HOT(화기), CONF(밀폐), ELEC(정전), DIG(굴착), HIGH(고소), HEVY(중량물), GEN(일반)
     
     -- 작업 기간 (PDF 서식의 '시 부터 시 까지' 반영)
     start_dt TIMESTAMP,
     end_dt TIMESTAMP,
-    
+    location VARCHAR(100),
+
     dept_id VARCHAR(20), -- 신청부서
     person_id VARCHAR(20), -- 신청인
     
@@ -250,13 +255,13 @@ CREATE TABLE work_permit (
     hazard_factor TEXT, -- 위험요인
     safety_factor TEXT, -- 안전조치
     
-    -- 특별 작업 유형 (다중 선택 가능 화기 : HOT, 밀폐 : CONF, 전기 : ELEC, 고소 : HIGH, 굴착 : DIG 등)
-    risk_types VARCHAR(100), -- 예: "HOT,CONF" (콤마 구분)
-    checksheet_json_hot JSONB,
-    checksheet_json_conf JSONB,
-    checksheet_json_elec JSONB,
-    checksheet_json_high JSONB,
-    checksheet_json_dig JSONB,
+    -- 특별 작업 유형 (다중 선택 가능 공통 : COM, 화기 : HOT, 밀폐 : CONF, 전기 : ELEC, 고소 : HIGH, 굴착 : DIG 등)
+    checksheet_json_com JSON,
+    checksheet_json_hot JSON,
+    checksheet_json_conf JSON,
+    checksheet_json_elec JSON,
+    checksheet_json_high JSON,
+    checksheet_json_dig JSON,
     
     file_group_id VARCHAR(100), -- 굴착 작업 스케치나 현장 사진 [cite: 80]
     delete_mark CHAR(1) DEFAULT 'N',
@@ -359,6 +364,7 @@ CREATE TABLE memo (
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
     ref_id VARCHAR(20),
+    isNotice CHAR(1) DEFAULT 'N',
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(20),
@@ -367,15 +373,26 @@ CREATE TABLE memo (
     CONSTRAINT pk_memo PRIMARY KEY (company_id, memo_id)
 );
 
+CREATE TABLE memo_comment (
+    company_id VARCHAR(20) NOT NULL,
+    memo_id VARCHAR(20) NOT NULL,
+    comment_id INTEGER NOT NULL,
+    author_id VARCHAR(20),
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    content TEXT    
+);
+
 CREATE TABLE approval (
     company_id VARCHAR(20) NOT NULL,
     approval_id VARCHAR(20) NOT NULL,
     title VARCHAR(100),
     content TEXT,
+    requester_id VARCHAR(20), -- 기안자
+    current_step INTEGER DEFAULT 1, -- 현재 결재 순번
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
-    status CHAR(1),
-    ref_entity VARCHAR(20), -- INSPC, WPERM 등
+    status CHAR(1), -- T:임시, A:결재중, C:확정, R:반려 
+    ref_entity VARCHAR(20), -- IN, WO 등
     ref_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(20),
@@ -389,8 +406,8 @@ CREATE TABLE approval_step (
     approval_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
     person_id VARCHAR(20),
-    decision VARCHAR(10), -- 01:결재, 02:합의, 03:통보
-    result VARCHAR(10),
+    decision VARCHAR(10), -- 00: 기안, 01:결재, 02:합의, 03:통보, 04:반려
+    result VARCHAR(10), -- 00: 미결, 01:결재승인, 02:합의승인, 03:통보승인, 04:반려
     decided_at TIMESTAMP,
     comment TEXT,
     CONSTRAINT pk_approval_step PRIMARY KEY (company_id, approval_id, line_no)

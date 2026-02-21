@@ -6,7 +6,7 @@ export interface Equipment {
     name: string;
     code_item?: string; // Equipment Type
     install_location?: string;
-    status?: 'OPERATING' | 'IDLE' | 'MAINTENANCE' | 'DISCARDED';
+    status?: 'T' | 'A' | 'C' | 'R' | string; // T:임시, A:결재중, C:확정, R:반려
     dept_id?: string;
     maker_name?: string;
     model?: string;

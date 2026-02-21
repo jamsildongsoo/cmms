@@ -105,16 +105,31 @@ export default function WorkOrderListPage() {
                                                 <td className="px-4 py-3 text-right font-medium">
                                                     {wo.cost?.toLocaleString()} 원
                                                 </td>
-                                                <td className="px-4 py-3 text-center">{getStatusBadge(wo.status)}</td>
+                                                <td className="px-4 py-3 text-center">{getStatusBadge(wo.status || "")}</td>
                                                 <td className="px-4 py-3 text-center">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 px-2 text-blue-600 hover:text-blue-800"
-                                                        onClick={(e) => { e.stopPropagation(); navigate(`/wo/work-order/${wo.order_id}`); }}
-                                                    >
-                                                        상세
-                                                    </Button>
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        {filter === 'REQ' && (
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-8 px-2 text-orange-600 border-orange-200 hover:bg-orange-50"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate(`/wo/work-order/new?ref_entity=WO&ref_id=${wo.order_id}`);
+                                                                }}
+                                                            >
+                                                                실적 입력
+                                                            </Button>
+                                                        )}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 px-2 text-blue-600 hover:text-blue-800"
+                                                            onClick={(e) => { e.stopPropagation(); navigate(`/wo/work-order/${wo.order_id}`); }}
+                                                        >
+                                                            상세
+                                                        </Button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))

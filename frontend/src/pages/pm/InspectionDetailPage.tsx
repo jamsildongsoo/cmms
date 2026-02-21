@@ -138,7 +138,7 @@ export default function InspectionDetailPage() {
                     </div>
                     <div className="space-y-1">
                         <Label className="text-muted-foreground text-xs">{inspection.actual_date ? '실적 일자' : '예정 일자'}</Label>
-                        <div className="font-medium text-sm">{inspection.actual_date || inspection.plan_date}</div>
+                        <div className="font-medium text-sm">{inspection.actual_date || inspection.date}</div>
                     </div>
 
                     {/* Row 1-1: Ref Info */}
@@ -158,7 +158,7 @@ export default function InspectionDetailPage() {
                     {/* Row 2: Type, Equipment, Dept, Person */}
                     <div className="space-y-1 lg:col-start-1">
                         <Label className="text-muted-foreground text-xs">점검 유형</Label>
-                        <div className="font-medium text-sm">{inspection.type}</div>
+                        <div className="font-medium text-sm">{inspection.code_item}</div>
                     </div>
                     <div className="space-y-1">
                         <Label className="text-muted-foreground text-xs">대상 설비</Label>
@@ -174,7 +174,7 @@ export default function InspectionDetailPage() {
                     </div>
                     <div className="space-y-1">
                         <Label className="text-muted-foreground text-xs">계획 일자</Label>
-                        <div className="font-medium text-sm">{inspection.plan_date}</div>
+                        <div className="font-medium text-sm">{inspection.date}</div>
                     </div>
                     {isCompleted && (
                         <div className="space-y-1">
@@ -184,7 +184,7 @@ export default function InspectionDetailPage() {
                     )}
                     <div className="lg:col-span-4 space-y-1">
                         <Label className="text-muted-foreground text-xs">비고</Label>
-                        <div className="text-sm bg-slate-50 p-2 rounded">{inspection.description || '-'}</div>
+                        <div className="text-sm bg-slate-50 p-2 rounded">{inspection.note || '-'}</div>
                     </div>
                 </CardContent>
             </Card>

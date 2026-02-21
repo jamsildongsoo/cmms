@@ -48,6 +48,9 @@ public class Inventory extends BaseEntity {
     @Column(name = "serial", length = 100)
     private String serial;
 
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     @Column(name = "file_group_id", length = 100)
     private String fileGroupId;
 

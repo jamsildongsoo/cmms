@@ -13,11 +13,11 @@ export interface InspectionItem {
 export interface Inspection {
     inspection_id: string;
     name: string;
-    description?: string;
-    type: string; // e.g. 'Regular', 'Spot'
+    note?: string;
+    code_item: string; // e.g. 'Regular', 'Spot'
     stage: 'PLN' | 'ACT'; // Plan | Action
     status: 'T' | 'S' | 'P' | 'C'; // Temp(Draft) | Scheduled(Confirmed) | Progress | Complete
-    plan_date: string;
+    date: string; // plan_date -> date (Backend sync)
     actual_date?: string;
 
     // References

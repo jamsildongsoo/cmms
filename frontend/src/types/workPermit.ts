@@ -14,8 +14,8 @@ export interface WorkPermit {
     checksheet_json_conf?: Record<string, any>;
     checksheet_json_elec?: Record<string, any>;
     checksheet_json_high?: Record<string, any>;
+    checksheet_json_dig?: Record<string, any>;
 
-    description?: string;
     location?: string;
 
     // Risk Assessment
@@ -27,10 +27,11 @@ export interface WorkPermit {
     equipment_id?: string;
     equipment_name?: string;
     dept_id?: string;
+    person_id?: string;
 
-    // Result Mode Fields
+    order_id?: string;
     stage?: 'PLN' | 'ACT'; // Plan / Actual
-    ref_entity?: string;
-    ref_id?: string;
+    parent_permit_id?: string;
+    approval_id?: string;
 
 }

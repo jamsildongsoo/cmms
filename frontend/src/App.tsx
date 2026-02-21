@@ -60,6 +60,7 @@ import ApprovalDetailPage from '@/pages/approval/ApprovalDetailPage';
 // Common
 import PlaceholderPage from '@/components/common/PlaceholderPage';
 import { useAuthStore } from '@/features/auth/useAuthStore';
+import { Toaster } from '@/components/ui/toaster';
 
 // Protected Route Wrapper
 const ProtectedRoute = () => {
@@ -159,6 +160,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Toaster />
     </BrowserRouter>
   );
 }

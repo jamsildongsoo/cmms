@@ -46,6 +46,12 @@ public class Inspection extends BaseEntity {
     @Column(name = "date")
     private LocalDate date;
 
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    @Column(name = "note", columnDefinition = "TEXT")
+    private String note;
+
     @Column(name = "file_group_id", length = 100)
     private String fileGroupId;
 
