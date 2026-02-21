@@ -16,6 +16,7 @@
 
 # Log files
 *.log
+*.txt
 
 # Node
 node_modules/
@@ -28,6 +29,7 @@ test-results/
 
 # Backend
 backend/target/
+backend/build/
 backend/.mvn/wrapper/maven-wrapper.properties
 backend/mvnw
 backend/mvnw.cmd
