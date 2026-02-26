@@ -22,8 +22,8 @@ public class TransactionController {
     }
 
     @GetMapping("/inspections")
-    public List<Inspection> getInspections() {
-        return transactionService.getAllInspections();
+    public List<Inspection> getInspections(@RequestParam String companyId) {
+        return transactionService.getAllInspections(companyId);
     }
 
     @GetMapping("/inspections/{companyId}/{inspectionId}")
@@ -46,8 +46,8 @@ public class TransactionController {
     }
 
     @GetMapping("/work-orders")
-    public List<WorkOrder> getWorkOrders() {
-        return transactionService.getAllWorkOrders();
+    public List<WorkOrder> getWorkOrders(@RequestParam String companyId) {
+        return transactionService.getAllWorkOrders(companyId);
     }
 
     @GetMapping("/work-orders/{companyId}/{orderId}")
@@ -70,8 +70,8 @@ public class TransactionController {
     }
 
     @GetMapping("/work-permits")
-    public List<WorkPermit> getWorkPermits() {
-        return transactionService.getAllWorkPermits();
+    public List<WorkPermit> getWorkPermits(@RequestParam String companyId) {
+        return transactionService.getAllWorkPermits(companyId);
     }
 
     @GetMapping("/work-permits/{companyId}/{permitId}")

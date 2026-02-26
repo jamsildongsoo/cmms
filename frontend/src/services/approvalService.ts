@@ -74,7 +74,7 @@ export const approvalService = {
         const request = {
             companyId: user.company_id,
             approvalId: approvalId,
-            personId: user.id,
+            personId: user.person_id,
             decision: decision,
             comment: comment
         };

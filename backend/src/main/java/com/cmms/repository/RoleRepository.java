@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, RoleId> {
-    List<Role> findAllByDeleteMarkIsNullOrDeleteMark(String deleteMark);
+    List<Role> findAllByCompanyIdAndDeleteMark(String companyId, String deleteMark);
 }

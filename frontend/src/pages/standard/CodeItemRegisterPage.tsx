@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { standardService } from '@/services/standardService';
 import type { CodeItem } from '@/services/standardService';
@@ -24,7 +23,7 @@ export default function CodeItemRegisterPage() {
 
     useEffect(() => {
         if (groupId) {
-            setValue('group_id', groupId);
+            setValue('code_id', groupId);
         }
 
         if (isEditMode && groupId && itemId) {
@@ -40,7 +39,7 @@ export default function CodeItemRegisterPage() {
 
     const onSubmit = async (data: CodeItem) => {
         try {
-            await standardService.saveCodeItem({ ...data, group_id: groupId! });
+            await standardService.saveCodeItem({ ...data, code_id: groupId!, company_id: user?.company_id });
             toast({ title: "성공", description: isEditMode ? "코드 상세가 수정되었습니다." : "코드 상세가 등록되었습니다." });
             navigate(`/standard/code/${groupId}/edit`);
         } catch (error) {
@@ -81,27 +80,15 @@ export default function CodeItemRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>코드 그룹 ID</Label>
-                            <Input {...register('group_id')} disabled className="bg-slate-50" />
+                            <Input {...register('code_id')} disabled className="bg-slate-50" />
                         </div>
                         <div className="space-y-2">
                             <Label>상세 코드 ID <span className="text-red-500">*</span></Label>
-                            <Input {...register('id', { required: !isEditMode })} placeholder="PUMP" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
+                            <Input {...register('item_id', { required: !isEditMode })} placeholder="PUMP" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
                         </div>
                         <div className="space-y-2">
                             <Label>상세 코드명 <span className="text-red-500">*</span></Label>
                             <Input {...register('name', { required: true })} placeholder="코드명 입력" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>사용 여부</Label>
-                            <Select onValueChange={(val: string) => setValue('is_active', val as 'Y' | 'N')} defaultValue="Y">
-                                <SelectTrigger>
-                                    <SelectValue placeholder="사용 여부 선택" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Y">사용</SelectItem>
-                                    <SelectItem value="N">미사용</SelectItem>
-                                </SelectContent>
-                            </Select>
                         </div>
                     </CardContent>
                 </Card>

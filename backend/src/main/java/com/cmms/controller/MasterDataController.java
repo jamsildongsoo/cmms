@@ -21,8 +21,8 @@ public class MasterDataController {
     }
 
     @GetMapping("/equipment")
-    public List<Equipment> getEquipment() {
-        return masterDataService.getAllEquipments();
+    public List<Equipment> getEquipment(@RequestParam String companyId) {
+        return masterDataService.getAllEquipments(companyId);
     }
 
     @GetMapping("/equipment/{companyId}/{equipmentId}")
@@ -44,8 +44,8 @@ public class MasterDataController {
     }
 
     @GetMapping("/inventory")
-    public List<Inventory> getInventory() {
-        return masterDataService.getAllInventories();
+    public List<Inventory> getInventory(@RequestParam String companyId) {
+        return masterDataService.getAllInventories(companyId);
     }
 
     @GetMapping("/inventory/{companyId}/{inventoryId}")

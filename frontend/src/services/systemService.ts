@@ -2,11 +2,9 @@
 import api from '@/utils/api';
 
 export interface FileItem {
-    file_item_id: {
-        company_id: string;
-        file_group_id: string;
-        line_no: number;
-    };
+    company_id: string;
+    file_group_id: string;
+    line_no: number;
     original_name: string;
     storage_path: string;
     size: number;

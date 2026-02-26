@@ -1,19 +1,43 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { standardService } from '@/services/standardService';
 import type { Code } from '@/services/standardService';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function CodeListPage() {
     const [codes, setCodes] = useState<Code[]>([]);
     const navigate = useNavigate();
 
-    useEffect(() => {
+    const { toast } = useToast();
+    const [loading, setLoading] = useState(false);
+
+    const loadData = () => {
         standardService.getAll('code').then(data => setCodes(data));
+    };
+
+    useEffect(() => {
+        loadData();
     }, []);
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        try {
+            setLoading(true);
+            await standardService.delete('code', id);
+            toast({ title: "성공", description: "코드가 삭제되었습니다." });
+            loadData();
+        } catch (error) {
+            console.error(error);
+            toast({ title: "오류", description: "삭제 중 오류가 발생했습니다.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -34,11 +58,12 @@ export default function CodeListPage() {
                                 <tr>
                                     <th className="px-4 py-3 font-medium text-slate-500">코드ID</th>
                                     <th className="px-4 py-3 font-medium text-slate-500">코드명</th>
+                                    <th className="px-4 py-3 font-medium text-slate-500 text-center">작업</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {codes.length === 0 ? (
-                                    <tr><td colSpan={2} className="px-4 py-8 text-center text-slate-500">등록된 코드가 없습니다.</td></tr>
+                                    <tr><td colSpan={3} className="px-4 py-8 text-center text-slate-500">등록된 코드가 없습니다.</td></tr>
                                 ) : (
                                     codes.map((item) => (
                                         <tr
@@ -48,6 +73,17 @@ export default function CodeListPage() {
                                         >
                                             <td className="px-4 py-3 font-medium">{item.id}</td>
                                             <td className="px-4 py-3">{item.name}</td>
+                                            <td className="px-4 py-3 text-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={(e) => handleDelete(e, item.id)}
+                                                    disabled={loading}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}

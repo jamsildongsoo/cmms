@@ -12,6 +12,7 @@ import { standardService } from '@/services/standardService';
 import type { Dept } from '@/services/standardService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 
+
 export default function DeptRegisterPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();

@@ -26,8 +26,8 @@ public class SystemService {
         return memoRepository.save(memo);
     }
 
-    public List<Memo> getAllMemos() {
-        return memoRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Memo> getAllMemos(String companyId) {
+        return memoRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Memo> getMemoById(String companyId, String memoId) {
@@ -48,8 +48,8 @@ public class SystemService {
         return approvalRepository.save(approval);
     }
 
-    public List<Approval> getAllApprovals() {
-        return approvalRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Approval> getAllApprovals(String companyId) {
+        return approvalRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Approval> getApprovalById(String companyId, String approvalId) {
@@ -86,7 +86,11 @@ public class SystemService {
 
     public Optional<FileGroup> getFileGroupById(String companyId, String fileGroupId) {
         return fileGroupRepository.findById(new FileGroupId(companyId, fileGroupId))
-                .filter(group -> group.getDeleteMark() == null || "N".equals(group.getDeleteMark()));
+                .filter(group -> group.getDeleteMark() == null || "N".equals(group.getDeleteMark()))
+                .map(group -> {
+                    group.setItems(fileItemRepository.findAllByCompanyIdAndFileGroupId(companyId, fileGroupId));
+                    return group;
+                });
     }
 
     @Transactional
@@ -109,6 +113,10 @@ public class SystemService {
     @Transactional
     public void deleteFileItem(String companyId, String fileGroupId, Integer lineNo) {
         fileItemRepository.deleteById(new FileItemId(companyId, fileGroupId, lineNo));
+    }
+
+    public List<FileItem> getFileItems(String companyId, String fileGroupId) {
+        return fileItemRepository.findAllByCompanyIdAndFileGroupId(companyId, fileGroupId);
     }
 
     public Integer getNextFileItemLineNo(String companyId, String fileGroupId) {

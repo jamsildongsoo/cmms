@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,10 @@ export default function CodeRegisterPage() {
         }
     }, [user, setValue]);
 
+    const fetchItems = () => {
+        if (id) standardService.getCodeItems(id).then(setItems);
+    };
+
     useEffect(() => {
         if (isEditMode && id) {
             standardService.getById('code', id).then((data: Code) => {
@@ -38,9 +42,22 @@ export default function CodeRegisterPage() {
                     });
                 }
             });
-            standardService.getCodeItems(id).then(setItems);
+            fetchItems();
         }
     }, [id, isEditMode, setValue]);
+
+    const handleDeleteCodeItem = async (e: React.MouseEvent, itemId: string) => {
+        e.stopPropagation();
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        try {
+            await standardService.deleteCodeItem(id!, itemId);
+            toast({ title: "성공", description: "상세 코드가 삭제되었습니다." });
+            fetchItems();
+        } catch (error) {
+            console.error(error);
+            toast({ title: "오류", description: "삭제 중 오류가 발생했습니다.", variant: "destructive" });
+        }
+    };
 
     const onSubmit = async (data: Code) => {
         try {
@@ -115,7 +132,7 @@ export default function CodeRegisterPage() {
                                     <tr>
                                         <th className="px-4 py-3 font-medium text-slate-500">코드ID</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">코드명</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500">사용여부</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500 text-center">작업</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -124,13 +141,22 @@ export default function CodeRegisterPage() {
                                     ) : (
                                         items.map((item) => (
                                             <tr
-                                                key={item.id}
+                                                key={item.item_id}
                                                 className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                                onClick={() => navigate(`/standard/code/${id}/item/${item.id}`)}
+                                                onClick={() => navigate(`/standard/code/${id}/item/${item.item_id}`)}
                                             >
-                                                <td className="px-4 py-3 font-medium">{item.id}</td>
+                                                <td className="px-4 py-3 font-medium">{item.item_id}</td>
                                                 <td className="px-4 py-3">{item.name}</td>
-                                                <td className="px-4 py-3">{item.is_active === 'N' ? '미사용' : '사용'}</td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={(e) => handleDeleteCodeItem(e, item.item_id)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </td>
                                             </tr>
                                         ))
                                     )}

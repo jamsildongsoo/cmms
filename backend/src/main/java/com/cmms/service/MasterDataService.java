@@ -40,8 +40,8 @@ public class MasterDataService {
         return equipmentRepository.save(equipment);
     }
 
-    public List<Equipment> getAllEquipments() {
-        return equipmentRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Equipment> getAllEquipments(String companyId) {
+        return equipmentRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Equipment> getEquipmentById(String companyId, String equipmentId) {
@@ -78,8 +78,8 @@ public class MasterDataService {
         return inventoryRepository.save(inventory);
     }
 
-    public List<Inventory> getAllInventories() {
-        return inventoryRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Inventory> getAllInventories(String companyId) {
+        return inventoryRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Inventory> getInventoryById(String companyId, String inventoryId) {

@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface StorageRepository extends JpaRepository<Storage, StorageId> {
-    List<Storage> findAllByDeleteMarkIsNullOrDeleteMark(String deleteMark);
+    List<Storage> findAllByCompanyIdAndDeleteMark(String companyId, String deleteMark);
 }

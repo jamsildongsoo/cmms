@@ -1,15 +1,17 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { equipmentService } from "@/services/equipmentService";
 import type { Equipment } from "@/types/equipment";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function EquipmentListPage() {
+    const { toast } = useToast();
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +30,20 @@ export default function EquipmentListPage() {
             console.error("Failed to load equipment", error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        if (!window.confirm("정말로 이 설비를 삭제하시겠습니까?")) return;
+
+        try {
+            await equipmentService.delete(id);
+            toast({ title: "성공", description: "설비가 삭제되었습니다." });
+            loadEquipment();
+        } catch (error) {
+            console.error("Failed to delete equipment", error);
+            toast({ title: "오류", description: "설비 삭제 중 오류가 발생했습니다.", variant: "destructive" });
         }
     };
 
@@ -85,6 +101,7 @@ export default function EquipmentListPage() {
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">메이커</th>
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">마지막 점검일</th>
                                     <th className="h-12 px-4 text-left font-medium text-slate-500">설치일자</th>
+                                    <th className="h-12 px-4 text-center font-medium text-slate-500">작업</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -111,6 +128,16 @@ export default function EquipmentListPage() {
                                             <td className="p-4">{item.maker_name || '-'}</td>
                                             <td className="p-4">{item.last_inspection || '-'}</td>
                                             <td className="p-4">{item.install_date}</td>
+                                            <td className="p-4 text-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={(e) => handleDelete(e, item.equipment_id)}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}

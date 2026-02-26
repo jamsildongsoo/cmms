@@ -25,10 +25,10 @@ export default function ApprovalInboxPage() {
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        if (user?.company_id && user?.id) {
-            approvalService.getList(user.id, 'inbox-pending').then(setPendingData);
-            approvalService.getList(user.id, 'inbox-completed').then(setCompletedData);
-            approvalService.getList(user.id, 'inbox-reference').then(setReferenceData);
+        if (user?.company_id && user?.person_id) {
+            approvalService.getList(user.person_id, 'inbox-pending').then(setPendingData);
+            approvalService.getList(user.person_id, 'inbox-completed').then(setCompletedData);
+            approvalService.getList(user.person_id, 'inbox-reference').then(setReferenceData);
         }
     }, [user]);
 

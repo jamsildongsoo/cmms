@@ -59,7 +59,7 @@ public class MemoService {
     }
 
     public List<Memo> getMemos(String companyId) {
-        return memoRepository.findAllByCompanyIdAndDeleteMarkIsNullOrDeleteMark(companyId, "N");
+        return memoRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Memo> getMemoById(String companyId, String memoId) {

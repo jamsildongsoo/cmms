@@ -45,6 +45,14 @@ export default function MemoListPage() {
         (item.author_name && item.author_name.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const sortedData = [...filteredData].sort((a, b) => {
+        // 1. 공지사항 최상단
+        if (a.is_notice === 'Y' && b.is_notice !== 'Y') return -1;
+        if (a.is_notice !== 'Y' && b.is_notice === 'Y') return 1;
+        // 2. 최신 작성일 기준 정렬
+        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -84,14 +92,14 @@ export default function MemoListPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredData.length === 0 ? (
+                            {sortedData.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                                         검색 결과가 없습니다.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                filteredData.map((item) => (
+                                sortedData.map((item) => (
                                     <TableRow
                                         key={item.memo_id}
                                         className="cursor-pointer hover:bg-slate-50"
@@ -100,10 +108,9 @@ export default function MemoListPage() {
                                         <TableCell className="text-center font-medium">
                                             {item.is_notice === 'Y' ? (
                                                 <Badge variant="secondary" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-100">공지</Badge>
-                                            ) : (
-                                                // Extract number from ID or just show ID
-                                                item.memo_id
-                                            )}
+                                            ) : item.status === 'T' ? (
+                                                <Badge variant="outline" className="text-slate-500 border-slate-200">임시</Badge>
+                                            ) : null}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">

@@ -31,4 +31,7 @@ public class Dept {
 
     @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
     private String deleteMark = "N";
+
+    @Column(name = "use_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'Y'")
+    private String useYn = "Y";
 }

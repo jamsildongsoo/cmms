@@ -1,5 +1,7 @@
 package com.cmms.common.security;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -8,8 +10,6 @@ public class SecurityUtil {
     /**
      * Validates if the provided companyId matches the authenticated user's
      * companyId.
-     * Currently a placeholder that accepts any non-null/non-empty value.
-     * In a real implementation, this would check against the SecurityContext.
      *
      * @param requestCompanyId The companyId from the request/entity
      * @throws SecurityException if validation fails
@@ -19,11 +19,20 @@ public class SecurityUtil {
             throw new SecurityException("Company ID is required.");
         }
 
-        // TODO: Integrate with Spring Security to check against logged-in user's
-        // company
-        // String currentCompanyId = SecurityContextHolder.getContext()...
-        // if (!currentCompanyId.equals(requestCompanyId)) {
-        // throw new SecurityException("Unauthorized access to company data.");
-        // }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("Authentication is required.");
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof String) {
+            String strPrincipal = (String) principal;
+            if (strPrincipal.contains(":")) {
+                String currentCompanyId = strPrincipal.split(":")[0];
+                if (!currentCompanyId.equals(requestCompanyId)) {
+                    throw new SecurityException("Unauthorized access to company data.");
+                }
+            }
+        }
     }
 }

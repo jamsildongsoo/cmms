@@ -6,6 +6,7 @@ export interface BaseStandard {
   id: string;
   name: string;
   delete_mark?: 'Y' | 'N';
+  use_yn?: 'Y' | 'N';
 }
 
 export interface Company extends BaseStandard {
@@ -34,10 +35,10 @@ export interface Warehouse extends BaseStandard {
 }
 
 export interface CodeItem {
-  id: string; // The item code (e.g., 'PUMP')
-  group_id: string; // The parent code group (e.g., 'EQUIP_TYPE')
+  item_id: string; // The item code (e.g., 'PUMP')
+  code_id: string; // The parent code group (e.g., 'EQUIP_TYPE')
   name: string;
-  is_active?: 'Y' | 'N';
+  company_id?: string;
 }
 
 export interface Person extends BaseStandard {
@@ -215,22 +216,21 @@ export const standardService = {
   getCodeItem: async (groupId: string, id: string): Promise<CodeItem | undefined> => {
     const companyId = useAuthStore.getState().user?.company_id;
     if (!companyId) throw new Error("User not authenticated");
-    const response = await api.get(`/api/std/code-items/${companyId}/${groupId}/${id}`);
+    const response = await api.get(`/api/std/codes/${companyId}/${groupId}/items/${id}`);
     return response.data;
   },
 
   saveCodeItem: async (item: CodeItem): Promise<CodeItem> => {
     const companyId = useAuthStore.getState().user?.company_id;
     if (!companyId) throw new Error("User not authenticated");
-    // Inject company_id manually as CodeItem interface doesn't have it explicitly but backend needs it
-    const payload = { ...item, company_id: companyId };
-    const response = await api.post('/api/std/code-items', payload);
+
+    const response = await api.post(`/api/std/codes/${companyId}/${item.code_id}/items`, item);
     return response.data;
   },
 
   deleteCodeItem: async (groupId: string, id: string): Promise<void> => {
     const companyId = useAuthStore.getState().user?.company_id;
     if (!companyId) throw new Error("User not authenticated");
-    await api.delete(`/api/std/code-items/${companyId}/${groupId}/${id}`);
+    await api.delete(`/api/std/codes/${companyId}/${groupId}/items/${id}`);
   },
 };

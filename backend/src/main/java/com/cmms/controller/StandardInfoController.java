@@ -21,8 +21,8 @@ public class StandardInfoController {
     }
 
     @GetMapping("/plants")
-    public List<Plant> getPlants() {
-        return standardInfoService.getAllPlants();
+    public List<Plant> getPlants(@RequestParam String companyId) {
+        return standardInfoService.getAllPlants(companyId);
     }
 
     @GetMapping("/plants/{companyId}/{plantId}")
@@ -44,8 +44,8 @@ public class StandardInfoController {
     }
 
     @GetMapping("/depts")
-    public List<Dept> getDepts() {
-        return standardInfoService.getAllDepts();
+    public List<Dept> getDepts(@RequestParam String companyId) {
+        return standardInfoService.getAllDepts(companyId);
     }
 
     @GetMapping("/depts/{companyId}/{deptId}")
@@ -67,8 +67,8 @@ public class StandardInfoController {
     }
 
     @GetMapping("/roles")
-    public List<Role> getRoles() {
-        return standardInfoService.getAllRoles();
+    public List<Role> getRoles(@RequestParam String companyId) {
+        return standardInfoService.getAllRoles(companyId);
     }
 
     @GetMapping("/roles/{companyId}/{roleId}")
@@ -90,8 +90,8 @@ public class StandardInfoController {
     }
 
     @GetMapping("/persons")
-    public List<Person> getPersons() {
-        return standardInfoService.getAllPersons();
+    public List<Person> getPersons(@RequestParam String companyId) {
+        return standardInfoService.getAllPersons(companyId);
     }
 
     @GetMapping("/persons/{companyId}/{personId}")
@@ -113,8 +113,8 @@ public class StandardInfoController {
     }
 
     @GetMapping("/storages")
-    public List<Storage> getStorages() {
-        return standardInfoService.getAllStorages();
+    public List<Storage> getStorages(@RequestParam String companyId) {
+        return standardInfoService.getAllStorages(companyId);
     }
 
     @GetMapping("/storages/{companyId}/{storageId}")
@@ -184,8 +184,8 @@ public class StandardInfoController {
     }
 
     @GetMapping("/codes")
-    public List<Code> getCodes() {
-        return standardInfoService.getAllCodes();
+    public List<Code> getCodes(@RequestParam String companyId) {
+        return standardInfoService.getAllCodes(companyId);
     }
 
     @GetMapping("/codes/{companyId}/{codeId}")
@@ -201,14 +201,12 @@ public class StandardInfoController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/code-items")
-    public CodeItem createCodeItem(@RequestBody CodeItem codeItem) {
+    @PostMapping("/codes/{companyId}/{codeId}/items")
+    public CodeItem createCodeItem(@PathVariable String companyId, @PathVariable String codeId,
+            @RequestBody CodeItem codeItem) {
+        codeItem.setCompanyId(companyId);
+        codeItem.setCodeId(codeId);
         return standardInfoService.saveCodeItem(codeItem);
-    }
-
-    @GetMapping("/code-items")
-    public List<CodeItem> getCodeItems() {
-        return standardInfoService.getAllCodeItems();
     }
 
     @GetMapping("/codes/{companyId}/{codeId}/items")
@@ -216,7 +214,7 @@ public class StandardInfoController {
         return standardInfoService.getCodeItemsByCodeId(companyId, codeId);
     }
 
-    @GetMapping("/code-items/{companyId}/{codeId}/{itemId}")
+    @GetMapping("/codes/{companyId}/{codeId}/items/{itemId}")
     public ResponseEntity<CodeItem> getCodeItem(@PathVariable String companyId, @PathVariable String codeId,
             @PathVariable String itemId) {
         return standardInfoService.getCodeItemById(companyId, codeId, itemId)
@@ -224,7 +222,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/code-items/{companyId}/{codeId}/{itemId}")
+    @DeleteMapping("/codes/{companyId}/{codeId}/items/{itemId}")
     public ResponseEntity<Void> deleteCodeItem(@PathVariable String companyId, @PathVariable String codeId,
             @PathVariable String itemId) {
         standardInfoService.deleteCodeItem(companyId, codeId, itemId);

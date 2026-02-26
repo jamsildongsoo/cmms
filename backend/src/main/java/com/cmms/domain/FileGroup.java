@@ -29,4 +29,7 @@ public class FileGroup extends BaseEntity {
 
     @Column(name = "ref_id", length = 20)
     private String refId;
+
+    @jakarta.persistence.Transient
+    private java.util.List<FileItem> items;
 }

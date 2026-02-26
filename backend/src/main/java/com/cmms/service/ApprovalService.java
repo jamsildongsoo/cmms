@@ -78,7 +78,7 @@ public class ApprovalService {
             throw new IllegalStateException("현재 결재 순서가 아닙니다.");
         }
 
-        currentStep.setDecision(decision);
+        // currentStep.setDecision(decision); // DO NOT OVERWRITE THE TYPE
         currentStep.setComment(comment);
         currentStep.setDecidedAt(java.time.LocalDateTime.now());
 

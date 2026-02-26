@@ -39,7 +39,7 @@ export default function MemoDetailPage() {
                     const fileGroup = await systemService.getFileGroup(companyId, data.file_group_id);
                     if (fileGroup && fileGroup.items) {
                         setFiles(fileGroup.items.map(item => ({
-                            id: item.file_item_id.line_no.toString(),
+                            id: item.line_no.toString(),
                             name: item.original_name,
                             size: item.size,
                             raw: item
@@ -106,8 +106,8 @@ export default function MemoDetailPage() {
     const handleDownload = (file: AttachedFileInfo & { raw?: any }) => {
         if (memo && file.raw) {
             const companyId = memo.company_id;
-            const fileGroupId = file.raw.file_item_id.file_group_id;
-            const lineNo = file.raw.file_item_id.line_no;
+            const fileGroupId = file.raw.file_group_id;
+            const lineNo = file.raw.line_no;
             const url = systemService.getDownloadUrl(companyId, fileGroupId, lineNo);
             window.open(url, '_blank');
         }

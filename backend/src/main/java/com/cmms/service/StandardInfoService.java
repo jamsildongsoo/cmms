@@ -30,8 +30,8 @@ public class StandardInfoService {
         return plantRepository.save(plant);
     }
 
-    public List<Plant> getAllPlants() {
-        return plantRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Plant> getAllPlants(String companyId) {
+        return plantRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Plant> getPlantById(String companyId, String plantId) {
@@ -53,8 +53,8 @@ public class StandardInfoService {
         return deptRepository.save(dept);
     }
 
-    public List<Dept> getAllDepts() {
-        return deptRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Dept> getAllDepts(String companyId) {
+        return deptRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Dept> getDeptById(String companyId, String deptId) {
@@ -76,8 +76,8 @@ public class StandardInfoService {
         return roleRepository.save(role);
     }
 
-    public List<Role> getAllRoles() {
-        return roleRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Role> getAllRoles(String companyId) {
+        return roleRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Role> getRoleById(String companyId, String roleId) {
@@ -99,8 +99,8 @@ public class StandardInfoService {
         return personRepository.save(person);
     }
 
-    public List<Person> getAllPersons() {
-        return personRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Person> getAllPersons(String companyId) {
+        return personRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Person> getPersonById(String companyId, String personId) {
@@ -122,8 +122,8 @@ public class StandardInfoService {
         return storageRepository.save(storage);
     }
 
-    public List<Storage> getAllStorages() {
-        return storageRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Storage> getAllStorages(String companyId) {
+        return storageRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Storage> getStorageById(String companyId, String storageId) {
@@ -185,8 +185,8 @@ public class StandardInfoService {
         return codeRepository.save(code);
     }
 
-    public List<Code> getAllCodes() {
-        return codeRepository.findAllByDeleteMarkIsNullOrDeleteMark("N");
+    public List<Code> getAllCodes(String companyId) {
+        return codeRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
     }
 
     public Optional<Code> getCodeById(String companyId, String codeId) {

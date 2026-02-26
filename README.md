@@ -1,2 +1,4 @@
 # cmms
-CMMS project by Antigravity google 
+
+cmms\\.agents\\rules 참조
+

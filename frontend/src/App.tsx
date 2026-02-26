@@ -18,6 +18,8 @@ import UserRegisterPage from '@/pages/standard/UserRegisterPage';
 import CodeListPage from '@/pages/standard/CodeListPage';
 import CodeRegisterPage from '@/pages/standard/CodeRegisterPage';
 import CodeItemRegisterPage from '@/pages/standard/CodeItemRegisterPage';
+import ProfilePage from '@/pages/standard/ProfilePage';
+import PasswordPage from '@/pages/standard/PasswordPage';
 
 // Master Data
 import EquipmentListPage from '@/pages/equipment/EquipmentListPage';
@@ -107,6 +109,9 @@ function App() {
             <Route path="standard/code/:id/edit" element={<CodeRegisterPage />} />
             <Route path="standard/code/:groupId/item/new" element={<CodeItemRegisterPage />} />
             <Route path="standard/code/:groupId/item/:itemId" element={<CodeItemRegisterPage />} />
+
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="password" element={<PasswordPage />} />
 
             {/* Master Routes */}
             <Route path="master/equipment" element={<EquipmentListPage />} />

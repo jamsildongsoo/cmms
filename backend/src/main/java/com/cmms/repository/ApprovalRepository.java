@@ -11,16 +11,18 @@ import java.util.List;
 
 @Repository
 public interface ApprovalRepository extends JpaRepository<Approval, ApprovalId> {
-        List<Approval> findAllByDeleteMarkIsNullOrDeleteMark(String deleteMark);
+        List<Approval> findAllByCompanyIdAndDeleteMark(String companyId, String deleteMark);
 
         @Query("SELECT a FROM Approval a " +
                         "WHERE a.companyId = :companyId " +
+                        "AND a.status = 'A' " + // Under approval
                         "AND (a.deleteMark IS NULL OR a.deleteMark = 'N') " +
                         "AND a.approvalId IN (" +
                         "  SELECT s.approvalId FROM ApprovalStep s " +
                         "  WHERE s.companyId = :companyId " +
                         "  AND s.personId = :personId " +
-                        "  AND s.result = '00'" + // 00: Unresolved/Pending
+                        "  AND s.lineNo = a.currentStep " + // Current turn
+                        "  AND s.result = '00'" + // Pending/Unresolved
                         ")")
         List<Approval> findInbox(@Param("companyId") String companyId, @Param("personId") String personId);
 
@@ -32,7 +34,7 @@ public interface ApprovalRepository extends JpaRepository<Approval, ApprovalId> 
                         "  SELECT s.approvalId FROM ApprovalStep s " +
                         "  WHERE s.companyId = :companyId " +
                         "  AND s.personId = :personId " +
-                        "  AND s.result IN ('Y', 'N')" + // Processed
+                        "  AND s.result IN ('01', '02', '03', '04')" + // 01:Approve, 02:Agree, 03:Notify, 04:Reject
                         ")")
         List<Approval> findCompletedInbox(@Param("companyId") String companyId, @Param("personId") String personId);
 
@@ -51,6 +53,7 @@ public interface ApprovalRepository extends JpaRepository<Approval, ApprovalId> 
         @Query("SELECT a FROM Approval a " +
                         "WHERE a.companyId = :companyId " +
                         "AND a.requesterId = :requesterId " +
+                        "AND a.status IN ('A', 'C', 'R') " + // Sent, Confirmed, or Rejected (Exclude 'T')
                         "AND (a.deleteMark IS NULL OR a.deleteMark = 'N')")
         List<Approval> findOutbox(@Param("companyId") String companyId, @Param("requesterId") String requesterId);
 }

@@ -1,8 +1,28 @@
 
+export type WPQuestionType = 'checkbox' | 'input';
+
+export interface WPQuestion {
+    id: string;
+    label: string;
+    type: WPQuestionType;
+    placeholder?: string;
+    className?: string; // For layout control (e.g., col-span-2)
+}
+
+export interface WPCategoryTemplate {
+    id: string;
+    title: string;
+    icon?: string;
+    questions: WPQuestion[];
+    colorClass?: string;
+}
+
 export interface WorkPermit {
     permit_id: string;
     wp_types: string[]; // HOT, CONF, ELEC, etc. (Multi-select)
     name: string;
+    date: string; // Application Date
+    // ... rest of the existing interface
     start_dt: string;
     end_dt: string;
     person_name: string;

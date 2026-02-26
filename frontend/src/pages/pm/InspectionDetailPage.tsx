@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Play, CheckCircle, Save } from 'lucide-react';
+import { ArrowLeft, Edit, Play, CheckCircle, Save, Trash2 } from 'lucide-react';
 import { inspectionService } from '@/services/inspectionService';
 import type { Inspection, InspectionItem } from '@/types/inspection';
 import { Button } from '@/components/ui/button';
@@ -54,12 +54,24 @@ export default function InspectionDetailPage() {
     const handleSaveResults = async () => {
         if (!inspection || !id) return;
         try {
-            await inspectionService.update(id, { items });
+            await inspectionService.update(id, { ...inspection, items });
             toast({ title: "저장 완료", description: "점검 결과가 저장되었습니다." });
         } catch (error) {
             toast({ title: "오류", description: "저장 실패", variant: "destructive" });
         }
     }
+
+    const onDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
+        try {
+            await inspectionService.delete(id);
+            toast({ title: "성공", description: "삭제되었습니다." });
+            navigate('/pm/inspection');
+        } catch (error) {
+            toast({ title: "오류", description: "삭제 실패", variant: "destructive" });
+        }
+    };
 
 
     if (loading) return <div className="p-8 text-center text-muted-foreground">로딩 중...</div>;
@@ -86,6 +98,7 @@ export default function InspectionDetailPage() {
                                     inspection.status === 'C' ? 'bg-green-100 text-green-700' : 'bg-slate-100'
                                 }`}>
                                 {inspection.status === 'T' && '임시 저장'}
+                                {inspection.status === 'A' && '결재 중'}
                                 {inspection.status === 'S' && '계획 확정'}
                                 {inspection.status === 'P' && '진행 중'}
                                 {inspection.status === 'C' && '완료 됨'}
@@ -96,7 +109,17 @@ export default function InspectionDetailPage() {
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate('/pm/inspection')}>목록</Button>
 
-                    {/* Status Actions */}
+                    {inspection.status === 'T' && (
+                        <>
+                            <Button variant="outline" onClick={() => navigate(`/pm/inspection/${id}/edit`)}>
+                                <Edit className="mr-2 h-4 w-4" /> 계획 수정
+                            </Button>
+                            <Button variant="destructive" onClick={onDelete}>
+                                <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                            </Button>
+                        </>
+                    )}
+
                     {inspection.status === 'S' && (
                         <>
                             <Button variant="outline" onClick={() => navigate(`/pm/inspection/${id}/edit`)}>
@@ -211,27 +234,26 @@ export default function InspectionDetailPage() {
                                 {items.map((item, index) => (
                                     <tr key={item.seq} className="hover:bg-slate-50/50">
                                         <td className="p-3 text-center text-slate-500">{index + 1}</td>
-                                        <td className="p-3 font-medium">{item.check_item}</td>
+                                        <td className="p-3 font-medium">{item.name}</td>
                                         <td className="p-3 text-slate-600">{item.method}</td>
-                                        <td className="p-3 text-slate-600">{item.criteria}</td>
+                                        <td className="p-3 text-slate-600">{item.std_val}</td>
                                         <td className="p-3 text-slate-600 text-center">{item.unit || '-'}</td>
 
                                         {/* Result Input */}
                                         <td className="p-3 text-center">
                                             {isEditable ? (
                                                 <div className="flex justify-center">
-                                                    {/* Input is not imported, using simple input for now or need to import Input */}
                                                     <input
                                                         type="number"
-                                                        value={item.result_value || ''}
-                                                        onChange={(e) => handleItemChange(item.seq, 'result_value', parseFloat(e.target.value))}
+                                                        value={item.result_val || ''}
+                                                        onChange={(e) => handleItemChange(item.seq, 'result_val', parseFloat(e.target.value))}
                                                         placeholder="0"
                                                         className="h-8 w-24 text-right border rounded px-2"
                                                     />
                                                 </div>
                                             ) : (
                                                 <span className="font-bold text-slate-700">
-                                                    {item.result_value !== undefined ? item.result_value : '-'}
+                                                    {item.result_val !== undefined ? item.result_val : '-'}
                                                 </span>
                                             )}
                                         </td>

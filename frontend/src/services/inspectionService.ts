@@ -33,9 +33,16 @@ export const inspectionService = {
 
     create: async (data: Inspection): Promise<Inspection> => {
         const companyId = useAuthStore.getState().user?.company_id;
+        const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
+
+        const sanitizedData = {
+            ...data,
+            plan_date: (data as any).plan_date || new Date().toISOString().split('T')[0]
+        };
+
         const payload = {
-            inspection: { ...data, company_id: companyId },
+            inspection: { ...sanitizedData, company_id: companyId, plant_id: (data as any).plant_id || currentPlantId || 'P0001' },
             items: data.items
         };
         const response = await api.post<Inspection>('/api/tx/inspections', payload);

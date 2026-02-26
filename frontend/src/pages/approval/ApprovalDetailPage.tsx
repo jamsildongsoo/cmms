@@ -8,8 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { FileAttachmentList, type AttachedFileInfo } from '@/components/common/FileAttachmentList';
+import { systemService } from '@/services/systemService';
 import { approvalService, type Approval, type DecisionType } from '@/services/approvalService';
-import { FileAttachment } from '@/components/common/FileAttachment';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 
 const DECISION_TYPE_MAP: Record<DecisionType, string> = {
@@ -34,6 +35,7 @@ export default function ApprovalDetailPage() {
     const { user } = useAuthStore();
 
     const [approval, setApproval] = useState<Approval | null>(null);
+    const [files, setFiles] = useState<AttachedFileInfo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
 
@@ -43,6 +45,18 @@ export default function ApprovalDetailPage() {
             const data = await approvalService.getById(id);
             if (data) {
                 setApproval(data);
+                if (data.file_group_id) {
+                    const companyId = user?.company_id || 'COM-001';
+                    const fileGroup = await systemService.getFileGroup(companyId, data.file_group_id);
+                    if (fileGroup && fileGroup.items) {
+                        setFiles(fileGroup.items.map(item => ({
+                            id: item.line_no.toString(),
+                            name: item.original_name,
+                            size: item.size,
+                            raw: item
+                        } as any)));
+                    }
+                }
             } else {
                 toast({ title: "오류", description: "결재 문서를 찾을 수 없습니다.", variant: "destructive" });
                 navigate(-1);
@@ -78,6 +92,13 @@ export default function ApprovalDetailPage() {
         }
     };
 
+    const handleDownload = (file: AttachedFileInfo & { raw?: any }) => {
+        if (approval && file.raw) {
+            const url = systemService.getDownloadUrl(approval.company_id, file.raw.file_group_id, file.raw.line_no);
+            window.open(url, '_blank');
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="max-w-4xl mx-auto space-y-6 pb-10">
@@ -93,9 +114,9 @@ export default function ApprovalDetailPage() {
     const statusInfo = STATUS_MAP[approval.status] || { label: approval.status, variant: 'secondary' };
 
     // My Turn Check: status must be 'A' (Submitted/In progress)
-    const currentStep = approval.approval_steps?.find(s => s.line_no === approval.current_step);
+    const currentStep = approval.approval_steps?.find((s: any) => s.line_no === approval.current_step);
     const isMyTurn = approval.status === 'A'
-        && currentStep?.person_id === user?.id
+        && currentStep?.person_id === user?.person_id
         && currentStep?.result === '00'
         && currentStep?.decision !== '03'; // 참조/통보형은 승인 버튼 노출 제외
 
@@ -142,7 +163,7 @@ export default function ApprovalDetailPage() {
                             <div className="mt-1 text-xs text-slate-500">{approval.created_at?.split(' ')[0]}</div>
                         </div>
                         <div className="absolute top-11 left-12 right-12 h-0.5 bg-slate-200 -z-0" />
-                        {(approval.approval_steps || []).map((step, index) => {
+                        {(approval.approval_steps || []).map((step: any, index: number) => {
                             const isStepCurrent = approval.status === 'A' && approval.current_step === step.line_no;
                             const isApproved = step.result === 'Y';
                             const isRejected = step.result === 'N' || (approval.status === 'R' && approval.current_step === step.line_no);
@@ -208,7 +229,14 @@ export default function ApprovalDetailPage() {
                     <Separator />
                     <div className="space-y-2">
                         <h4 className="text-sm font-medium text-muted-foreground">첨부파일</h4>
-                        <FileAttachment files={[]} onChange={() => { }} readonly={true} />
+                        {files.length > 0 ? (
+                            <FileAttachmentList
+                                files={files}
+                                onDownload={handleDownload}
+                            />
+                        ) : (
+                            <div className="text-sm text-slate-400 italic">첨부파일이 없습니다.</div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

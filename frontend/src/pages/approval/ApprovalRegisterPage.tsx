@@ -125,7 +125,7 @@ export default function ApprovalRegisterPage() {
             const approvalData: Partial<Approval> = {
                 title: titleRef.current.value,
                 content: contentRef.current.value,
-                requester_id: currentUser?.id,
+                requester_id: currentUser?.person_id,
             };
 
             const steps: Partial<ApprovalStep>[] = approvalLine.map((item, index) => ({

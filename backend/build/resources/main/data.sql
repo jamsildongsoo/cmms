@@ -64,14 +64,3 @@ INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_T
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_TYPE', 'PM', 'Preventive Maint');
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_TYPE', 'CM', 'Corrective Maint');
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_TYPE', 'EM', 'Emergency');
-
--- [WP_TYPE] Work Permit Type
-INSERT INTO code (company_id, code_id, name) VALUES ('1000', 'WP_TYPE', 'Work Permit Type');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'HOT', 'Hot Work');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'CONF', 'Confined Space');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'ELEC', 'Electrical Work');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'HIGH', 'High Place Work');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'DIG', 'Excavation');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'HEVY', 'Heavy Lifting');
-INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WP_TYPE', 'GEN', 'General Work');
-

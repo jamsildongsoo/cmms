@@ -25,13 +25,13 @@ export default function WorkPermitListPage() {
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
-            'T': 'bg-gray-100 text-gray-800',
-            'A': 'bg-blue-100 text-blue-800', // Approval Pending
-            'C': 'bg-green-100 text-green-800' // Approved/Completed
+            'T': 'bg-slate-100 text-slate-800 border-slate-200',
+            'A': 'bg-orange-100 text-orange-800 border-orange-200',
+            'C': 'bg-green-100 text-green-800 border-green-200'
         };
         const labels: Record<string, string> = { 'T': '임시', 'A': '승인대기', 'C': '승인완료' };
         return (
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
+            <span className={`px-2 py-0.5 rounded border text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
                 {labels[status] || status}
             </span>
         );

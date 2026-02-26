@@ -163,7 +163,7 @@ export default function InventoryProcessingPage() {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {materials.map(m => (
-                                                        <SelectItem key={m.inventory_id} value={m.inventory_id}>
+                                                        <SelectItem key={m.inventory_id} value={m.inventory_id || ''}>
                                                             [{m.inventory_id}] {m.name}
                                                         </SelectItem>
                                                     ))}

@@ -14,13 +14,14 @@ import type { Person, Dept } from '@/services/standardService';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 
+
 export default function UserRegisterPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const isEditMode = !!id;
 
-    const { register, handleSubmit, setValue, watch } = useForm<Person>();
+    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Person>();
 
     // Department data for SearchableSelect
     const [departments, setDepartments] = useState<Dept[]>([]);
@@ -91,12 +92,21 @@ export default function UserRegisterPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label>사번 <span className="text-red-500">*</span></Label>
-                            <Input {...register('person_id', { required: true })} placeholder="사번 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
+                            <Label htmlFor="person_id">사번 (ID) <span className="text-red-500">*</span></Label>
+                            <Input id="person_id" {...register('person_id', { required: '사번은 필수입니다.' })} placeholder="사번 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
+                            {errors.person_id && <span className="text-xs text-red-500">{errors.person_id.message}</span>}
                         </div>
+                        {!isEditMode && (
+                            <div className="space-y-2">
+                                <Label htmlFor="password_hash">초기 비밀번호 <span className="text-red-500">*</span></Label>
+                                <Input id="password_hash" type="password" {...register('password_hash', { required: '초기 비밀번호는 필수입니다.' })} placeholder="비밀번호 입력" />
+                                {errors.password_hash && <span className="text-xs text-red-500">{errors.password_hash.message}</span>}
+                            </div>
+                        )}
                         <div className="space-y-2">
-                            <Label>이름 <span className="text-red-500">*</span></Label>
-                            <Input {...register('name', { required: true })} placeholder="사용자명" />
+                            <Label htmlFor="name">성명 <span className="text-red-500">*</span></Label>
+                            <Input id="name" {...register('name', { required: '성명은 필수입니다.' })} placeholder="성명 입력" />
+                            {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
                         </div>
                         <div className="space-y-2">
                             <Label>회사 ID <span className="text-red-500">*</span></Label>

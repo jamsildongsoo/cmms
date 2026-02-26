@@ -5,9 +5,11 @@ import com.cmms.domain.WorkPermitId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import java.util.List;
 
 @Repository
 public interface WorkPermitRepository extends JpaRepository<WorkPermit, WorkPermitId> {
-    List<WorkPermit> findAllByDeleteMarkIsNullOrDeleteMark(String deleteMark);
+    @EntityGraph(attributePaths = { "items" })
+    List<WorkPermit> findAllByCompanyIdAndDeleteMark(String companyId, String deleteMark);
 }

@@ -43,9 +43,19 @@ export const workOrderService = {
 
     create: async (data: WorkOrder): Promise<WorkOrder> => {
         const companyId = useAuthStore.getState().user?.company_id;
+        const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
+
+        // Ensure numeric types and handle 'date' vs 'req_date' mappings if needed
+        const sanitizedData = {
+            ...data,
+            cost: Number(data.cost) || 0,
+            time: Number(data.time) || 0,
+            req_date: (data as any).req_date || (data as any).date || new Date().toISOString().split('T')[0],
+        };
+
         const payload = {
-            workOrder: { ...data, company_id: companyId },
+            workOrder: { ...sanitizedData, company_id: companyId, plant_id: (data as any).plant_id || currentPlantId || 'P0001' },
             items: (data as any).items // Type assertion in case it's missing in type
         };
         const response = await api.post<WorkOrder>('/api/tx/work-orders', payload);
@@ -58,8 +68,17 @@ export const workOrderService = {
             if (!existing) throw new Error("WorkOrder not found");
 
             const merged = { ...existing, ...updates };
+
+            // Ensure numeric types
+            const sanitizedMerged = {
+                ...merged,
+                cost: Number(merged.cost) || 0,
+                time: Number(merged.time) || 0,
+                req_date: (merged as any).req_date || (merged as any).date || (existing as any).req_date,
+            };
+
             const payload = {
-                workOrder: merged,
+                workOrder: sanitizedMerged,
                 items: (merged as any).items
             };
             const response = await api.post<WorkOrder>('/api/tx/work-orders', payload);

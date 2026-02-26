@@ -1,9 +1,10 @@
+import axios from 'axios';
 import api from '@/utils/api';
 import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export interface Material {
-    company_id?: string;
-    inventory_id: string;
+    company_id: string;
+    inventory_id?: string;
     name: string;
     code_item?: string;
     dept_id?: string;
@@ -14,8 +15,9 @@ export interface Material {
     serial?: string;
     note?: string;
     file_group_id?: string;
-    status?: 'T' | 'A' | 'C' | 'R' | string;
-    delete_mark?: string;
+    status: 'T' | 'C' | 'D';
+    delete_mark: 'Y' | 'N';
+    use_yn?: 'Y' | 'N';
 }
 
 export type TransactionType = 'IN' | 'OUT' | 'MOVE' | 'ADJUST';
@@ -92,7 +94,7 @@ export const inventoryService = {
             if (!existing) throw new Error("Material not found");
             const merged = { ...existing, ...updates };
             // Ensure company_id is present
-            if (!merged.company_id) merged.company_id = useAuthStore.getState().user?.company_id;
+            if (!merged.company_id) merged.company_id = useAuthStore.getState().user?.company_id ?? '';
             if (!merged.company_id) throw new Error("User not authenticated");
 
             const response = await api.post<Material>('/api/master/inventory', merged);
@@ -139,5 +141,11 @@ export const inventoryService = {
 
     createTransaction: async (): Promise<InventoryTransaction> => {
         return Promise.resolve({} as InventoryTransaction);
+    },
+
+    deleteMaterial: async (id: string): Promise<void> => {
+        const companyId = useAuthStore.getState().user?.company_id;
+        if (!companyId) throw new Error("User not authenticated");
+        await api.delete(`/api/master/inventory/${companyId}/${id}`);
     }
 };

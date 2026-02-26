@@ -26,6 +26,7 @@ export interface Equipment {
     next_inspection?: string;
     note?: string;
     file_group_id?: string;
+    use_yn?: 'Y' | 'N';
 
     // Additional fields for frontend convenience or future use
     created_at?: string;

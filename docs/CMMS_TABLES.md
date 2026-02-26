@@ -363,7 +363,7 @@ CREATE TABLE memo (
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
     ref_id VARCHAR(20),
-    isNotice CHAR(1) DEFAULT 'N',
+    is_notice CHAR(1) DEFAULT 'N',
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(20),

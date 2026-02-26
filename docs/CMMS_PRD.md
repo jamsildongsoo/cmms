@@ -15,6 +15,7 @@
     *   **Database**: `snake_case`
     *   **Backend**: `camelCase` (Internal), `snake_case` (API JSON Strategy)
     *   **Frontend**: `snake_case` (Data Types/API), `camelCase` (UI Logic)
+    *   **api**: companies-/api/vi, standard except companies-/api/std, master data-/api/master, tx-/api/tx, inventory except inventory master-/api/inv
 *   **Security**: 백엔드는 Spring Security와 JWT(JSON Web Token)를 이용하여 무상태(Stateless) API 접근 제어를 수행하고, 프론트엔드는 발급받은 JWT와 사용자 정보를 Zustand로 메모리에서 안전하게 관리하며 API 호출 시마다 Authorization 헤더(Bearer 토큰)에 실어 보낸다.
 
 ## 3. 기능 분류 및 화면 흐름 정책
@@ -51,6 +52,8 @@
     *   **목록**: 목록 화면으로 복귀.
     *   **수정**: 편집 모드로 전환.
     *   **출력**: 출력 화면으로 이동.
+*   **작업허가 템플릿**:	\frontend\src\constants 에 wpTemplates.ts
+    *
 ### D. 결재 (Approval)
 *   **대상**: Approval, Approval Step
 *   **특징**: 문서 의사결정 프로세스 관리 및 추적.

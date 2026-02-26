@@ -49,6 +49,9 @@ public class WorkPermit extends BaseEntity {
     @jakarta.persistence.Convert(converter = com.cmms.common.converter.StringListConverter.class)
     private List<String> wpTypes;
 
+    @Column(name = "date")
+    private java.time.LocalDate date;
+
     @Column(name = "start_dt")
     private LocalDateTime startDt;
 
@@ -109,6 +112,10 @@ public class WorkPermit extends BaseEntity {
     @Column(name = "approval_id", length = 20)
     private String approvalId;
 
-    @jakarta.persistence.Transient
+    @jakarta.persistence.OneToMany(fetch = jakarta.persistence.FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    @jakarta.persistence.JoinColumns({
+            @jakarta.persistence.JoinColumn(name = "company_id", referencedColumnName = "company_id", insertable = false, updatable = false),
+            @jakarta.persistence.JoinColumn(name = "permit_id", referencedColumnName = "permit_id", insertable = false, updatable = false)
+    })
     private List<WorkPermitItem> items;
 }

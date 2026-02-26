@@ -93,8 +93,15 @@ export default function WarehouseRegisterPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label>창고 ID <span className="text-red-500">*</span></Label>
-                            <Input {...register('id')} placeholder="시스템 자동 생성" disabled value={id || '자동 생성'} className="bg-slate-50" />
+                            <Label htmlFor="id">창고 코드 (ID) <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="id"
+                                {...register('id', { required: '창고 코드는 필수입니다.' })}
+                                placeholder="예: WH01"
+                                disabled={isEditMode}
+                                className={isEditMode ? "bg-slate-50" : ""}
+                            />
+                            {errors.id && <span className="text-xs text-red-500">{errors.id.message}</span>}
                             <input type="hidden" {...register('company_id')} />
                         </div>
                         <div className="space-y-2">
@@ -102,6 +109,7 @@ export default function WarehouseRegisterPage() {
                             <Input {...register('name', { required: true })} placeholder="창고명 입력" />
                             {errors.name && <span className="text-red-500 text-xs">창고명은 필수입니다.</span>}
                         </div>
+
                         <div className="space-y-2">
                             <Label>사업장 <span className="text-red-500">*</span></Label>
                             <Select

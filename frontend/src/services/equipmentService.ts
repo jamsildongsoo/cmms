@@ -32,8 +32,9 @@ export const equipmentService = {
 
     create: async (equipment: Omit<Equipment, "equipment_id">): Promise<Equipment> => {
         const companyId = useAuthStore.getState().user?.company_id;
+        const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
-        const payload = { ...equipment, company_id: companyId };
+        const payload = { ...equipment, company_id: companyId, plant_id: equipment.plant_id || currentPlantId || 'P0001' };
         const response = await api.post<Equipment>('/api/master/equipment', payload);
         return response.data;
     },

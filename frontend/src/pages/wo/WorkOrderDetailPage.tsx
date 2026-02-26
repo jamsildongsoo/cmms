@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Send } from 'lucide-react';
 import { workOrderService } from '@/services/workOrderService';
 import type { WorkOrder } from '@/types/workOrder';
 import { Button } from '@/components/ui/button';
@@ -27,16 +27,31 @@ export default function WorkOrderDetailPage() {
         });
     }, [id]);
 
-    const handleActualSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleStatusChange = async (newStatus: 'A' | 'C') => {
+        if (!id) return;
+        if (newStatus === 'C' && !window.confirm("작업을 완료하시겠습니까?")) return;
+        if (newStatus === 'A' && !window.confirm("승인 요청(시작)을 하시겠습니까?")) return;
+
         try {
-            if (id) {
-                await workOrderService.update(id, { status: 'C' });
-                toast({ title: "작업 실적 저장", description: "작업 결과가 저장되었습니다." });
-                const updated = await workOrderService.getById(id);
-                setWorkOrder(updated || null);
-            }
-        } catch (e) { console.error(e); }
+            await workOrderService.update(id, { ...workOrder!, status: newStatus });
+            toast({ title: "성공", description: newStatus === 'C' ? "작업이 완료되었습니다." : "승인 요청되었습니다." });
+            const updated = await workOrderService.getById(id);
+            setWorkOrder(updated || null);
+        } catch (e) {
+            toast({ title: "오류", description: "처리 중 오류 발생", variant: "destructive" });
+        }
+    };
+
+    const onDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
+        try {
+            await workOrderService.delete(id);
+            toast({ title: "성공", description: "삭제되었습니다." });
+            navigate('/wo/work-order');
+        } catch (error) {
+            toast({ title: "오류", description: "삭제 실패", variant: "destructive" });
+        }
     };
 
     if (loading) return <div className="p-8 text-center">로딩 중...</div>;
@@ -59,9 +74,16 @@ export default function WorkOrderDetailPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate('/wo/work-order')}>목록</Button>
-                    <Button variant="outline" onClick={() => navigate(`/wo/work-order/${id}/edit`)}>
-                        <Edit className="mr-2 h-4 w-4" /> 요청 수정
-                    </Button>
+                    {workOrder.status === 'T' && (
+                        <>
+                            <Button variant="outline" onClick={() => navigate(`/wo/work-order/${id}/edit`)}>
+                                <Edit className="mr-2 h-4 w-4" /> 요청 수정
+                            </Button>
+                            <Button variant="destructive" onClick={onDelete}>
+                                <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -119,21 +141,19 @@ export default function WorkOrderDetailPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                <div className="p-4 bg-slate-100 rounded-lg text-center font-bold text-lg">
+                                <div className={`p-4 rounded-lg text-center font-bold text-lg border-2 ${workOrder.status === 'C' ? 'bg-green-50 border-green-500 text-green-700' :
+                                    workOrder.status === 'A' ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-slate-100 border-slate-200'
+                                    }`}>
                                     {workOrder.status === 'T' && '임시 저장'}
                                     {workOrder.status === 'A' && '진행 중 (승인)'}
                                     {workOrder.status === 'C' && '완료 됨'}
                                 </div>
                                 {workOrder.status === 'T' && (
                                     <Button
-                                        className="w-full bg-blue-600 hover:bg-blue-700"
-                                        onClick={async () => {
-                                            await workOrderService.update(id!, { status: 'A' });
-                                            const updated = await workOrderService.getById(id!);
-                                            setWorkOrder(updated || null);
-                                        }}
+                                        className="w-full bg-orange-600 hover:bg-orange-700"
+                                        onClick={() => handleStatusChange('A')}
                                     >
-                                        작업 승인/시작
+                                        <Send className="mr-2 h-4 w-4" /> 작업 상신/시작
                                     </Button>
                                 )}
                             </div>
@@ -146,7 +166,7 @@ export default function WorkOrderDetailPage() {
                             <CardTitle className="text-lg">작업 결과 입력</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleActualSubmit} className="space-y-4">
+                            <form onSubmit={(e) => { e.preventDefault(); handleStatusChange('C'); }} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label>작업 일자</Label>
                                     <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} />

@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ export default function WorkOrderRegisterPage() {
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [actionType, setActionType] = useState<'T' | 'C'>('T');
+    const [actionType, setActionType] = useState<'T' | 'C' | 'A'>('T');
     const location = useLocation();
 
     // Mode Detection
@@ -122,6 +122,9 @@ export default function WorkOrderRegisterPage() {
     };
 
     const onSubmit = async (data: WorkOrder) => {
+        if (actionType === 'C' && !window.confirm("확정된 데이터는 수정할 수 없습니다. 확정하시겠습니까?")) return;
+        if (actionType === 'A' && !window.confirm("상신하시겠습니까? 이후 수정이 불가능합니다.")) return;
+
         try {
             setLoading(true);
             const payload = {
@@ -132,11 +135,15 @@ export default function WorkOrderRegisterPage() {
 
             if (isEditMode && id) {
                 await workOrderService.update(id, payload);
-                toast({ title: "성공", description: actionType === 'C' ? "작업 정보가 확정되었습니다." : "작업 정보가 수정되었습니다." });
             } else {
                 await workOrderService.create(payload);
-                toast({ title: "성공", description: actionType === 'C' ? "신규 작업이 확정 등록되었습니다." : "신규 작업이 임시 저장되었습니다." });
             }
+
+            let message = "정보가 저장되었습니다.";
+            if (actionType === 'C') message = "작업 정보가 확정되었습니다.";
+            if (actionType === 'A') message = "결재 상신되었습니다.";
+
+            toast({ title: "성공", description: message });
             navigate('/wo/work-order');
         } catch (error: any) {
             console.error(error);
@@ -146,7 +153,22 @@ export default function WorkOrderRegisterPage() {
         }
     };
 
-    const isConfirmed = watch('status') === 'C';
+    const onDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
+        try {
+            await workOrderService.delete(id);
+            toast({ title: "성공", description: "삭제되었습니다." });
+            navigate('/wo/work-order');
+        } catch (error: any) {
+            toast({ title: "오류", description: "삭제 중 오류 발생", variant: "destructive" });
+        }
+    };
+
+    const currentStatus = watch('status');
+    const isConfirmed = currentStatus === 'C';
+    const isApproval = currentStatus === 'A';
+    const isReadOnly = isConfirmed || isApproval;
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-10">
@@ -166,7 +188,12 @@ export default function WorkOrderRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" type="button" onClick={() => navigate('/wo/work-order')}>목록</Button>
-                    {!isConfirmed && (
+                    {isEditMode && !isReadOnly && (
+                        <Button variant="destructive" type="button" onClick={onDelete}>
+                            <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                        </Button>
+                    )}
+                    {!isReadOnly && (
                         <>
                             <Button
                                 type="submit"
@@ -176,6 +203,15 @@ export default function WorkOrderRegisterPage() {
                                 onClick={() => setActionType('T')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 임시 저장
+                            </Button>
+                            <Button
+                                type="submit"
+                                form="wo-form"
+                                disabled={loading}
+                                className="bg-orange-600 hover:bg-orange-700"
+                                onClick={() => setActionType('A')}
+                            >
+                                <Send className="mr-2 h-4 w-4" /> 상신
                             </Button>
                             <Button
                                 type="submit"

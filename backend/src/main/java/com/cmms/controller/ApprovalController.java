@@ -7,6 +7,7 @@ import com.cmms.dto.DecisionRequest;
 import com.cmms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,7 +45,17 @@ public class ApprovalController {
     }
 
     @PostMapping
-    public Approval saveApproval(@RequestBody ApprovalRequest request) {
+    public Approval saveApproval(@RequestBody ApprovalRequest request, Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof String principal) {
+            String[] parts = principal.split(":");
+            if (parts.length == 2) {
+                String personId = parts[1];
+                request.getApproval().setRequesterId(personId);
+                if (request.getApproval().getCreatedBy() == null) {
+                    request.getApproval().setCreatedBy(personId);
+                }
+            }
+        }
         return approvalService.saveApproval(request.getApproval(), request.getSteps(), request.getStatus());
     }
 

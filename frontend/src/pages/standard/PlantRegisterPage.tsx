@@ -12,6 +12,7 @@ import { standardService } from '@/services/standardService';
 import type { Plant } from '@/services/standardService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 
+
 export default function PlantRegisterPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();

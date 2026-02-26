@@ -11,4 +11,9 @@ public interface FileItemRepository extends JpaRepository<FileItem, FileItemId> 
     Integer findMaxLineNoByCompanyIdAndFileGroupId(
             @org.springframework.data.repository.query.Param("companyId") String companyId,
             @org.springframework.data.repository.query.Param("fileGroupId") String fileGroupId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT f FROM FileItem f WHERE f.companyId = :companyId AND f.fileGroupId = :fileGroupId")
+    java.util.List<FileItem> findAllByCompanyIdAndFileGroupId(
+            @org.springframework.data.repository.query.Param("companyId") String companyId,
+            @org.springframework.data.repository.query.Param("fileGroupId") String fileGroupId);
 }

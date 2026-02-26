@@ -44,11 +44,12 @@ export default function EquipmentRegisterPage() {
     });
 
     useEffect(() => {
+        let isMounted = true;
         if (isEditMode && id) {
             setLoading(true);
             equipmentService.getById(id)
                 .then(data => {
-                    if (data) {
+                    if (isMounted && data) {
                         if (data.status === 'C') {
                             toast({ title: "안내", description: "확정된 건은 수정할 수 없습니다.", variant: "destructive" });
                         }
@@ -59,12 +60,17 @@ export default function EquipmentRegisterPage() {
                     }
                 })
                 .catch(err => {
-                    console.error(err);
-                    toast({ title: "오류", description: "설비 정보를 불러오지 못했습니다.", variant: "destructive" });
-                    navigate('/master/equipment');
+                    if (isMounted) {
+                        console.error(err);
+                        toast({ title: "오류", description: "설비 정보를 불러오지 못했습니다.", variant: "destructive" });
+                        navigate('/master/equipment');
+                    }
                 })
-                .finally(() => setLoading(false));
+                .finally(() => {
+                    if (isMounted) setLoading(false);
+                });
         }
+        return () => { isMounted = false; };
     }, [id, isEditMode, setValue, navigate, toast]);
 
     const onSubmit = async (data: Equipment) => {
@@ -166,7 +172,10 @@ export default function EquipmentRegisterPage() {
                         {/* Row 2: Type(1) / Dept(1) / Location(2) */}
                         <div className="space-y-2">
                             <Label htmlFor="code_item">설비 유형</Label>
-                            <Select onValueChange={(val: string) => setValue('code_item', val)} defaultValue="COMPRESSOR">
+                            <Select
+                                value={watch('code_item') || ''}
+                                onValueChange={(val: string) => setValue('code_item', val)}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="유형 선택" />
                                 </SelectTrigger>
@@ -241,7 +250,10 @@ export default function EquipmentRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="depre_method">상각 방법</Label>
-                            <Select onValueChange={(val: string) => setValue('depre_method', val as any)} defaultValue="STRAIGHT">
+                            <Select
+                                value={watch('depre_method') || ''}
+                                onValueChange={(val: string) => setValue('depre_method', val as any)}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>

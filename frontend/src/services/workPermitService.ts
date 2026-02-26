@@ -38,9 +38,10 @@ export const workPermitService = {
 
     create: async (data: Omit<WorkPermit, "permit_id">): Promise<WorkPermit> => {
         const companyId = useAuthStore.getState().user?.company_id;
+        const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
         const payload = {
-            work_permit: { ...data, company_id: companyId },
+            work_permit: { ...data, company_id: companyId, plant_id: (data as any).plant_id || currentPlantId || 'P0001' },
             items: (data as any).items
         };
         const response = await api.post<WorkPermit>('/api/tx/work-permits', payload);

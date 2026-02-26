@@ -9,7 +9,5 @@ import java.util.List;
 
 @Repository
 public interface MemoRepository extends JpaRepository<Memo, MemoId> {
-    List<Memo> findAllByCompanyIdAndDeleteMarkIsNullOrDeleteMark(String companyId, String deleteMark);
-
-    List<Memo> findAllByDeleteMarkIsNullOrDeleteMark(String deleteMark);
+    List<Memo> findAllByCompanyIdAndDeleteMark(String companyId, String deleteMark);
 }

@@ -67,6 +67,10 @@ public class Inspection extends BaseEntity {
     @Column(name = "approval_id", length = 20)
     private String approvalId;
 
-    @jakarta.persistence.Transient
+    @jakarta.persistence.OneToMany(fetch = jakarta.persistence.FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+    @jakarta.persistence.JoinColumns({
+            @jakarta.persistence.JoinColumn(name = "company_id", referencedColumnName = "company_id", insertable = false, updatable = false),
+            @jakarta.persistence.JoinColumn(name = "inspection_id", referencedColumnName = "inspection_id", insertable = false, updatable = false)
+    })
     private java.util.List<InspectionItem> items;
 }

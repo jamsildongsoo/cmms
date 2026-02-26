@@ -41,11 +41,12 @@ export default function MaterialRegisterPage() {
     }, [user, setValue]);
 
     useEffect(() => {
+        let isMounted = true;
         if (isEditMode && id) {
             setLoading(true);
             inventoryService.getMaterialById(id)
                 .then((data) => {
-                    if (data) {
+                    if (isMounted && data) {
                         if (data.status === 'C') {
                             toast({ title: "안내", description: "확정된 건은 수정할 수 없습니다.", variant: "destructive" });
                         }
@@ -55,12 +56,17 @@ export default function MaterialRegisterPage() {
                     }
                 })
                 .catch(err => {
-                    console.error(err);
-                    toast({ title: "오류", description: "자재 정보를 불러오지 못했습니다.", variant: "destructive" });
-                    navigate('/master/inventory');
+                    if (isMounted) {
+                        console.error(err);
+                        toast({ title: "오류", description: "자재 정보를 불러오지 못했습니다.", variant: "destructive" });
+                        navigate('/master/inventory');
+                    }
                 })
-                .finally(() => setLoading(false));
+                .finally(() => {
+                    if (isMounted) setLoading(false);
+                });
         }
+        return () => { isMounted = false; };
     }, [id, isEditMode, setValue, navigate, toast]);
 
     const onSubmit = async (data: Material) => {

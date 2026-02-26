@@ -23,8 +23,8 @@ export default function ApprovalOutboxPage() {
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        if (user?.company_id && user?.id) {
-            approvalService.getList(user.id, 'outbox').then(setOutboxData);
+        if (user?.company_id && user?.person_id) {
+            approvalService.getList(user.person_id, 'outbox').then(setOutboxData);
         }
     }, [user]);
 

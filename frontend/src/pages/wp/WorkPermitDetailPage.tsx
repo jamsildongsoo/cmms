@@ -1,15 +1,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit, CheckCircle, Trash2, Send } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import { workPermitService } from '@/services/workPermitService';
 import type { WorkPermit } from '@/types/workPermit';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
 import { Label } from '@/components/ui/label';
-
-import { useToast } from '@/components/ui/use-toast';
+import { WPValueCard } from '@/components/wp/WPValueCard';
+import { WP_TEMPLATES } from '@/constants/wpTemplates';
 
 export default function WorkPermitDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -17,6 +17,7 @@ export default function WorkPermitDetailPage() {
     const { toast } = useToast();
     const [permit, setPermit] = useState<WorkPermit | null>(null);
     const [loading, setLoading] = useState(true);
+    // ... rest of the code
 
     useEffect(() => {
         if (!id) return;
@@ -27,18 +28,34 @@ export default function WorkPermitDetailPage() {
         });
     }, [id]);
 
-    const handleApprove = async () => {
+    const handleStatusChange = async (newStatus: 'A' | 'C') => {
+        if (!id) return;
+        if (newStatus === 'C' && !window.confirm("작업 허가를 승인 완료하시겠습니까?")) return;
+        if (newStatus === 'A' && !window.confirm("허가 신청을 상신하시겠습니까?")) return;
+
         try {
-            if (id) {
-                await workPermitService.update(id, { status: 'C' });
-                toast({ title: "승인 완료", description: "작업 허가가 승인되었습니다." });
-                const updated = await workPermitService.getById(id);
-                setPermit(updated || null);
-            }
+            await workPermitService.update(id, { ...permit!, status: newStatus });
+            toast({ title: "성공", description: newStatus === 'C' ? "작업 허가가 승인되었습니다." : "허가 신청이 상신되었습니다." });
+            const updated = await workPermitService.getById(id);
+            setPermit(updated || null);
         } catch (e) {
-            toast({ title: "오류", description: "승인 처리 중 오류 발생", variant: "destructive" });
+            toast({ title: "오류", description: "처리 중 오류 발생", variant: "destructive" });
         }
     };
+
+    const onDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
+        try {
+            await workPermitService.delete(id);
+            toast({ title: "성공", description: "삭제되었습니다." });
+            navigate('/wp/work-permit');
+        } catch (error) {
+            toast({ title: "오류", description: "삭제 실패", variant: "destructive" });
+        }
+    };
+
+    // Removed handleApprove as it's replaced by handleStatusChange
 
     if (loading) return <div className="p-8 text-center">로딩 중...</div>;
     if (!permit) return <div className="p-8 text-center text-red-500">데이터를 찾을 수 없습니다.</div>;
@@ -75,9 +92,16 @@ export default function WorkPermitDetailPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate('/wp/work-permit')}>목록</Button>
-                    <Button variant="outline" onClick={() => navigate(`/wp/work-permit/${id}/edit`)}>
-                        <Edit className="mr-2 h-4 w-4" /> 신청 수정
-                    </Button>
+                    {permit.status === 'T' && (
+                        <>
+                            <Button variant="outline" onClick={() => navigate(`/wp/work-permit/${id}/edit`)}>
+                                <Edit className="mr-2 h-4 w-4" /> 신청 수정
+                            </Button>
+                            <Button variant="destructive" onClick={onDelete}>
+                                <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -130,66 +154,20 @@ export default function WorkPermitDetailPage() {
 
                         {/* Common Safety Checks (Mandatory) */}
                         <div className="md:col-span-2 space-y-2">
-                            <Label className="font-semibold">공통 안전 점검 (필수)</Label>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div className={`flex items-center gap-2 p-2 rounded border ${permit.checksheet_json_com?.check_ppe ? 'bg-green-50 border-green-200' : 'bg-slate-50'}`}>
-                                    <CheckCircle className={`h-4 w-4 ${permit.checksheet_json_com?.check_ppe ? 'text-green-600' : 'text-slate-300'}`} />
-                                    <span>개인보호구 착용</span>
-                                </div>
-                                <div className={`flex items-center gap-2 p-2 rounded border ${permit.checksheet_json_com?.check_edu ? 'bg-green-50 border-green-200' : 'bg-slate-50'}`}>
-                                    <CheckCircle className={`h-4 w-4 ${permit.checksheet_json_com?.check_edu ? 'text-green-600' : 'text-slate-300'}`} />
-                                    <span>작업 전 안전교육(TBM)</span>
-                                </div>
-                            </div>
+                            <WPValueCard template={WP_TEMPLATES.COM} permit={permit} />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Special Work Cards */}
                 <div className="md:col-span-2 space-y-4">
-                    {permit.wp_types?.includes('HOT') && (
-                        <Card className="border-red-200 bg-red-50/10">
-                            <CardHeader className="pb-3 border-b border-red-100">
-                                <CardTitle className="text-base text-red-700">🔥 화기 작업 정보</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-4 grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">화재 감시자</span>
-                                    <span>{permit.checksheet_json_hot?.fire_watcher || '-'}</span>
-                                </div>
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">소화기 비치</span>
-                                    <span>{permit.checksheet_json_hot?.fire_extinguisher ? '완료' : '미비치'}</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {permit.wp_types?.includes('CONF') && (
-                        <Card className="border-blue-200 bg-blue-50/10">
-                            <CardHeader className="pb-3 border-b border-blue-100">
-                                <CardTitle className="text-base text-blue-700">💨 밀폐 공간 측정 기록</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-4 grid grid-cols-4 gap-4 text-sm">
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">O2</span>
-                                    <span>{permit.checksheet_json_conf?.gas_o2 || '-'} %</span>
-                                </div>
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">CO</span>
-                                    <span>{permit.checksheet_json_conf?.gas_co || '-'} ppm</span>
-                                </div>
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">H2S</span>
-                                    <span>{permit.checksheet_json_conf?.gas_h2s || '-'} ppm</span>
-                                </div>
-                                <div>
-                                    <span className="text-muted-foreground block text-xs">LEL</span>
-                                    <span>{permit.checksheet_json_conf?.gas_lel || '-'} %</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
+                    {(permit.wp_types || []).map((type) => {
+                        const template = WP_TEMPLATES[type];
+                        if (!template) return null;
+                        return (
+                            <WPValueCard key={type} template={template} permit={permit} />
+                        );
+                    })}
                 </div>
 
                 {/* Approval & History (Right Column) - Moved below dynamic cards in mobile, or stick to right in desktop */}
@@ -209,9 +187,15 @@ export default function WorkPermitDetailPage() {
                                 {(permit.status === 'T' || permit.status === 'A') && (
                                     <div className="space-y-2">
                                         <div className="text-sm text-center text-muted-foreground">안전 관리자의 승인이 필요합니다.</div>
-                                        <Button className="w-full bg-green-600 hover:bg-green-700" onClick={handleApprove}>
-                                            허가 승인
-                                        </Button>
+                                        {permit.status === 'T' ? (
+                                            <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={() => handleStatusChange('A')}>
+                                                <Send className="mr-2 h-4 w-4" /> 허가 신청 상신
+                                            </Button>
+                                        ) : (
+                                            <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleStatusChange('C')}>
+                                                <CheckCircle className="mr-2 h-4 w-4" /> 허가 승인
+                                            </Button>
+                                        )}
                                     </div>
                                 )}
                             </div>

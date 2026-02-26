@@ -1,13 +1,11 @@
 
 export interface InspectionItem {
     seq: number;
-    check_item: string;
+    name: string; // Used to be check_item
     method: string;
-    criteria: string;
+    std_val?: number; // Used to be criteria
     unit?: string;
-    result_value?: number;
-    result?: 'OK' | 'NG' | 'NA';
-    remarks?: string;
+    result_val?: number; // Used to be result_value
 }
 
 export interface Inspection {
@@ -16,7 +14,7 @@ export interface Inspection {
     note?: string;
     code_item: string; // e.g. 'Regular', 'Spot'
     stage: 'PLN' | 'ACT'; // Plan | Action
-    status: 'T' | 'S' | 'P' | 'C'; // Temp(Draft) | Scheduled(Confirmed) | Progress | Complete
+    status: 'T' | 'S' | 'P' | 'C' | 'A'; // Temp(Draft) | Scheduled(Confirmed) | Progress | Complete | Approval
     date: string; // plan_date -> date (Backend sync)
     actual_date?: string;
 

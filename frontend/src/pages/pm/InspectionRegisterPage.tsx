@@ -2,17 +2,18 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, CheckCircle2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { inspectionService } from '@/services/inspectionService';
 import type { Inspection, InspectionItem } from '@/types/inspection';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
-import { standardService, type Dept, type Person } from '@/services/standardService';
+import { standardService, type Dept, type Person, type CodeItem } from '@/services/standardService';
 import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
 
@@ -35,16 +36,18 @@ export default function InspectionRegisterPage() {
     const [equipments, setEquipments] = useState<Equipment[]>([]);
     const [departments, setDepartments] = useState<Dept[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
+    const [inspTypes, setInspTypes] = useState<CodeItem[]>([]);
 
     useEffect(() => {
         equipmentService.getAll().then(setEquipments);
         standardService.getAll('dept').then(setDepartments);
         standardService.getAll('person').then(setPersons);
+        standardService.getCodeItems('INSP_TYPE').then(setInspTypes).catch(() => console.error("INSP_TYPE fetch error"));
     }, []);
 
     // Local state for items
     const [items, setItems] = useState<InspectionItem[]>([
-        { seq: 1, check_item: '', method: '', criteria: '', unit: '' },
+        { seq: 1, name: '', method: '', std_val: undefined, unit: '' },
     ]);
 
     const { register, setValue, getValues, watch } = useForm<Inspection>({
@@ -93,7 +96,7 @@ export default function InspectionRegisterPage() {
     }, [id, isEditMode, isResultMode, refIdParam, setValue]);
 
     const addItem = () => {
-        setItems(prev => [...prev, { seq: prev.length + 1, check_item: '', method: '', criteria: '', unit: '' }]);
+        setItems(prev => [...prev, { seq: prev.length + 1, name: '', method: '', std_val: undefined, unit: '' }]);
     };
 
     const removeItem = (seq: number) => {
@@ -104,8 +107,10 @@ export default function InspectionRegisterPage() {
         setItems(prev => prev.map(i => i.seq === seq ? { ...i, [field]: value } : i));
     };
 
-    // Save Logic
-    const onSave = async (targetStatus: 'T' | 'C') => {
+    // Save/Submit Logic
+    const onSave = async (targetStatus: 'T' | 'A' | 'C') => {
+        if (targetStatus === 'C' && !window.confirm("확정된 데이터는 수정할 수 없습니다. 확정하시겠습니까?")) return;
+        if (targetStatus === 'A' && !window.confirm("상신하시겠습니까? 이후 수정이 불가능합니다.")) return;
         const formData = getValues();
         const dataToSave: Inspection = {
             ...formData,
@@ -120,7 +125,9 @@ export default function InspectionRegisterPage() {
                 await inspectionService.create(dataToSave);
             }
 
-            let message = targetStatus === 'C' ? "정보가 확정되었습니다." : "정보가 임시 저장되었습니다.";
+            let message = "정보가 저장되었습니다.";
+            if (targetStatus === 'C') message = "정보가 확정되었습니다.";
+            if (targetStatus === 'A') message = "결재 상신되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/pm/inspection');
@@ -135,11 +142,26 @@ export default function InspectionRegisterPage() {
         }
     };
 
+    const onDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
+        try {
+            await inspectionService.delete(id);
+            toast({ title: "성공", description: "삭제되었습니다." });
+            navigate('/pm/inspection');
+        } catch (error: any) {
+            toast({ title: "오류", description: "삭제 중 오류 발생", variant: "destructive" });
+        }
+    };
+
     // UI State Logic
     const currentStatus = watch('status');
     const isConfirmed = currentStatus === 'C';
-    const isPlanEditable = !isResultMode && !isConfirmed;
-    const isResultEditable = isResultMode && !isConfirmed;
+    const isApproval = currentStatus === 'A';
+    const isReadOnly = isConfirmed || isApproval;
+
+    const isPlanEditable = !isResultMode && !isReadOnly;
+    const isResultEditable = isResultMode && !isReadOnly;
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
@@ -160,8 +182,12 @@ export default function InspectionRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" type="button" onClick={() => navigate('/pm/inspection')}>목록</Button>
-
-                    {!isConfirmed && (
+                    {isEditMode && !isReadOnly && (
+                        <Button variant="destructive" type="button" onClick={onDelete}>
+                            <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                        </Button>
+                    )}
+                    {!isReadOnly && (
                         <>
                             <Button
                                 type="button"
@@ -169,6 +195,13 @@ export default function InspectionRegisterPage() {
                                 onClick={() => onSave('T')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 임시 저장
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => onSave('A')}
+                                className="bg-orange-600 hover:bg-orange-700"
+                            >
+                                <Send className="mr-2 h-4 w-4" /> 상신
                             </Button>
                             <Button
                                 type="button"
@@ -231,13 +264,27 @@ export default function InspectionRegisterPage() {
                         {/* Row 2: Type, Equipment, Dept, Person */}
                         <div className="space-y-2 lg:col-start-1">
                             <Label>점검 유형 <span className="text-red-500">*</span></Label>
-                            <Input {...register('code_item', { required: true })} placeholder="예: 정기점검" disabled={!isPlanEditable && !isResultEditable} />
+                            <Select
+                                value={watch('code_item') || ''}
+                                onValueChange={(val: string) => setValue('code_item', val)}
+                                disabled={!isPlanEditable && !isResultEditable}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="점검 유형 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {inspTypes.map(type => (
+                                        <SelectItem key={type.item_id} value={type.item_id}>{type.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <input type="hidden" {...register('code_item', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={equipments.map(e => ({ ...e, id: e.equipment_id }))}
-                                value={getValues('equipment_id') || ''}
+                                value={watch('equipment_id') || ''}
                                 onChange={(val) => {
                                     const equipment = equipments.find(e => e.equipment_id === val);
                                     setValue('equipment_id', val);
@@ -258,7 +305,7 @@ export default function InspectionRegisterPage() {
                             <Label>관리 부서</Label>
                             <SearchableSelect
                                 items={departments}
-                                value={getValues('dept_id') || ''}
+                                value={watch('dept_id') || ''}
                                 onChange={(val) => {
                                     const dept = departments.find(d => d.id === val);
                                     setValue('dept_id', val);
@@ -273,8 +320,8 @@ export default function InspectionRegisterPage() {
                         <div className="space-y-2">
                             <Label>담당자</Label>
                             <SearchableSelect
-                                items={persons.filter(p => !getValues('dept_id') || p.dept_id === getValues('dept_id'))}
-                                value={getValues('person_id') || ''}
+                                items={persons.filter(p => !watch('dept_id') || p.dept_id === watch('dept_id'))}
+                                value={watch('person_id') || ''}
                                 onChange={(val) => {
                                     const person = persons.find(p => p.person_id === val);
                                     setValue('person_id', val);
@@ -332,8 +379,8 @@ export default function InspectionRegisterPage() {
                                                 <td className="p-3 text-center text-slate-500 font-mono">{index + 1}</td>
                                                 <td className="p-3">
                                                     <Input
-                                                        value={item.check_item}
-                                                        onChange={(e) => updateItem(item.seq, 'check_item', e.target.value)}
+                                                        value={item.name}
+                                                        onChange={(e) => updateItem(item.seq, 'name', e.target.value)}
                                                         disabled={!isPlanEditable}
                                                         placeholder="항목 입력"
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none" : ""}
@@ -350,11 +397,12 @@ export default function InspectionRegisterPage() {
                                                 </td>
                                                 <td className="p-3">
                                                     <Input
-                                                        value={item.criteria}
-                                                        onChange={(e) => updateItem(item.seq, 'criteria', e.target.value)}
+                                                        type="number"
+                                                        value={item.std_val || ''}
+                                                        onChange={(e) => updateItem(item.seq, 'std_val', parseFloat(e.target.value))}
                                                         disabled={!isPlanEditable}
-                                                        placeholder="기준 입력"
-                                                        className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none" : ""}
+                                                        placeholder="0.0"
+                                                        className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none text-right" : "text-right"}
                                                     />
                                                 </td>
                                                 <td className="p-3">
@@ -370,14 +418,14 @@ export default function InspectionRegisterPage() {
                                                     {isResultEditable ? (
                                                         <Input
                                                             type="number"
-                                                            value={item.result_value || ''}
-                                                            onChange={(e) => updateItem(item.seq, 'result_value', parseFloat(e.target.value))}
+                                                            value={item.result_val || ''}
+                                                            onChange={(e) => updateItem(item.seq, 'result_val', parseFloat(e.target.value))}
                                                             placeholder="0"
                                                             className="h-8 text-right"
                                                         />
                                                     ) : (
                                                         <span className="font-bold text-slate-700">
-                                                            {item.result_value !== undefined ? item.result_value : '-'}
+                                                            {item.result_val !== undefined ? item.result_val : '-'}
                                                         </span>
                                                     )}
                                                 </td>

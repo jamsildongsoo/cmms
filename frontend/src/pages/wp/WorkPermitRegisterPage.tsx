@@ -1,8 +1,7 @@
-
 import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,13 +15,15 @@ import { SearchableSelect } from '@/components/common/SearchableSelect';
 import type { WorkPermit } from '@/types/workPermit';
 import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
+import { WPTemplateCard } from '@/components/wp/WPTemplateCard';
+import { WP_TEMPLATES } from '@/constants/wpTemplates';
 
 export default function WorkPermitRegisterPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [actionType, setActionType] = useState<'T' | 'C'>('T');
+    const [actionType, setActionType] = useState<'T' | 'C' | 'A'>('T');
     const isEditMode = !!id;
 
 
@@ -30,7 +31,8 @@ export default function WorkPermitRegisterPage() {
         defaultValues: {
             wp_types: [], // Default empty (General is implied/mandatory)
             status: 'T',
-            stage: 'PLN'
+            stage: 'PLN',
+            date: new Date().toISOString().split('T')[0],
         }
     });
 
@@ -75,6 +77,9 @@ export default function WorkPermitRegisterPage() {
     };
 
     const onSubmit = async (data: WorkPermit) => {
+        if (actionType === 'C' && !window.confirm("확정하시겠습니까? (안전 담당자 승인 단계로 넘어갑니다)")) return;
+        if (actionType === 'A' && !window.confirm("허가 신청을 상신하시겠습니까?")) return;
+
         try {
             setLoading(true);
             const payload = {
@@ -84,11 +89,15 @@ export default function WorkPermitRegisterPage() {
 
             if (isEditMode && id) {
                 await workPermitService.update(id, payload);
-                toast({ title: "성공", description: actionType === 'C' ? "허가 신청이 확정되었습니다." : "허가 신청이 수정되었습니다." });
             } else {
                 await workPermitService.create(payload);
-                toast({ title: "성공", description: actionType === 'C' ? "작업허가가 확정 신청되었습니다." : "작업허가 신청이 임시 저장되었습니다." });
             }
+
+            let message = "정보가 저장되었습니다.";
+            if (actionType === 'C') message = "허가 신청이 확정되었습니다.";
+            if (actionType === 'A') message = "허가 신청이 상신되었습니다.";
+
+            toast({ title: "성공", description: message });
             navigate('/wp/work-permit');
         } catch (error: any) {
             console.error(error);
@@ -98,7 +107,22 @@ export default function WorkPermitRegisterPage() {
         }
     };
 
-    const isConfirmed = watch('status') === 'C';
+    const onDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말 삭제하시겠습니까?")) return;
+        try {
+            await workPermitService.delete(id);
+            toast({ title: "성공", description: "삭제되었습니다." });
+            navigate('/wp/work-permit');
+        } catch (error) {
+            toast({ title: "오류", description: "삭제 실패", variant: "destructive" });
+        }
+    };
+
+    const currentStatus = watch('status');
+    const isConfirmed = currentStatus === 'C';
+    const isApproval = currentStatus === 'A';
+    const isReadOnly = isConfirmed || isApproval;
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-10">
@@ -114,7 +138,12 @@ export default function WorkPermitRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" type="button" onClick={() => navigate('/wp/work-permit')}>목록</Button>
-                    {!isConfirmed && (
+                    {isEditMode && !isReadOnly && (
+                        <Button variant="destructive" type="button" onClick={onDelete}>
+                            <Trash2 className="mr-2 h-4 w-4" /> 삭제
+                        </Button>
+                    )}
+                    {!isReadOnly && (
                         <>
                             <Button
                                 type="submit"
@@ -124,6 +153,15 @@ export default function WorkPermitRegisterPage() {
                                 onClick={() => setActionType('T')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 임시 저장
+                            </Button>
+                            <Button
+                                type="submit"
+                                form="wp-form"
+                                disabled={loading}
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
+                                onClick={() => setActionType('A')}
+                            >
+                                <Send className="mr-2 h-4 w-4" /> 상신
                             </Button>
                             <Button
                                 type="submit"
@@ -156,7 +194,7 @@ export default function WorkPermitRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>신청일자</Label>
-                            <Input type="date" disabled value={new Date().toISOString().split('T')[0]} className="bg-slate-50" />
+                            <Input type="date" {...register('date')} disabled={isConfirmed} />
                         </div>
 
                         <div className="space-y-2">
@@ -193,12 +231,17 @@ export default function WorkPermitRegisterPage() {
                             <Label>신청자</Label>
                             <SearchableSelect
                                 items={filteredPersons}
-                                value={watch('person_name') || ''}
-                                onChange={(val) => setValue('person_name', val)}
+                                value={watch('person_id') || ''}
+                                onChange={(val) => {
+                                    const p = persons.find(person => person.person_id === val);
+                                    setValue('person_id', val);
+                                    setValue('person_name', p?.name || '');
+                                }}
                                 placeholder="신청자 검색..."
                                 displayFormat={(person) => `${person.name} ${person.position || ''} (${person.person_id})`}
                                 disabled={isConfirmed}
                             />
+                            <input type="hidden" {...register('person_name')} />
                         </div>
                         <div className="space-y-2">
                         </div>
@@ -264,83 +307,33 @@ export default function WorkPermitRegisterPage() {
                     </CardContent>
                 </Card>
 
-                {/* Common Safety Check */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">공통 안전 점검 (필수)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="com-check1" {...register('checksheet_json_com.check_ppe')} disabled={isConfirmed} />
-                            <Label htmlFor="com-check1">1. 개인보호구(안전모, 안전화 등)를 착용하였는가?</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Checkbox id="com-check2" {...register('checksheet_json_com.check_edu')} disabled={isConfirmed} />
-                            <Label htmlFor="com-check2">2. 작업 전 안전 교육(TBM)을 실시하였는가?</Label>
-                        </div>
-                    </CardContent>
-                </Card>
+                {/* Dynamic Safety Templates */}
+                <div className="space-y-6">
+                    {/* 1. Common (Always Mandatory) */}
+                    <WPTemplateCard
+                        template={WP_TEMPLATES.COM}
+                        register={register}
+                        watch={watch}
+                        setValue={setValue}
+                        disabled={isConfirmed}
+                    />
 
-                {/* Special Work Cards */}
-                {selectedTypes.includes('HOT') && (
-                    <Card className="border-red-200 bg-red-50/10">
-                        <CardHeader className="pb-3 border-b border-red-100">
-                            <CardTitle className="text-base text-red-700 flex items-center gap-2">
-                                🔥 화기 작업 안전 조치
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                            <div className="space-y-2">
-                                <Label>화재 감시자</Label>
-                                <Input {...register('checksheet_json_hot.fire_watcher')} placeholder="성명 입력" disabled={isConfirmed} />
-                            </div>
-                            <div className="flex items-center space-x-2 pt-8">
-                                <Checkbox id="hot-check1" {...register('checksheet_json_hot.fire_extinguisher')} disabled={isConfirmed} />
-                                <Label htmlFor="hot-check1">소화기 비치 및 이상 유무 확인</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="hot-check2" {...register('checksheet_json_hot.welding_blanket')} disabled={isConfirmed} />
-                                <Label htmlFor="hot-check2">불티 비산 방지포 설치 확인</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="hot-check3" {...register('checksheet_json_hot.gas_check')} disabled={isConfirmed} />
-                                <Label htmlFor="hot-check3">주변 인화성 물질 제거 확인</Label>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {selectedTypes.includes('CONF') && (
-                    <Card className="border-blue-200 bg-blue-50/10">
-                        <CardHeader className="pb-3 border-b border-blue-100">
-                            <CardTitle className="text-base text-blue-700 flex items-center gap-2">
-                                💨 밀폐 공간 작업 안전 조치
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4">
-                            <div className="space-y-2">
-                                <Label>산소 (O2) %</Label>
-                                <Input {...register('checksheet_json_conf.gas_o2')} placeholder="18-23.5%" disabled={isConfirmed} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>일산화탄소 (CO) ppm</Label>
-                                <Input {...register('checksheet_json_conf.gas_co')} placeholder="< 30ppm" disabled={isConfirmed} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>황화수소 (H2S) ppm</Label>
-                                <Input {...register('checksheet_json_conf.gas_h2s')} placeholder="< 10ppm" disabled={isConfirmed} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>가연성가스 (LEL) %</Label>
-                                <Input {...register('checksheet_json_conf.gas_lel')} placeholder="< 25%" disabled={isConfirmed} />
-                            </div>
-                            <div className="md:col-span-4 flex items-center space-x-2">
-                                <Checkbox id="conf-check1" {...register('checksheet_json_conf.ventilation')} disabled={isConfirmed} />
-                                <Label htmlFor="conf-check1">환기 설비 가동 및 적정 공기 확인</Label>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                    {/* 2. Special Work Types (Dynamic) */}
+                    {selectedTypes.map((type) => {
+                        const template = WP_TEMPLATES[type];
+                        if (!template) return null;
+                        return (
+                            <WPTemplateCard
+                                key={type}
+                                template={template}
+                                register={register}
+                                watch={watch}
+                                setValue={setValue}
+                                disabled={isConfirmed}
+                            />
+                        );
+                    })}
+                </div>
             </form>
         </div>
     );
