@@ -99,49 +99,38 @@ export default function WorkPermitListPage() {
                                         <th className="px-4 py-3 font-medium text-slate-500">작업명</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업기간</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">신청자</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500">상태</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500 text-center">관리</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500 text-center">상태</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {permits.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                                            <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                                                 등록된 작업 허가 신청이 없습니다.
                                             </td>
                                         </tr>
                                     ) : (
                                         permits.map(wp => (
                                             <tr
-                                                key={wp.permit_id}
+                                                key={wp.permitId}
                                                 className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                                onClick={() => navigate(`/wp/work-permit/${wp.permit_id}`)}
+                                                onClick={() => navigate(`/wp/work-permit/${wp.permitId}`)}
                                             >
-                                                <td className="px-4 py-3 font-medium">{wp.permit_id}</td>
+                                                <td className="px-4 py-3 font-medium">{wp.permitId}</td>
                                                 <td className="px-4 py-3">
                                                     <div className="flex flex-wrap gap-1">
-                                                        {wp.wp_types && wp.wp_types.map(t => (
+                                                        {wp.wpTypes && wp.wpTypes.map(t => (
                                                             <span key={t}>{getWpTypeBadge(t)}</span>
                                                         ))}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">{wp.name}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-600">
-                                                    <div>{wp.start_dt ? wp.start_dt.split(' ')[0] : '-'}</div>
-                                                    <div className="text-slate-400">~ {wp.end_dt ? wp.end_dt.split(' ')[0] : '-'}</div>
+                                                    <div>{wp.startDt ? wp.startDt.split(' ')[0] : '-'}</div>
+                                                    <div className="text-slate-400">~ {wp.endDt ? wp.endDt.split(' ')[0] : '-'}</div>
                                                 </td>
-                                                <td className="px-4 py-3 text-slate-600">{wp.person_name}</td>
-                                                <td className="px-4 py-3">{getStatusBadge(wp.status)}</td>
-                                                <td className="px-4 py-3 text-center">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-8 px-2 text-blue-600 hover:text-blue-800"
-                                                        onClick={(e) => { e.stopPropagation(); navigate(`/wp/work-permit/${wp.permit_id}`); }}
-                                                    >
-                                                        상세/승인
-                                                    </Button>
-                                                </td>
+                                                <td className="px-4 py-3 text-slate-600">{wp.personName}</td>
+                                                <td className="px-4 py-3 text-center">{getStatusBadge(wp.status)}</td>
                                             </tr>
                                         ))
                                     )}

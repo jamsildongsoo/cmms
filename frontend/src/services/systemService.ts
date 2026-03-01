@@ -2,20 +2,20 @@
 import api from '@/utils/api';
 
 export interface FileItem {
-    company_id: string;
-    file_group_id: string;
-    line_no: number;
-    original_name: string;
-    storage_path: string;
+    companyId: string;
+    fileGroupId: string;
+    lineNo: number;
+    originalName: string;
+    storagePath: string;
     size: number;
     mime: string;
-    created_at?: string;
-    created_by?: string;
+    createdAt?: string;
+    createdBy?: string;
 }
 
 export interface FileGroup {
-    company_id: string;
-    file_group_id: string;
+    companyId: string;
+    fileGroupId: string;
     items?: FileItem[];
 }
 

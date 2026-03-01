@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { standardService, type Person } from '@/services/standardService';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { FileAttachment, type AttachedFile } from '@/components/common/FileAttachment';
+import { RichTextEditor } from '@/components/common/RichTextEditor';
 
 import { approvalService, type Approval, type ApprovalStep, type DecisionType } from '@/services/approvalService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
@@ -40,7 +40,7 @@ export default function ApprovalRegisterPage() {
     const navigate = useNavigate();
     const { toast } = useToast();
     const titleRef = useRef<HTMLInputElement>(null);
-    const contentRef = useRef<HTMLTextAreaElement>(null);
+    const [content, setContent] = useState('');
 
     // State
     const [approvalLine, setApprovalLine] = useState<ApprovalLineItem[]>([]);
@@ -61,16 +61,16 @@ export default function ApprovalRegisterPage() {
 
     // Current User (Fallbacks)
     const currentUserName = currentUser?.name || 'Unknown';
-    const currentUserDept = currentUser?.dept_id || 'Unknown';
+    const currentUserDept = currentUser?.deptId || 'Unknown';
 
     const handleAddApprover = () => {
         if (!selectedPersonId) return;
 
-        const person = persons.find(p => p.person_id === selectedPersonId);
+        const person = persons.find(p => p.personId === selectedPersonId);
         if (!person) return;
 
         // Check for duplicates
-        if (approvalLine.some(item => item.user.person_id === person.person_id)) {
+        if (approvalLine.some(item => item.user.personId === person.personId)) {
             toast({
                 title: "중복 선택",
                 description: "이미 결재선에 포함된 사용자입니다.",
@@ -110,7 +110,7 @@ export default function ApprovalRegisterPage() {
     };
 
     const onSave = async (status: 'T' | 'A') => {
-        if (!titleRef.current?.value || !contentRef.current?.value) {
+        if (!titleRef.current?.value || !content) {
             toast({ title: "입력 오류", description: "제목과 내용을 입력해 주세요.", variant: "destructive" });
             return;
         }
@@ -124,14 +124,14 @@ export default function ApprovalRegisterPage() {
             setLoading(true);
             const approvalData: Partial<Approval> = {
                 title: titleRef.current.value,
-                content: contentRef.current.value,
-                requester_id: currentUser?.person_id,
+                content: content,
+                requesterId: currentUser?.personId,
             };
 
             const steps: Partial<ApprovalStep>[] = approvalLine.map((item, index) => ({
-                person_id: item.user.person_id,
+                personId: item.user.personId,
                 decision: item.type,
-                line_no: index + 1,
+                lineNo: index + 1,
                 result: '00'
             }));
 
@@ -185,11 +185,11 @@ export default function ApprovalRegisterPage() {
                             <div className="space-y-1">
                                 <Label>사용자 선택</Label>
                                 <SearchableSelect
-                                    items={persons}
+                                    items={persons.map((p: any) => ({ ...p, id: p.personId }))}
                                     value={selectedPersonId}
                                     onChange={setSelectedPersonId}
                                     placeholder="이름 검색..."
-                                    displayFormat={(p) => `${p.name} ${p.position || ''} (${p.person_id})`}
+                                    displayFormat={(p) => `${p.name} ${p.position || ''} (${p.personId})`}
                                 />
                             </div>
                             <div className="space-y-1">
@@ -253,7 +253,7 @@ export default function ApprovalRegisterPage() {
                                             {DECISION_TYPE_MAP[item.type]}
                                         </Badge>
                                         <div className="text-sm font-bold">{item.user.name}</div>
-                                        <div className="text-xs text-muted-foreground">{item.user.dept_id || ''} {item.user.position || ''}</div>
+                                        <div className="text-xs text-muted-foreground">{item.user.deptId || ''} {item.user.position || ''}</div>
                                     </div>
                                     {index < approvalLine.length - 1 && <ArrowRight className="text-slate-300 mx-1" />}
                                 </div>
@@ -275,7 +275,7 @@ export default function ApprovalRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>내용 <span className="text-red-500">*</span></Label>
-                            <Textarea ref={contentRef} className="min-h-[400px]" placeholder="상세 내용을 입력하세요." />
+                            <RichTextEditor value={content} onChange={setContent} placeholder="상세 내용을 입력하세요." />
                         </div>
                         <div className="space-y-2">
                             <Label className="flex items-center gap-2">

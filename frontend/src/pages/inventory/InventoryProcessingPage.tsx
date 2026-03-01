@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { inventoryService } from '@/services/inventoryService';
 import type { Material, TransactionType, TransactionItem } from '@/services/inventoryService';
-import { standardService, type Warehouse } from '@/services/standardService';
+import { standardService, type Storage } from '@/services/standardService';
 
 interface ProcessingForm {
     type: TransactionType;
@@ -22,12 +22,12 @@ export default function InventoryProcessingPage() {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [materials, setMaterials] = useState<Material[]>([]);
-    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+    const [warehouses, setWarehouses] = useState<Storage[]>([]);
 
     const { register, control, handleSubmit, setValue, watch } = useForm<ProcessingForm>({
         defaultValues: {
             type: 'IN',
-            items: [{ inventory_id: '', storage_id: '', current_stock: 0, qty: 0, ref: '' }]
+            items: [{ inventoryId: '', storageId: '', current_stock: 0, qty: 0, ref: '' }]
         }
     });
 
@@ -40,23 +40,23 @@ export default function InventoryProcessingPage() {
 
     useEffect(() => {
         inventoryService.getAllMaterials().then(setMaterials);
-        standardService.getAll('warehouse').then(setWarehouses);
+        standardService.getAll('storage').then(setWarehouses);
     }, []);
 
     const handleMaterialChange = (index: number, inventoryId: string) => {
-        const material = materials.find(m => m.inventory_id === inventoryId);
+        const material = materials.find(m => m.inventoryId === inventoryId);
         if (material) {
             // We use standard 'update' from useFieldArray, or just setValue
             // However, update replaces the whole item. Let's use setValue for specific fields to avoid resetting unrelated ones if we want, 
             // but here we are initializing the row with material data, so replacing is fine or just setting the ID.
             // Actually, we should just set the value.
-            setValue(`items.${index}.inventory_id`, inventoryId);
+            setValue(`items.${index}.inventoryId`, inventoryId);
         }
     };
 
     const onSubmit = async (data: ProcessingForm) => {
         try {
-            const validItems = data.items.filter(item => item.inventory_id && item.qty > 0);
+            const validItems = data.items.filter(item => item.inventoryId && item.qty > 0);
             if (validItems.length === 0) {
                 toast({ title: "경고", description: "처리할 품목을 입력해주세요.", variant: "destructive" });
                 return;
@@ -155,7 +155,7 @@ export default function InventoryProcessingPage() {
                                     <tr key={field.id} className="hover:bg-slate-50/50">
                                         <td className="p-2">
                                             <Select
-                                                value={watch(`items.${index}.inventory_id`)}
+                                                value={watch(`items.${index}.inventoryId`)}
                                                 onValueChange={(val: string) => handleMaterialChange(index, val)}
                                             >
                                                 <SelectTrigger className="h-9">
@@ -163,8 +163,8 @@ export default function InventoryProcessingPage() {
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {materials.map(m => (
-                                                        <SelectItem key={m.inventory_id} value={m.inventory_id || ''}>
-                                                            [{m.inventory_id}] {m.name}
+                                                        <SelectItem key={m.inventoryId} value={m.inventoryId || ''}>
+                                                            [{m.inventoryId}] {m.name}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -172,15 +172,15 @@ export default function InventoryProcessingPage() {
                                         </td>
                                         <td className="p-2">
                                             <Select
-                                                value={watch(`items.${index}.storage_id`)}
-                                                onValueChange={(val: string) => setValue(`items.${index}.storage_id`, val)}
+                                                value={watch(`items.${index}.storageId`)}
+                                                onValueChange={(val: string) => setValue(`items.${index}.storageId`, val)}
                                             >
                                                 <SelectTrigger className="h-9">
                                                     <SelectValue placeholder="창고 선택" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {warehouses.map(w => (
-                                                        <SelectItem key={w.id} value={w.id}>
+                                                        <SelectItem key={w.storageId} value={w.storageId}>
                                                             {w.name}
                                                         </SelectItem>
                                                     ))}
@@ -216,7 +216,7 @@ export default function InventoryProcessingPage() {
                                 variant="outline"
                                 size="sm"
                                 className="w-full border-dashed"
-                                onClick={() => append({ inventory_id: '', storage_id: '', current_stock: 0, qty: 0, ref: '' })}
+                                onClick={() => append({ inventoryId: '', storageId: '', current_stock: 0, qty: 0, ref: '' })}
                             >
                                 <Plus className="mr-2 h-4 w-4" /> 품목 추가
                             </Button>

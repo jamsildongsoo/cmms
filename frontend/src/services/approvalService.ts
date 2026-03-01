@@ -14,21 +14,21 @@ export type ResultType = '00' | 'Y' | 'N';
 // 00: 미결, Y:승인, N:반려
 
 export interface Approval {
-    company_id: string;
-    approval_id: string;
+    companyId: string;
+    approvalId: string;
     title: string;
     content: string;
-    requester_id: string;
-    current_step: number;
-    file_group_id?: string;
+    requesterId: string;
+    currentStep: number;
+    fileGroupId?: string;
     delete_mark: 'Y' | 'N';
     status: ApprovalStatus;
-    ref_entity?: string;
-    ref_id?: string;
-    created_at?: string;
-    created_by?: string;
-    updated_at?: string;
-    updated_by?: string;
+    refEntity?: string;
+    refId?: string;
+    createdAt?: string;
+    createdBy?: string;
+    updatedAt?: string;
+    updatedBy?: string;
 
     // For UI convenience
     requester_name?: string;
@@ -36,13 +36,13 @@ export interface Approval {
 }
 
 export interface ApprovalStep {
-    company_id: string;
-    approval_id?: string;
-    line_no: number;
-    person_id: string;
+    companyId: string;
+    approvalId?: string;
+    lineNo: number;
+    personId: string;
     decision: DecisionType | string;
     result: ResultType | string;
-    decided_at?: string;
+    decidedAt?: string;
     comment?: string;
 
     // For UI convenience
@@ -54,12 +54,12 @@ export interface ApprovalStep {
 export const approvalService = {
     // Save Approval (Branching T vs A)
     save: async (data: Partial<Approval>, steps: Partial<ApprovalStep>[], status: 'T' | 'A'): Promise<Approval> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         if (!companyId) throw new Error("User not authenticated");
 
         const request = {
-            approval: { ...data, company_id: companyId },
-            steps: steps.map(s => ({ ...s, company_id: companyId })),
+            approval: { ...data, companyId: companyId },
+            steps: steps.map(s => ({ ...s, companyId: companyId })),
             status: status
         };
         const response = await api.post('/api/approval', request);
@@ -69,12 +69,12 @@ export const approvalService = {
     // Process Decision (Approve/Reject)
     processDecision: async (approvalId: string, decision: 'APPROVE' | 'REJECT', comment: string): Promise<void> => {
         const user = useAuthStore.getState().user;
-        if (!user || !user.company_id || !user.id) throw new Error("User not authenticated");
+        if (!user || !user.companyId || !user.personId) throw new Error("User not authenticated");
 
         const request = {
-            companyId: user.company_id,
+            companyId: user.companyId,
             approvalId: approvalId,
-            personId: user.person_id,
+            personId: user.personId,
             decision: decision,
             comment: comment
         };
@@ -83,7 +83,7 @@ export const approvalService = {
 
     // Get List (Inbox/Outbox)
     getList: async (userId: string, type: 'inbox-pending' | 'inbox-completed' | 'inbox-reference' | 'outbox'): Promise<Approval[]> => {
-        const storeCompanyId = useAuthStore.getState().user?.company_id;
+        const storeCompanyId = useAuthStore.getState().user?.companyId;
         if (!storeCompanyId) throw new Error("User not authenticated");
 
         let endpoint = '';
@@ -100,7 +100,7 @@ export const approvalService = {
 
     // Get Detail
     getById: async (id: string): Promise<Approval | undefined> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         if (!companyId) throw new Error("User not authenticated");
         try {
             const response = await api.get(`/api/approval/${id}?companyId=${companyId}`);

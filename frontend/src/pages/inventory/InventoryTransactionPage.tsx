@@ -80,7 +80,7 @@ export default function InventoryTransactionPage() {
                                                 {tx.type === 'IN' ? '입고' : '출고'}
                                             </span>
                                         </td>
-                                        <td className="h-12 px-4 font-mono text-xs">{tx.inventory_id}</td>
+                                        <td className="h-12 px-4 font-mono text-xs">{tx.inventoryId}</td>
                                         <td className="h-12 px-4 font-medium">{tx.name}</td>
                                         <td className="h-12 px-4 text-slate-600">{tx.spec}</td>
                                         <td className="h-12 px-4">{tx.storage}</td>

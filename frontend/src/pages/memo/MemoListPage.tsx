@@ -27,9 +27,9 @@ export default function MemoListPage() {
 
     useEffect(() => {
         const fetchMemos = async () => {
-            // Defaulting companyId to COM-001 if user not logged in or missing company_id
+            // Defaulting companyId to COM-001 if user not logged in or missing companyId
             // Ideally should depend on user.
-            const companyId = user?.company_id || 'COM-001';
+            const companyId = user?.companyId || 'COM-001';
             try {
                 const data = await memoService.getAllMemos(companyId);
                 setMemos(data);
@@ -47,10 +47,10 @@ export default function MemoListPage() {
 
     const sortedData = [...filteredData].sort((a, b) => {
         // 1. 공지사항 최상단
-        if (a.is_notice === 'Y' && b.is_notice !== 'Y') return -1;
-        if (a.is_notice !== 'Y' && b.is_notice === 'Y') return 1;
+        if (a.isNotice === 'Y' && b.isNotice !== 'Y') return -1;
+        if (a.isNotice !== 'Y' && b.isNotice === 'Y') return 1;
         // 2. 최신 작성일 기준 정렬
-        return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     });
 
     return (
@@ -101,12 +101,12 @@ export default function MemoListPage() {
                             ) : (
                                 sortedData.map((item) => (
                                     <TableRow
-                                        key={item.memo_id}
+                                        key={item.memoId}
                                         className="cursor-pointer hover:bg-slate-50"
-                                        onClick={() => navigate(`/memo/${item.memo_id}`)}
+                                        onClick={() => navigate(`/memo/${item.memoId}`)}
                                     >
                                         <TableCell className="text-center font-medium">
-                                            {item.is_notice === 'Y' ? (
+                                            {item.isNotice === 'Y' ? (
                                                 <Badge variant="secondary" className="bg-red-50 text-red-600 hover:bg-red-100 border-red-100">공지</Badge>
                                             ) : item.status === 'T' ? (
                                                 <Badge variant="outline" className="text-slate-500 border-slate-200">임시</Badge>
@@ -114,13 +114,13 @@ export default function MemoListPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                <span className={item.is_notice === 'Y' ? "font-bold text-slate-900" : "text-slate-700"}>
+                                                <span className={item.isNotice === 'Y' ? "font-bold text-slate-900" : "text-slate-700"}>
                                                     {item.title}
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-center text-muted-foreground">{item.author_name || item.created_by}</TableCell>
-                                        <TableCell className="text-center text-muted-foreground">{item.created_at?.split('T')[0]}</TableCell>
+                                        <TableCell className="text-center text-muted-foreground">{item.author_name || item.createdBy}</TableCell>
+                                        <TableCell className="text-center text-muted-foreground">{item.createdAt?.split('T')[0]}</TableCell>
                                     </TableRow>
                                 ))
                             )}

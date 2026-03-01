@@ -20,4 +20,107 @@
         -moz-osx-font-smoothing: grayscale;
         @apply bg-slate-50 text-slate-900;
     }
-}
+
+    /* Rich Text Content & ProseMirror Styles */
+    .ProseMirror,
+    .rich-text-content {
+        outline: none;
+    }
+
+    .ProseMirror p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        float: left;
+        color: #94a3b8;
+        pointer-events: none;
+        height: 0;
+    }
+
+    .ProseMirror table,
+    .rich-text-content table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+        margin: 1rem 0;
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+    }
+
+    .ProseMirror td,
+    .ProseMirror th,
+    .rich-text-content td,
+    .rich-text-content th {
+        min-width: 1em;
+        border: 1px solid #cbd5e1;
+        padding: 6px 10px;
+        vertical-align: top;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    .ProseMirror th,
+    .rich-text-content th {
+        font-weight: bold;
+        text-align: left;
+        background-color: #f8fafc;
+    }
+
+    .ProseMirror .selectedCell:after {
+        z-index: 2;
+        position: absolute;
+        content: "";
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(200, 200, 255, 0.4);
+        pointer-events: none;
+    }
+
+    .ProseMirror .column-resize-handle {
+        position: absolute;
+        right: -2px;
+        top: 0;
+        bottom: -2px;
+        width: 4px;
+        background-color: #3b82f6;
+        pointer-events: none;
+    }
+
+    .ProseMirror p,
+    .rich-text-content p {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ProseMirror ul,
+    .rich-text-content ul {
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ProseMirror ol,
+    .rich-text-content ol {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ProseMirror h1,
+    .rich-text-content h1 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .ProseMirror h2,
+    .rich-text-content h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-top: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+    }

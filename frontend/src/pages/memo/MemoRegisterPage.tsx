@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { FileAttachment, type AttachedFile } from '@/components/common/FileAttachment';
+import { RichTextEditor } from '@/components/common/RichTextEditor';
 import { Checkbox } from '@/components/ui/checkbox';
 import { memoService } from '@/services/memoService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
@@ -34,7 +34,7 @@ export default function MemoRegisterPage() {
         }
 
         try {
-            const companyId = user?.company_id;
+            const companyId = user?.companyId;
             if (!companyId) throw new Error("로그인 정보가 없습니다.");
             let fileGroupId = null;
 
@@ -54,20 +54,20 @@ export default function MemoRegisterPage() {
                         });
 
                         if (!fileGroupId) {
-                            fileGroupId = response.data.file_group_id || response.data.fileGroupId;
+                            fileGroupId = response.data.fileGroupId || response.data.fileGroupId;
                         }
                     }
                 }
             }
 
             await memoService.createMemo({
-                company_id: companyId,
+                companyId: companyId,
                 title: title,
                 content: content,
-                is_notice: isNotice ? 'Y' : 'N',
+                isNotice: isNotice ? 'Y' : 'N',
                 status: status,
-                file_group_id: fileGroupId,
-                created_by: user?.person_id || 'SYSTEM'
+                fileGroupId: fileGroupId,
+                createdBy: user?.personId || 'SYSTEM'
             });
 
             toast({
@@ -143,12 +143,10 @@ export default function MemoRegisterPage() {
 
                     <div className="space-y-2">
                         <Label htmlFor="content">내용</Label>
-                        <Textarea
-                            id="content"
-                            placeholder="내용을 입력하세요"
-                            className="min-h-[400px] resize-none"
+                        <RichTextEditor
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            onChange={setContent}
+                            placeholder="내용을 입력하세요"
                         />
                     </div>
                 </CardContent>

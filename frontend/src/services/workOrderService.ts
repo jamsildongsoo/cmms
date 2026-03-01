@@ -5,7 +5,7 @@ import { useAuthStore } from "@/features/auth/useAuthStore";
 export const workOrderService = {
     getAll: async (filter?: 'ALL' | 'REQ' | 'ACT'): Promise<WorkOrder[]> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             // Backend doesn't support filter param in GET yet, we filter client side
             const response = await api.get<WorkOrder[]>(`/api/tx/work-orders?companyId=${companyId}`);
@@ -31,7 +31,7 @@ export const workOrderService = {
 
     getById: async (id: string): Promise<WorkOrder | undefined> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<WorkOrder>(`/api/tx/work-orders/${companyId}/${id}`);
             return response.data;
@@ -42,7 +42,7 @@ export const workOrderService = {
     },
 
     create: async (data: WorkOrder): Promise<WorkOrder> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
 
@@ -55,7 +55,7 @@ export const workOrderService = {
         };
 
         const payload = {
-            workOrder: { ...sanitizedData, company_id: companyId, plant_id: (data as any).plant_id || currentPlantId || 'P0001' },
+            workOrder: { ...sanitizedData, companyId: companyId, plantId: (data as any).plantId || currentPlantId || 'P0001' },
             items: (data as any).items // Type assertion in case it's missing in type
         };
         const response = await api.post<WorkOrder>('/api/tx/work-orders', payload);
@@ -89,7 +89,7 @@ export const workOrderService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         if (!companyId) throw new Error("User not authenticated");
         await api.delete(`/api/tx/work-orders/${companyId}/${id}`);
     }

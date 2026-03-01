@@ -5,7 +5,7 @@ import { useAuthStore } from "@/features/auth/useAuthStore";
 export const workPermitService = {
     getAll: async (filter?: 'ALL' | 'REQ' | 'APR'): Promise<WorkPermit[]> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<WorkPermit[]>(`/api/tx/work-permits?companyId=${companyId}`);
             let data = response.data;
@@ -26,7 +26,7 @@ export const workPermitService = {
 
     getById: async (id: string): Promise<WorkPermit | undefined> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<WorkPermit>(`/api/tx/work-permits/${companyId}/${id}`);
             return response.data;
@@ -36,12 +36,12 @@ export const workPermitService = {
         }
     },
 
-    create: async (data: Omit<WorkPermit, "permit_id">): Promise<WorkPermit> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+    create: async (data: Omit<WorkPermit, "permitId">): Promise<WorkPermit> => {
+        const companyId = useAuthStore.getState().user?.companyId;
         const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
         const payload = {
-            work_permit: { ...data, company_id: companyId, plant_id: (data as any).plant_id || currentPlantId || 'P0001' },
+            work_permit: { ...data, companyId: companyId, plantId: (data as any).plantId || currentPlantId || 'P0001' },
             items: (data as any).items
         };
         const response = await api.post<WorkPermit>('/api/tx/work-permits', payload);
@@ -66,7 +66,7 @@ export const workPermitService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         if (!companyId) throw new Error("User not authenticated");
         await api.delete(`/api/tx/work-permits/${companyId}/${id}`);
     }

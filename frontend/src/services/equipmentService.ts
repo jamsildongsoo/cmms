@@ -8,7 +8,7 @@ import { useAuthStore } from "@/features/auth/useAuthStore";
 export const equipmentService = {
     getAll: async (): Promise<Equipment[]> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<Equipment[]>(`/api/master/equipment?companyId=${companyId}`);
             return response.data;
@@ -20,7 +20,7 @@ export const equipmentService = {
 
     getById: async (id: string): Promise<Equipment | undefined> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<Equipment>(`/api/master/equipment/${companyId}/${id}`);
             return response.data;
@@ -30,11 +30,11 @@ export const equipmentService = {
         }
     },
 
-    create: async (equipment: Omit<Equipment, "equipment_id">): Promise<Equipment> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+    create: async (equipment: Omit<Equipment, "equipmentId">): Promise<Equipment> => {
+        const companyId = useAuthStore.getState().user?.companyId;
         const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
-        const payload = { ...equipment, company_id: companyId, plant_id: equipment.plant_id || currentPlantId || 'P0001' };
+        const payload = { ...equipment, companyId: companyId, plantId: equipment.plantId || currentPlantId || 'P0001' };
         const response = await api.post<Equipment>('/api/master/equipment', payload);
         return response.data;
     },
@@ -45,7 +45,7 @@ export const equipmentService = {
             if (!existing) throw new Error("Equipment not found");
             const merged = { ...existing, ...updates };
             // Ensure ID is set if missing in updates
-            if (!merged.equipment_id) merged.equipment_id = id;
+            if (!merged.equipmentId) merged.equipmentId = id;
 
             const response = await api.post<Equipment>('/api/master/equipment', merged);
             return response.data;
@@ -55,7 +55,7 @@ export const equipmentService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         if (!companyId) throw new Error("User not authenticated");
         await api.delete(`/api/master/equipment/${companyId}/${id}`);
     }

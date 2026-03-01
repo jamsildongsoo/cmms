@@ -23,8 +23,8 @@ export default function ApprovalOutboxPage() {
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        if (user?.company_id && user?.person_id) {
-            approvalService.getList(user.person_id, 'outbox').then(setOutboxData);
+        if (user?.companyId && user?.personId) {
+            approvalService.getList(user.personId, 'outbox').then(setOutboxData);
         }
     }, [user]);
 
@@ -60,18 +60,18 @@ export default function ApprovalOutboxPage() {
                                 {outboxData.length > 0 ? (
                                     outboxData.map((item) => (
                                         <TableRow
-                                            key={item.approval_id}
+                                            key={item.approvalId}
                                             className="cursor-pointer hover:bg-slate-50"
-                                            onClick={() => navigate(`/approval/${item.approval_id}`)}
+                                            onClick={() => navigate(`/approval/${item.approvalId}`)}
                                         >
                                             <TableCell>기안</TableCell>
                                             <TableCell className="font-medium">{item.title}</TableCell>
                                             <TableCell className="text-muted-foreground flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" /> {item.created_at}
+                                                <Calendar className="h-3 w-3" /> {item.createdAt}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1 text-sm">
-                                                    {item.current_step}단계
+                                                    {item.currentStep}단계
                                                 </div>
                                             </TableCell>
                                             <TableCell>

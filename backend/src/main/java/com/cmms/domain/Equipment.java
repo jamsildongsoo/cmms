@@ -71,13 +71,13 @@ public class Equipment extends BaseEntity {
     @Column(name = "residual_value", precision = 18, scale = 2)
     private BigDecimal residualValue;
 
-    @Column(name = "inspection_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'Y'")
+    @Column(name = "inspection_yn", length = 1, columnDefinition = "CHAR(1)")
     private String inspectionYn;
 
-    @Column(name = "psm_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "psm_yn", length = 1, columnDefinition = "CHAR(1)")
     private String psmYn;
 
-    @Column(name = "workpermit_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "workpermit_yn", length = 1, columnDefinition = "CHAR(1)")
     private String workpermitYn;
 
     @Column(name = "inspection_interval")
@@ -97,7 +97,4 @@ public class Equipment extends BaseEntity {
 
     @Column(name = "status", length = 1)
     private String status;
-
-    @Column(name = "use_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'Y'")
-    private String useYn = "Y";
 }

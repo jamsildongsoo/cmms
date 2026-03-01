@@ -80,7 +80,7 @@ export default function EquipmentDetailPage() {
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">설비 상세</h1>
                         <p className="text-sm text-muted-foreground flex items-center gap-2">
-                            {equipment.equipment_id}
+                            {equipment.equipmentId}
                             {getStatusBadge(equipment.status ?? '')}
                         </p>
                     </div>
@@ -92,7 +92,7 @@ export default function EquipmentDetailPage() {
                         </Link>
                     </Button>
                     <Button className="bg-blue-600 hover:bg-blue-700" asChild>
-                        <Link to={`/master/equipment/${equipment.equipment_id}/edit`}>
+                        <Link to={`/master/equipment/${equipment.equipmentId}/edit`}>
                             <Edit2 className="mr-2 h-4 w-4" /> 수정
                         </Link>
                     </Button>
@@ -106,15 +106,15 @@ export default function EquipmentDetailPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Row 1: ID(1) / Name(3) */}
-                    <Field label="설비 코드" value={equipment.equipment_id} />
+                    <Field label="설비 코드" value={equipment.equipmentId} />
                     <div className="col-span-1 md:col-span-3">
                         <Field label="설비명" value={equipment.name} />
                     </div>
                     {/* Row 2: Type(1) / Dept(1) / Location(2) */}
-                    <Field label="설비 유형" value={equipment.code_item} />
-                    <Field label="관리 부서" value={equipment.dept_id} />
+                    <Field label="설비 유형" value={equipment.codeItem} />
+                    <Field label="관리 부서" value={equipment.deptId} />
                     <div className="col-span-1 md:col-span-2">
-                        <Field label="설치 위치" value={equipment.install_location} />
+                        <Field label="설치 위치" value={equipment.installLocation} />
                     </div>
                 </CardContent>
             </Card>
@@ -126,7 +126,7 @@ export default function EquipmentDetailPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Row 3: Maker(1) / Model(1) / Spec(1) / Serial(1) */}
-                    <Field label="제조사" value={equipment.maker_name} />
+                    <Field label="제조사" value={equipment.makerName} />
                     <Field label="모델명" value={equipment.model} />
                     <Field label="설비 사양" value={equipment.spec} />
                     <Field label="Serial No." value={equipment.serial} />
@@ -140,11 +140,11 @@ export default function EquipmentDetailPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     {/* Row 4: InstallDate(1) / Cost(1) / Residual(1) / Method(1) / Period(1) */}
-                    <Field label="설치 일자" value={equipment.install_date} />
-                    <Field label="취득 금액" value={equipment.purchase_cost?.toLocaleString()} />
-                    <Field label="잔존 가액" value={equipment.residual_value?.toLocaleString()} />
-                    <Field label="상각 방법" value={equipment.depre_method} />
-                    <Field label="내용 연수" value={equipment.depre_period ? `${equipment.depre_period}년` : '-'} />
+                    <Field label="설치 일자" value={equipment.installDate} />
+                    <Field label="취득 금액" value={equipment.purchaseCost?.toLocaleString()} />
+                    <Field label="잔존 가액" value={equipment.residualValue?.toLocaleString()} />
+                    <Field label="상각 방법" value={equipment.depreMethod} />
+                    <Field label="내용 연수" value={equipment.deprePeriod ? `${equipment.deprePeriod}년` : '-'} />
                 </CardContent>
             </Card>
 
@@ -155,12 +155,12 @@ export default function EquipmentDetailPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Row 5: PSM / Insp / WP */}
-                    <Field label="PSM 대상 여부" value={equipment.psm_yn === 'Y' ? '예 (Yes)' : '아니오 (No)'} />
-                    <Field label="예방 점검 대상" value={equipment.inspection_yn === 'Y' ? '예 (Yes)' : '아니오 (No)'} />
-                    <Field label="작업허가 대상" value={equipment.workpermit_yn === 'Y' ? '예 (Yes)' : '아니오 (No)'} />
+                    <Field label="PSM 대상 여부" value={equipment.psmYn === 'Y' ? '예 (Yes)' : '아니오 (No)'} />
+                    <Field label="예방 점검 대상" value={equipment.inspectionYn === 'Y' ? '예 (Yes)' : '아니오 (No)'} />
+                    <Field label="작업허가 대상" value={equipment.workpermitYn === 'Y' ? '예 (Yes)' : '아니오 (No)'} />
 
                     {/* Row 6: Interval / Last / Next */}
-                    <Field label="표준 점검 주기" value={equipment.inspection_interval ? `${equipment.inspection_interval} ${equipment.inspection_unit === 'MONTH' ? '개월' : equipment.inspection_unit === 'WEEK' ? '주' : '일'}` : '-'} />
+                    <Field label="표준 점검 주기" value={equipment.inspectionInterval ? `${equipment.inspectionInterval} ${equipment.inspectionUnit === 'MONTH' ? '개월' : equipment.inspectionUnit === 'WEEK' ? '주' : '일'}` : '-'} />
                     <Field label="마지막 점검일" value="-" />
                     <Field label="다음 점검일" value="-" />
                 </CardContent>

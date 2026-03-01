@@ -75,7 +75,7 @@ export default function CompanyRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label>회사 코드 <span className="text-red-500">*</span></Label>
-                            <Input {...register('id', { required: true })} placeholder="회사 코드 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
+                            <Input {...register('companyId', { required: true })} placeholder="회사 코드 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
                         </div>
                         <div className="space-y-2">
                             <Label>회사명 <span className="text-red-500">*</span></Label>

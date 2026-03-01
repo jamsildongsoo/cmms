@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function WorkOrderListPage() {
     const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-    const [filter, setFilter] = useState<'ALL' | 'REQ' | 'ACT'>('ALL');
+    const [filter, setFilter] = useState<'ALL' | 'PLN' | 'ACT'>('ALL');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,17 +19,43 @@ export default function WorkOrderListPage() {
     }, [filter]);
 
     const loadData = async () => {
-        const data = await workOrderService.getAll(filter);
-        setWorkOrders(data);
+        const data = await workOrderService.getAll();
+        // Sort by ID (Descending)
+        let filtered = [...data].sort((a, b) => b.orderId.localeCompare(a.orderId));
+        
+        if (filter !== 'ALL') {
+            filtered = filtered.filter(wo => wo.stage === filter);
+        }
+        
+        setWorkOrders(filtered);
+    };
+
+    const getStageBadge = (stage?: string) => {
+        const labels: Record<string, string> = { 'PLN': '계획', 'ACT': '실적' };
+        const styles: Record<string, string> = {
+            'PLN': 'bg-blue-50 text-blue-700 border-blue-200',
+            'ACT': 'bg-purple-50 text-purple-700 border-purple-200'
+        };
+        return (
+            <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${styles[stage || ""] || 'bg-gray-100'}`}>
+                {labels[stage || ""] || stage || '-'}
+            </span>
+        );
     };
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             'T': 'bg-slate-100 text-slate-800 border-slate-200',
-            'A': 'bg-blue-100 text-blue-800 border-blue-200',
-            'C': 'bg-green-100 text-green-800 border-green-200'
+            'A': 'bg-orange-100 text-orange-800 border-orange-200',
+            'C': 'bg-green-100 text-green-800 border-green-200',
+            'REQ': 'bg-yellow-100 text-yellow-800 border-yellow-200'
         };
-        const labels: Record<string, string> = { 'T': '임시', 'A': '결재중', 'C': '확정' };
+        const labels: Record<string, string> = { 
+            'T': '임시', 
+            'A': '결재중', 
+            'C': '완료',
+            'REQ': '요청'
+        };
         return (
             <span className={`px-2 py-0.5 rounded border text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
                 {labels[status] || status}
@@ -45,7 +71,7 @@ export default function WorkOrderListPage() {
                     <p className="text-muted-foreground">설비 고장 수리 및 작업 요청을 관리합니다.</p>
                 </div>
                 <Button onClick={() => navigate('/wo/work-order/new')} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" /> 작업 요청
+                    <Plus className="mr-2 h-4 w-4" /> 작업 요청 등록
                 </Button>
             </div>
 
@@ -53,8 +79,8 @@ export default function WorkOrderListPage() {
                 <div className="flex justify-between items-center mb-4">
                     <TabsList>
                         <TabsTrigger value="ALL">전체</TabsTrigger>
-                        <TabsTrigger value="REQ">요청</TabsTrigger>
-                        <TabsTrigger value="ACT">조치</TabsTrigger>
+                        <TabsTrigger value="PLN">계획</TabsTrigger>
+                        <TabsTrigger value="ACT">실적</TabsTrigger>
                     </TabsList>
 
                     <div className="flex items-center space-x-2">
@@ -75,11 +101,12 @@ export default function WorkOrderListPage() {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-50 border-b">
                                     <tr>
+                                        <th className="px-4 py-3 font-medium text-slate-500 w-20">구분</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">지시번호</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업명</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">대상설비</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500">예정일자</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500 text-right">예상비용</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500">작업일자</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500">담당자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">상태</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">관리</th>
                                     </tr>
@@ -87,48 +114,40 @@ export default function WorkOrderListPage() {
                                 <tbody>
                                     {workOrders.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                                            <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                                                 등록된 작업 내역이 없습니다.
                                             </td>
                                         </tr>
                                     ) : (
                                         workOrders.map(wo => (
                                             <tr
-                                                key={wo.order_id}
+                                                key={wo.orderId}
                                                 className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                                onClick={() => navigate(`/wo/work-order/${wo.order_id}`)}
+                                                onClick={() => navigate(`/wo/work-order/${wo.orderId}`)}
                                             >
-                                                <td className="px-4 py-3 font-medium">{wo.order_id}</td>
+                                                <td className="px-4 py-3">{getStageBadge(wo.stage)}</td>
+                                                <td className="px-4 py-3 font-medium">{wo.orderId}</td>
                                                 <td className="px-4 py-3">{wo.name}</td>
-                                                <td className="px-4 py-3 text-slate-600">{wo.equipment_name}</td>
+                                                <td className="px-4 py-3 text-slate-600">{wo.equipmentName}</td>
                                                 <td className="px-4 py-3 text-slate-600">{wo.date}</td>
-                                                <td className="px-4 py-3 text-right font-medium">
-                                                    {wo.cost?.toLocaleString()} 원
-                                                </td>
+                                                <td className="px-4 py-3 text-slate-600">{wo.personName || wo.personId || '-'}</td>
                                                 <td className="px-4 py-3 text-center">{getStatusBadge(wo.status || "")}</td>
                                                 <td className="px-4 py-3 text-center">
                                                     <div className="flex items-center justify-center gap-2">
-                                                        {filter === 'REQ' && (
+                                                        {wo.stage === 'PLN' && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="h-8 px-2 text-orange-600 border-orange-200 hover:bg-orange-50"
+                                                                className={`h-8 px-2 ${wo.status === 'C' ? 'text-orange-600 border-orange-200 hover:bg-orange-50' : 'text-slate-400 border-slate-200'}`}
+                                                                disabled={wo.status !== 'C'}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    navigate(`/wo/work-order/new?ref_entity=WO&ref_id=${wo.order_id}`);
+                                                                    navigate(`/wo/work-order/result/new?refEntity=WO&refId=${wo.orderId}`);
                                                                 }}
                                                             >
                                                                 실적 입력
                                                             </Button>
                                                         )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 px-2 text-blue-600 hover:text-blue-800"
-                                                            onClick={(e) => { e.stopPropagation(); navigate(`/wo/work-order/${wo.order_id}`); }}
-                                                        >
-                                                            상세
-                                                        </Button>
                                                     </div>
                                                 </td>
                                             </tr>

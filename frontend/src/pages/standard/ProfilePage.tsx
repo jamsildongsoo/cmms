@@ -33,7 +33,7 @@ export default function ProfilePage() {
     const onSubmit = async (data: Person) => {
         try {
             setLoading(true);
-            await standardService.update('person', data.person_id, data);
+            await standardService.update('person', data.personId, data);
             toast({ title: "성공", description: "개인 정보가 수정되었습니다." });
             // Update local user state if needed, but standardService.update doesn't return the full updated user for store
             // For now, redirect or just show success
@@ -45,7 +45,7 @@ export default function ProfilePage() {
         }
     };
 
-    const deptName = departments.find(d => d.id === user?.dept_id)?.name || user?.dept_id || '부서 미지정';
+    const deptName = departments.find(d => d.deptId === user?.deptId)?.name || user?.deptId || '부서 미지정';
 
     return (
         <div className="max-w-3xl mx-auto space-y-6 pb-10">
@@ -74,7 +74,7 @@ export default function ProfilePage() {
                             {user?.name?.[0] || '?'}
                         </div>
                         <div>
-                            <CardTitle className="text-xl font-bold">{user?.name} ({user?.person_id})</CardTitle>
+                            <CardTitle className="text-xl font-bold">{user?.name} ({user?.personId})</CardTitle>
                             <CardDescription>{deptName} / {user?.position || '직급 정보 없음'}</CardDescription>
                         </div>
                     </CardHeader>
@@ -85,7 +85,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="space-y-2">
                             <Label>사번</Label>
-                            <Input {...register('person_id')} disabled className="bg-slate-50" />
+                            <Input {...register('personId')} disabled className="bg-slate-50" />
                         </div>
                         <div className="space-y-2">
                             <Label>이메일</Label>

@@ -25,10 +25,10 @@ export default function ApprovalInboxPage() {
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        if (user?.company_id && user?.person_id) {
-            approvalService.getList(user.person_id, 'inbox-pending').then(setPendingData);
-            approvalService.getList(user.person_id, 'inbox-completed').then(setCompletedData);
-            approvalService.getList(user.person_id, 'inbox-reference').then(setReferenceData);
+        if (user?.companyId && user?.personId) {
+            approvalService.getList(user.personId, 'inbox-pending').then(setPendingData);
+            approvalService.getList(user.personId, 'inbox-completed').then(setCompletedData);
+            approvalService.getList(user.personId, 'inbox-reference').then(setReferenceData);
         }
     }, [user]);
 
@@ -51,9 +51,9 @@ export default function ApprovalInboxPage() {
                         {data.length > 0 ? (
                             data.map((item) => (
                                 <TableRow
-                                    key={item.approval_id}
+                                    key={item.approvalId}
                                     className="cursor-pointer hover:bg-slate-50"
-                                    onClick={() => navigate(`/approval/${item.approval_id}`)}
+                                    onClick={() => navigate(`/approval/${item.approvalId}`)}
                                 >
                                     <TableCell>
                                         <Badge
@@ -72,11 +72,11 @@ export default function ApprovalInboxPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-1 text-sm">
                                             <User className="h-3 w-3 text-muted-foreground" />
-                                            {item.requester_name || item.requester_id}
+                                            {item.requester_name || item.requesterId}
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" /> {item.created_at?.split(' ')[0]}
+                                        <Calendar className="h-3 w-3" /> {item.createdAt?.split(' ')[0]}
                                     </TableCell>
                                 </TableRow>
                             ))

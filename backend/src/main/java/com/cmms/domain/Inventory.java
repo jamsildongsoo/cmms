@@ -56,7 +56,4 @@ public class Inventory extends BaseEntity {
 
     @Column(name = "status", length = 1)
     private String status;
-
-    @Column(name = "use_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'Y'")
-    private String useYn = "Y";
 }

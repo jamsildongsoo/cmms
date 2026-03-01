@@ -33,10 +33,10 @@ export default function MaterialRegisterPage() {
 
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Material>();
 
-    // Auto-fill company_id from auth store (hidden)
+    // Auto-fill companyId from auth store (hidden)
     useEffect(() => {
-        if (user?.company_id) {
-            setValue('company_id', user.company_id);
+        if (user?.companyId) {
+            setValue('companyId', user.companyId);
         }
     }, [user, setValue]);
 
@@ -136,8 +136,8 @@ export default function MaterialRegisterPage() {
                 </div>
             </div>
 
-            {/* company_id: hidden, managed by auth store */}
-            <input type="hidden" {...register('company_id')} />
+            {/* companyId: hidden, managed by auth store */}
+            <input type="hidden" {...register('companyId')} />
 
             <form id="material-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* 섹션 1: 기본정보 */}
@@ -150,7 +150,7 @@ export default function MaterialRegisterPage() {
                         <div className="space-y-2">
                             <Label>자재 코드</Label>
                             <Input
-                                {...register('inventory_id')}
+                                {...register('inventoryId')}
                                 placeholder="저장 시 자동 생성"
                                 disabled={true}
                                 className="bg-slate-50"
@@ -167,7 +167,7 @@ export default function MaterialRegisterPage() {
                         {/* Row 2: 자재유형(1) / 기본단위(1) / 관리부서(2) */}
                         <div className="space-y-2">
                             <Label>자재 유형</Label>
-                            <Select onValueChange={(val: string) => setValue('code_item', val)} defaultValue={watch('code_item') || ''}>
+                            <Select onValueChange={(val: string) => setValue('codeItem', val)} defaultValue={watch('codeItem') || ''}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="유형 선택" />
                                 </SelectTrigger>
@@ -201,9 +201,9 @@ export default function MaterialRegisterPage() {
                         <div className="space-y-2 md:col-span-2">
                             <Label>관리 부서</Label>
                             <SearchableSelect
-                                items={departments}
-                                value={watch('dept_id') || ''}
-                                onChange={(id) => setValue('dept_id', id)}
+                                items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
+                                value={watch('deptId') || ''}
+                                onChange={(id) => setValue('deptId', id)}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
                             />
@@ -219,7 +219,7 @@ export default function MaterialRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label>제조사</Label>
-                            <Input {...register('maker_name')} placeholder="제조사 입력" />
+                            <Input {...register('makerName')} placeholder="제조사 입력" />
                         </div>
                         <div className="space-y-2">
                             <Label>모델명</Label>

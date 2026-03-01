@@ -1,6 +1,6 @@
 -- 1. 기준 정보 (Standard Information)
 
-CREATE TABLE company (
+CREATE TABLE IF NOT EXISTS company (
     company_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     bizno VARCHAR(20),
@@ -10,7 +10,7 @@ CREATE TABLE company (
     CONSTRAINT pk_company PRIMARY KEY (company_id)
 );
 
-CREATE TABLE plant (
+CREATE TABLE IF NOT EXISTS plant (
     company_id VARCHAR(20) NOT NULL,
     plant_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE plant (
     CONSTRAINT pk_plant PRIMARY KEY (company_id, plant_id)
 );
 
-CREATE TABLE dept (
+CREATE TABLE IF NOT EXISTS dept (
     company_id VARCHAR(20) NOT NULL,
     dept_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE dept (
     CONSTRAINT pk_dept PRIMARY KEY (company_id, dept_id)
 );
 
-CREATE TABLE role (
+CREATE TABLE IF NOT EXISTS role (
     company_id VARCHAR(20) NOT NULL,
     role_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE role (
     CONSTRAINT pk_role PRIMARY KEY (company_id, role_id)
 );
 
-CREATE TABLE person (
+CREATE TABLE IF NOT EXISTS person (
     company_id VARCHAR(20) NOT NULL,
     person_id VARCHAR(20) NOT NULL,
     role_id VARCHAR(20),
@@ -50,11 +50,10 @@ CREATE TABLE person (
     note TEXT,
     delete_mark CHAR(1) DEFAULT 'N',
     last_login_at TIMESTAMP,
-    last_login_ip VARCHAR(50),
     CONSTRAINT pk_person PRIMARY KEY (company_id, person_id)
 );
 
-CREATE TABLE storage (
+CREATE TABLE IF NOT EXISTS storage (
     company_id VARCHAR(20) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -62,7 +61,7 @@ CREATE TABLE storage (
     CONSTRAINT pk_storage PRIMARY KEY (company_id, storage_id)
 );
 
-CREATE TABLE bin (
+CREATE TABLE IF NOT EXISTS bin (
     company_id VARCHAR(20) NOT NULL,
     bin_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -70,7 +69,7 @@ CREATE TABLE bin (
     CONSTRAINT pk_bin PRIMARY KEY (company_id, bin_id)
 );
 
-CREATE TABLE location (
+CREATE TABLE IF NOT EXISTS location (
     company_id VARCHAR(20) NOT NULL,
     location_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -79,7 +78,7 @@ CREATE TABLE location (
     CONSTRAINT pk_location PRIMARY KEY (company_id, location_id)
 );
 
-CREATE TABLE code (
+CREATE TABLE IF NOT EXISTS code (
     company_id VARCHAR(20) NOT NULL,
     code_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -87,7 +86,7 @@ CREATE TABLE code (
     CONSTRAINT pk_code PRIMARY KEY (company_id, code_id)
 );
 
-CREATE TABLE code_item (
+CREATE TABLE IF NOT EXISTS code_item (
     company_id VARCHAR(20) NOT NULL,
     code_id VARCHAR(20) NOT NULL,
     item_id VARCHAR(20) NOT NULL,
@@ -97,7 +96,7 @@ CREATE TABLE code_item (
 
 -- 2. 마스터 정보 (Master Data)
 
-CREATE TABLE equipment (
+CREATE TABLE IF NOT EXISTS equipment (
     company_id VARCHAR(20) NOT NULL,
     plant_id VARCHAR(20) NOT NULL,
     equipment_id VARCHAR(20) NOT NULL,
@@ -125,14 +124,10 @@ CREATE TABLE equipment (
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1), -- T:임시, A:결재중, C:확정
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(50),
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(50),
-    CONSTRAINT pk_equipment PRIMARY KEY (company_id, equipment_id)
+    CONSTRAINT pk_equipment PRIMARY KEY (company_id, plant_id, equipment_id)
 );
 
-CREATE TABLE inventory (
+CREATE TABLE IF NOT EXISTS inventory (
     company_id VARCHAR(20) NOT NULL,
     inventory_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -147,16 +142,12 @@ CREATE TABLE inventory (
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
     CONSTRAINT pk_inventory PRIMARY KEY (company_id, inventory_id)
 );
 
 -- 3. 트랜잭션 정보 (Transaction Data)
 
-CREATE TABLE inspection (
+CREATE TABLE IF NOT EXISTS inspection (
     company_id VARCHAR(20) NOT NULL,
     inspection_id VARCHAR(20) NOT NULL,
     plant_id VARCHAR(20),
@@ -181,7 +172,7 @@ CREATE TABLE inspection (
     CONSTRAINT pk_inspection PRIMARY KEY (company_id, inspection_id)
 );
 
-CREATE TABLE inspection_item (
+CREATE TABLE IF NOT EXISTS inspection_item (
     company_id VARCHAR(20) NOT NULL,
     inspection_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
@@ -195,7 +186,7 @@ CREATE TABLE inspection_item (
     CONSTRAINT pk_inspection_item PRIMARY KEY (company_id, inspection_id, line_no)
 );
 
-CREATE TABLE work_order (
+CREATE TABLE IF NOT EXISTS work_order (
     company_id VARCHAR(20) NOT NULL,
     order_id VARCHAR(20) NOT NULL,
     plant_id VARCHAR(20),
@@ -223,7 +214,7 @@ CREATE TABLE work_order (
     CONSTRAINT pk_work_order PRIMARY KEY (company_id, order_id)
 );
 
-CREATE TABLE work_order_item (
+CREATE TABLE IF NOT EXISTS work_order_item (
     company_id VARCHAR(20) NOT NULL,
     order_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
@@ -233,7 +224,7 @@ CREATE TABLE work_order_item (
     CONSTRAINT pk_work_order_item PRIMARY KEY (company_id, order_id, line_no)
 );
 
-CREATE TABLE work_permit (
+CREATE TABLE IF NOT EXISTS work_permit (
     company_id VARCHAR(20) NOT NULL,
     permit_id VARCHAR(20) NOT NULL, -- WP + YYYYMM + SEQ
     plant_id VARCHAR(20),
@@ -277,7 +268,7 @@ CREATE TABLE work_permit (
     CONSTRAINT pk_work_permit PRIMARY KEY (company_id, permit_id)
 );
 
-CREATE TABLE work_permit_item (
+CREATE TABLE IF NOT EXISTS work_permit_item (
     company_id VARCHAR(20) NOT NULL,
     permit_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
@@ -298,7 +289,7 @@ CREATE TABLE work_permit_item (
 -- 4. 재고 관리 (Inventory Management)
 -- Modified to include bin/location granularity
 
-CREATE TABLE inventory_stock (
+CREATE TABLE IF NOT EXISTS inventory_stock (
     company_id VARCHAR(20) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
     bin_id VARCHAR(20) NOT NULL,       -- Added
@@ -314,7 +305,7 @@ CREATE TABLE inventory_stock (
     CONSTRAINT pk_inventory_stock PRIMARY KEY (company_id, storage_id, bin_id, location_id, inventory_id)
 );
 
-CREATE TABLE inventory_history (
+CREATE TABLE IF NOT EXISTS inventory_history (
     company_id VARCHAR(20) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
     bin_id VARCHAR(20) NOT NULL,       -- Added
@@ -330,7 +321,7 @@ CREATE TABLE inventory_history (
     CONSTRAINT pk_inventory_history PRIMARY KEY (company_id, storage_id, bin_id, location_id, inventory_id, history_id)
 );
 
-CREATE TABLE inventory_closing (
+CREATE TABLE IF NOT EXISTS inventory_closing (
     company_id VARCHAR(20) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
     inventory_id VARCHAR(20) NOT NULL,
@@ -355,7 +346,7 @@ CREATE TABLE inventory_closing (
 
 -- 5. 공통 및 시스템 기능 (General & System)
 
-CREATE TABLE memo (
+CREATE TABLE IF NOT EXISTS memo (
     company_id VARCHAR(20) NOT NULL,
     memo_id VARCHAR(20) NOT NULL,
     title VARCHAR(100),
@@ -373,7 +364,7 @@ CREATE TABLE memo (
     CONSTRAINT pk_memo PRIMARY KEY (company_id, memo_id)
 );
 
-CREATE TABLE memo_comment (
+CREATE TABLE IF NOT EXISTS memo_comment (
     company_id VARCHAR(20) NOT NULL,
     memo_id VARCHAR(20) NOT NULL,
     comment_id INTEGER NOT NULL,
@@ -382,7 +373,7 @@ CREATE TABLE memo_comment (
     content TEXT    
 );
 
-CREATE TABLE approval (
+CREATE TABLE IF NOT EXISTS approval (
     company_id VARCHAR(20) NOT NULL,
     approval_id VARCHAR(20) NOT NULL,
     title VARCHAR(100),
@@ -401,7 +392,7 @@ CREATE TABLE approval (
     CONSTRAINT pk_approval PRIMARY KEY (company_id, approval_id)
 );
 
-CREATE TABLE approval_step (
+CREATE TABLE IF NOT EXISTS approval_step (
     company_id VARCHAR(20) NOT NULL,
     approval_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
@@ -413,7 +404,7 @@ CREATE TABLE approval_step (
     CONSTRAINT pk_approval_step PRIMARY KEY (company_id, approval_id, line_no)
 );
 
-CREATE TABLE file_group (
+CREATE TABLE IF NOT EXISTS file_group (
     company_id VARCHAR(20) NOT NULL,
     file_group_id VARCHAR(100) NOT NULL,
     ref_entity VARCHAR(20),
@@ -426,7 +417,7 @@ CREATE TABLE file_group (
     CONSTRAINT pk_file_group PRIMARY KEY (company_id, file_group_id)
 );
 
-CREATE TABLE file_item (
+CREATE TABLE IF NOT EXISTS file_item (
     company_id VARCHAR(20) NOT NULL,
     file_group_id VARCHAR(100) NOT NULL,
     line_no INTEGER NOT NULL,
@@ -440,7 +431,7 @@ CREATE TABLE file_item (
     CONSTRAINT pk_file_item PRIMARY KEY (company_id, file_group_id, line_no)
 );
 
-CREATE TABLE sequence (
+CREATE TABLE IF NOT EXISTS sequence (
     company_id VARCHAR(20) NOT NULL,
     ref_entity VARCHAR(20) NOT NULL, -- equipment, inventory 등
     date_key VARCHAR(20) NOT NULL, -- 년월일 혹은 prefix

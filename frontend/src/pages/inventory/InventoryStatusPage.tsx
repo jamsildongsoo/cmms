@@ -58,13 +58,13 @@ export default function InventoryStatusPage() {
                             </thead>
                             <tbody>
                                 {inventory.map((item) => (
-                                    <tr key={item.inventory_id} className="border-b hover:bg-slate-50 transition-colors">
-                                        <td className="h-12 px-4 font-mono text-xs">{item.inventory_id}</td>
+                                    <tr key={item.inventoryId} className="border-b hover:bg-slate-50 transition-colors">
+                                        <td className="h-12 px-4 font-mono text-xs">{item.inventoryId}</td>
                                         <td className="h-12 px-4 font-medium">{item.name}</td>
                                         <td className="h-12 px-4 text-slate-600">{item.spec || '-'}</td>
-                                        <td className="h-12 px-4">{item.code_item || '-'}</td>
+                                        <td className="h-12 px-4">{item.codeItem || '-'}</td>
                                         <td className="h-12 px-4">{item.unit}</td>
-                                        <td className="h-12 px-4">{item.maker_name || '-'}</td>
+                                        <td className="h-12 px-4">{item.makerName || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>

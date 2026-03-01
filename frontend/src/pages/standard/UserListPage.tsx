@@ -72,22 +72,22 @@ export default function UserListPage() {
                                 ) : (
                                     persons.map((item) => (
                                         <tr
-                                            key={item.person_id}
+                                            key={item.personId}
                                             className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                            onClick={() => navigate(`/standard/user/${item.person_id}/edit`)}
+                                            onClick={() => navigate(`/standard/user/${item.personId}/edit`)}
                                         >
-                                            <td className="px-4 py-3 font-medium">{item.person_id}</td>
+                                            <td className="px-4 py-3 font-medium">{item.personId}</td>
                                             <td className="px-4 py-3">{item.name}</td>
-                                            <td className="px-4 py-3">{item.dept_id || '-'}</td>
+                                            <td className="px-4 py-3">{item.deptId || '-'}</td>
                                             <td className="px-4 py-3">{item.position || '-'}</td>
                                             <td className="px-4 py-3">{item.email || '-'}</td>
-                                            <td className="px-4 py-3">{item.role_id || '-'}</td>
+                                            <td className="px-4 py-3">{item.roleId || '-'}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={(e) => handleDelete(e, item.person_id)}
+                                                    onClick={(e) => handleDelete(e, item.personId)}
                                                     disabled={loading}
                                                 >
                                                     <Trash2 className="h-4 w-4" />

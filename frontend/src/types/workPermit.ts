@@ -18,40 +18,40 @@ export interface WPCategoryTemplate {
 }
 
 export interface WorkPermit {
-    permit_id: string;
-    wp_types: string[]; // HOT, CONF, ELEC, etc. (Multi-select)
+    permitId: string;
+    wpTypes: string[]; // HOT, CONF, ELEC, etc. (Multi-select)
     name: string;
     date: string; // Application Date
     // ... rest of the existing interface
-    start_dt: string;
-    end_dt: string;
-    person_name: string;
+    startDt: string;
+    endDt: string;
+    personName: string;
     status: 'T' | 'A' | 'C'; // Temp, Approved, Completed(Closed)
 
     // Dynamic Form Data (JSON)
-    checksheet_json_com?: Record<string, any>; // Common (Mandatory)
-    checksheet_json_hot?: Record<string, any>;
-    checksheet_json_conf?: Record<string, any>;
-    checksheet_json_elec?: Record<string, any>;
-    checksheet_json_high?: Record<string, any>;
-    checksheet_json_dig?: Record<string, any>;
+    checksheetJsonCom?: Record<string, any>; // Common (Mandatory)
+    checksheetJsonHot?: Record<string, any>;
+    checksheetJsonConf?: Record<string, any>;
+    checksheetJsonElec?: Record<string, any>;
+    checksheetJsonHigh?: Record<string, any>;
+    checksheetJsonDig?: Record<string, any>;
 
     location?: string;
 
     // Risk Assessment
-    work_summary?: string;
-    hazard_factor?: string;
-    safety_factor?: string;
+    workSummary?: string;
+    hazardFactor?: string;
+    safetyFactor?: string;
 
     // Additional Fields for UI Spec
-    equipment_id?: string;
-    equipment_name?: string;
-    dept_id?: string;
-    person_id?: string;
+    equipmentId?: string;
+    equipmentName?: string;
+    deptId?: string;
+    personId?: string;
 
-    order_id?: string;
+    orderId?: string;
     stage?: 'PLN' | 'ACT'; // Plan / Actual
-    parent_permit_id?: string;
-    approval_id?: string;
+    parentPermitId?: string;
+    approvalId?: string;
 
 }

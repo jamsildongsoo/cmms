@@ -34,7 +34,7 @@ export default function PasswordPage() {
 
         try {
             setLoading(true);
-            await api.post(`/api/std/persons/${user?.company_id}/${user?.person_id}/password`, {
+            await api.post(`/api/std/persons/${user?.companyId}/${user?.personId}/password`, {
                 currentPassword: data.currentPassword,
                 newPassword: data.newPassword
             });

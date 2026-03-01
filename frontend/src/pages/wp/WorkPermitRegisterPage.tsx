@@ -29,14 +29,14 @@ export default function WorkPermitRegisterPage() {
 
     const { register, handleSubmit, setValue, watch } = useForm<WorkPermit>({
         defaultValues: {
-            wp_types: [], // Default empty (General is implied/mandatory)
+            wpTypes: [], // Default empty (General is implied/mandatory)
             status: 'T',
             stage: 'PLN',
             date: new Date().toISOString().split('T')[0],
         }
     });
 
-    const selectedTypes = watch('wp_types') || [];
+    const selectedTypes = watch('wpTypes') || [];
 
     // Department & User data for SearchableSelect
     const [departments, setDepartments] = useState<Dept[]>([]);
@@ -49,10 +49,10 @@ export default function WorkPermitRegisterPage() {
         equipmentService.getAll().then(setEquipments);
     }, []);
 
-    const selectedDeptId = watch('dept_id');
+    const selectedDeptId = watch('deptId');
     const filteredPersons = useMemo(() => {
         if (!selectedDeptId) return persons;
-        return persons.filter(p => p.dept_id === selectedDeptId);
+        return persons.filter(p => p.deptId === selectedDeptId);
     }, [selectedDeptId, persons]);
 
     useEffect(() => {
@@ -70,9 +70,9 @@ export default function WorkPermitRegisterPage() {
     const handleTypeChange = (type: string, checked: boolean) => {
         const current = selectedTypes;
         if (checked) {
-            setValue('wp_types', [...current, type]);
+            setValue('wpTypes', [...current, type]);
         } else {
-            setValue('wp_types', current.filter(t => t !== type));
+            setValue('wpTypes', current.filter(t => t !== type));
         }
     };
 
@@ -186,7 +186,7 @@ export default function WorkPermitRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label>허가번호</Label>
-                            <Input {...register('permit_id')} placeholder="자동 생성" disabled className="bg-slate-50" />
+                            <Input {...register('permitId')} placeholder="자동 생성" disabled className="bg-slate-50" />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>작업명 <span className="text-red-500">*</span></Label>
@@ -200,28 +200,28 @@ export default function WorkPermitRegisterPage() {
                         <div className="space-y-2">
                             <Label>대상 설비</Label>
                             <SearchableSelect
-                                items={equipments.map(e => ({ ...e, id: e.equipment_id }))}
-                                value={watch('equipment_id') || ''}
+                                items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
+                                value={watch('equipmentId') || ''}
                                 onChange={(val) => {
-                                    const equipment = equipments.find(e => e.equipment_id === val);
-                                    setValue('equipment_id', val);
-                                    setValue('equipment_name', equipment?.name || '');
-                                    if (equipment?.dept_id) {
-                                        setValue('dept_id', equipment.dept_id);
+                                    const equipment = equipments.find(e => e.equipmentId === val);
+                                    setValue('equipmentId', val);
+                                    setValue('equipmentName', equipment?.name || '');
+                                    if (equipment?.deptId) {
+                                        setValue('deptId', equipment.deptId);
                                     }
                                 }}
                                 placeholder="설비 검색..."
-                                displayFormat={(item) => `${item.name} (${item.equipment_id})`}
+                                displayFormat={(item) => `${item.name} (${item.equipmentId})`}
                                 disabled={isConfirmed}
                             />
-                            <input type="hidden" {...register('equipment_name')} />
+                            <input type="hidden" {...register('equipmentName')} />
                         </div>
                         <div className="space-y-2">
                             <Label>신청 부서</Label>
                             <SearchableSelect
-                                items={departments}
-                                value={watch('dept_id') || ''}
-                                onChange={(val) => setValue('dept_id', val)}
+                                items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
+                                value={watch('deptId') || ''}
+                                onChange={(val) => setValue('deptId', val)}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
                                 disabled={isConfirmed}
@@ -230,18 +230,18 @@ export default function WorkPermitRegisterPage() {
                         <div className="space-y-2">
                             <Label>신청자</Label>
                             <SearchableSelect
-                                items={filteredPersons}
-                                value={watch('person_id') || ''}
+                                items={filteredPersons.map((p: any) => ({ ...p, id: p.personId }))}
+                                value={watch('personId') || ''}
                                 onChange={(val) => {
-                                    const p = persons.find(person => person.person_id === val);
-                                    setValue('person_id', val);
-                                    setValue('person_name', p?.name || '');
+                                    const p = persons.find(person => person.personId === val);
+                                    setValue('personId', val);
+                                    setValue('personName', p?.name || '');
                                 }}
                                 placeholder="신청자 검색..."
-                                displayFormat={(person) => `${person.name} ${person.position || ''} (${person.person_id})`}
+                                displayFormat={(person) => `${person.name} ${person.position || ''} (${person.personId})`}
                                 disabled={isConfirmed}
                             />
-                            <input type="hidden" {...register('person_name')} />
+                            <input type="hidden" {...register('personName')} />
                         </div>
                         <div className="space-y-2">
                         </div>
@@ -272,11 +272,11 @@ export default function WorkPermitRegisterPage() {
 
                         <div className="space-y-2">
                             <Label>시작 일시</Label>
-                            <Input type="datetime-local" {...register('start_dt')} disabled={isConfirmed} />
+                            <Input type="datetime-local" {...register('startDt')} disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
                             <Label>종료 일시</Label>
-                            <Input type="datetime-local" {...register('end_dt')} disabled={isConfirmed} />
+                            <Input type="datetime-local" {...register('endDt')} disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>작업 장소</Label>
@@ -285,7 +285,7 @@ export default function WorkPermitRegisterPage() {
 
                         <div className="space-y-2 md:col-span-4">
                             <Label>작업 내용</Label>
-                            <Textarea {...register('work_summary')} placeholder="작업 내용을 상세히 기술하세요." disabled={isConfirmed} className={isConfirmed ? "bg-slate-50 min-h-[80px]" : "min-h-[80px]"} />
+                            <Textarea {...register('workSummary')} placeholder="작업 내용을 상세히 기술하세요." disabled={isConfirmed} className={isConfirmed ? "bg-slate-50 min-h-[80px]" : "min-h-[80px]"} />
                         </div>
                     </CardContent>
                 </Card>
@@ -298,11 +298,11 @@ export default function WorkPermitRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>위험 요인</Label>
-                            <Input {...register('hazard_factor')} placeholder="예: 화재, 추락, 질식" disabled={isConfirmed} />
+                            <Input {...register('hazardFactor')} placeholder="예: 화재, 추락, 질식" disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
                             <Label>안전 대책</Label>
-                            <Input {...register('safety_factor')} placeholder="예: 소화기 비치, 안전벨트 착용" disabled={isConfirmed} />
+                            <Input {...register('safetyFactor')} placeholder="예: 소화기 비치, 안전벨트 착용" disabled={isConfirmed} />
                         </div>
                     </CardContent>
                 </Card>

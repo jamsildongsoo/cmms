@@ -42,6 +42,6 @@ public class Memo extends BaseEntity {
     @Column(name = "approval_id", length = 20)
     private String approvalId;
 
-    @Column(name = "is_notice", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "is_notice", length = 1, columnDefinition = "CHAR(1)")
     private String isNotice = "N";
 }

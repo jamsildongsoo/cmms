@@ -24,8 +24,8 @@ export const useAuthStore = create<AuthState>()(
             login: async (companyId: string, id: string, password: string) => {
                 try {
                     const response = await axios.post('/api/auth/login', {
-                        company_id: companyId,
-                        person_id: id,
+                        companyId: companyId,
+                        personId: id,
                         password: password
                     });
 
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>()(
                     // Fetch plants to set default
                     try {
                         const plants = await standardService.getAll('plant');
-                        const defaultPlant = plants.find(p => p.company_id === user.company_id);
+                        const defaultPlant = plants.find(p => p.companyId === user.companyId);
                         if (defaultPlant) {
                             set({ currentPlantId: defaultPlant.id });
                         }

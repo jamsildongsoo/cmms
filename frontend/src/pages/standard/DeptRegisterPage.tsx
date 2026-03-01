@@ -23,8 +23,8 @@ export default function DeptRegisterPage() {
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
-        if (user?.company_id) {
-            setValue('company_id', user.company_id);
+        if (user?.companyId) {
+            setValue('companyId', user.companyId);
         }
     }, [user, setValue]);
 
@@ -84,7 +84,7 @@ export default function DeptRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                             <Label>부서 코드 <span className="text-red-500">*</span></Label>
-                            <Input {...register('id', { required: true })} placeholder="부서 코드 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
+                            <Input {...register('deptId', { required: true })} placeholder="부서 코드 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
                         </div>
                         <div className="space-y-2">
                             <Label>부서명 <span className="text-red-500">*</span></Label>
@@ -92,11 +92,11 @@ export default function DeptRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>회사 ID <span className="text-red-500">*</span></Label>
-                            <Input {...register('company_id', { required: true })} disabled className="bg-slate-50" />
+                            <Input {...register('companyId', { required: true })} disabled className="bg-slate-50" />
                         </div>
                         <div className="space-y-2">
                             <Label>상위 부서 ID</Label>
-                            <Input {...register('parent_id')} placeholder="상위 부서 ID (선택)" />
+                            <Input {...register('parentId')} placeholder="상위 부서 ID (선택)" />
                         </div>
                     </CardContent>
                 </Card>

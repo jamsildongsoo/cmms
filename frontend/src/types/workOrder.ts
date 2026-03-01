@@ -1,38 +1,40 @@
 
 export interface WorkOrder {
-    order_id: string;
+    orderId: string;
     name: string;
-    equipment_id?: string;
-    equipment_name: string;
+    equipmentId?: string;
+    equipmentName: string;
     date: string; // Request Date
     status?: 'REQ' | 'T' | 'A' | 'C'; // Requested, Temp, Assigned, Completed
     stage?: 'PLN' | 'ACT';
-    ref_entity?: string; // WO, IN
-    ref_id?: string;
+    refEntity?: string; // WO, IN
+    refId?: string;
     cost?: number;
     note?: string; // description -> note
     priority?: string; // High, Medium, Low
-    due_date?: string;
+    dueDate?: string;
 
     // Backend mapped fields
-    code_item?: string; // type -> code_item
-    dept_id?: string; // Department
-    person_id?: string; // Manager/Person in charge
+    codeItem?: string; // type -> codeItem
+    deptId?: string; // Department
+    deptName?: string;
+    personId?: string; // Manager/Person in charge
+    personName?: string;
     time?: number; // Estimated Man-Day
 
     // Result fields
-    start_dt?: string;
-    end_dt?: string;
-    worker_name?: string;
-    action_desc?: string;
-    labor_cost?: number;
-    material_cost?: number;
+    startDt?: string;
+    endDt?: string;
+    workerName?: string;
+    actionDesc?: string;
+    laborCost?: number;
+    materialCost?: number;
 
     items?: any[]; // Allow any for now to avoid strict type issues with flexible item structure, or define interface
 }
 
 export interface WorkOrderItem {
-    line_no: number;
+    lineNo: number;
     name: string; // Task Name
     method: string;
     result?: string;

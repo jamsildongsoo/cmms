@@ -23,8 +23,8 @@ public class InventoryService {
         return stockRepository.save(stock);
     }
 
-    public List<InventoryStock> getAllStocks() {
-        return stockRepository.findAll();
+    public List<InventoryStock> getAllStocks(String companyId) {
+        return stockRepository.findByCompanyId(companyId);
     }
 
     public Optional<InventoryStock> getStockById(String companyId, String storageId, String binId, String locationId,
@@ -42,8 +42,8 @@ public class InventoryService {
         return historyRepository.save(history);
     }
 
-    public List<InventoryHistory> getAllHistories() {
-        return historyRepository.findAll();
+    public List<InventoryHistory> getAllHistories(String companyId) {
+        return historyRepository.findByCompanyId(companyId);
     }
 
     public Optional<InventoryHistory> getHistoryById(String companyId, String storageId, String binId,
@@ -73,8 +73,8 @@ public class InventoryService {
         return closingRepository.save(closing);
     }
 
-    public List<InventoryClosing> getAllClosings() {
-        return closingRepository.findAll();
+    public List<InventoryClosing> getAllClosings(String companyId) {
+        return closingRepository.findByCompanyId(companyId);
     }
 
     public Optional<InventoryClosing> getClosingById(String companyId, String storageId, String inventoryId,

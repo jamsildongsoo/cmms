@@ -11,8 +11,8 @@ import PlantListPage from '@/pages/standard/PlantListPage';
 import PlantRegisterPage from '@/pages/standard/PlantRegisterPage';
 import DeptListPage from '@/pages/standard/DeptListPage';
 import DeptRegisterPage from '@/pages/standard/DeptRegisterPage';
-import WarehouseListPage from '@/pages/standard/WarehouseListPage';
-import WarehouseRegisterPage from '@/pages/standard/WarehouseRegisterPage';
+import StorageListPage from '@/pages/standard/StorageListPage';
+import StorageRegisterPage from '@/pages/standard/StorageRegisterPage';
 import UserListPage from '@/pages/standard/UserListPage';
 import UserRegisterPage from '@/pages/standard/UserRegisterPage';
 import CodeListPage from '@/pages/standard/CodeListPage';
@@ -94,9 +94,9 @@ function App() {
             <Route path="standard/dept/new" element={<DeptRegisterPage />} />
             <Route path="standard/dept/:id/edit" element={<DeptRegisterPage />} />
 
-            <Route path="standard/warehouse" element={<WarehouseListPage />} />
-            <Route path="standard/warehouse/new" element={<WarehouseRegisterPage />} />
-            <Route path="standard/warehouse/:id/edit" element={<WarehouseRegisterPage />} />
+            <Route path="standard/storage" element={<StorageListPage />} />
+            <Route path="standard/storage/new" element={<StorageRegisterPage />} />
+            <Route path="standard/storage/:id/edit" element={<StorageRegisterPage />} />
 
             <Route path="standard/user" element={<UserListPage />} />
             <Route path="standard/user/new" element={<UserRegisterPage />} />

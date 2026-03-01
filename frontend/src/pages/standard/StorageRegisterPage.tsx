@@ -15,16 +15,16 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
-import { standardService, type Warehouse, type Plant } from '@/services/standardService';
+import { standardService, type Storage, type Plant } from '@/services/standardService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 
-export default function WarehouseRegisterPage() {
+export default function StorageRegisterPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const isEditMode = !!id;
 
-    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Warehouse>();
+    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Storage>();
     const [plants, setPlants] = useState<Plant[]>([]);
     const user = useAuthStore((state) => state.user);
 
@@ -33,33 +33,33 @@ export default function WarehouseRegisterPage() {
     }, []);
 
     useEffect(() => {
-        if (user?.company_id) {
-            setValue('company_id', user.company_id);
+        if (user?.companyId) {
+            setValue('companyId', user.companyId);
         }
     }, [user, setValue]);
 
     useEffect(() => {
         if (isEditMode && id) {
-            standardService.getById('warehouse', id).then((data: Warehouse) => {
+            standardService.getById('storage', id).then((data: Storage) => {
                 if (data) {
                     Object.keys(data).forEach(key => {
-                        setValue(key as keyof Warehouse, data[key as keyof Warehouse]);
+                        setValue(key as keyof Storage, data[key as keyof Storage]);
                     });
                 }
             });
         }
     }, [id, isEditMode, setValue]);
 
-    const onSubmit = async (data: Warehouse) => {
+    const onSubmit = async (data: Storage) => {
         try {
             if (isEditMode && id) {
-                await standardService.update('warehouse', id, data);
-                toast({ title: "성공", description: "창고 정보가 수정되었습니다." });
+                await standardService.update('storage', id, data);
+                toast({ title: "성공", description: "저장소 정보가 수정되었습니다." });
             } else {
-                await standardService.create('warehouse', data);
-                toast({ title: "성공", description: "창고가 등록되었습니다." });
+                await standardService.create('storage', data);
+                toast({ title: "성공", description: "저장소가 등록되었습니다." });
             }
-            navigate('/standard/warehouse');
+            navigate('/standard/storage');
         } catch (error) {
             console.error(error);
             toast({ title: "오류", description: "저장 중 오류가 발생했습니다.", variant: "destructive" });
@@ -70,58 +70,58 @@ export default function WarehouseRegisterPage() {
         <div className="max-w-5xl mx-auto space-y-6 pb-10">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => navigate('/standard/warehouse')}>
+                    <Button variant="ghost" size="icon" onClick={() => navigate('/standard/storage')}>
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">{isEditMode ? '창고 수정' : '창고 등록'}</h1>
-                        <p className="text-muted-foreground">{isEditMode ? '기존 창고 정보를 수정합니다.' : '신규 창고를 등록합니다.'}</p>
+                        <h1 className="text-2xl font-bold tracking-tight">{isEditMode ? '저장소 수정' : '저장소 등록'}</h1>
+                        <p className="text-muted-foreground">{isEditMode ? '기존 저장소 정보를 수정합니다.' : '신규 저장소를 등록합니다.'}</p>
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" type="button" onClick={() => navigate('/standard/warehouse')}>취소</Button>
-                    <Button type="submit" form="warehouse-form" className="bg-blue-600 hover:bg-blue-700">
+                    <Button variant="outline" type="button" onClick={() => navigate('/standard/storage')}>취소</Button>
+                    <Button type="submit" form="storage-form" className="bg-blue-600 hover:bg-blue-700">
                         <Save className="mr-2 h-4 w-4" /> 저장
                     </Button>
                 </div>
             </div>
 
-            <form id="warehouse-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form id="storage-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">창고 정보</CardTitle>
+                        <CardTitle className="text-lg">저장소 정보</CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="id">창고 코드 (ID) <span className="text-red-500">*</span></Label>
+                            <Label htmlFor="storageId">저장소 코드 (ID) <span className="text-red-500">*</span></Label>
                             <Input
-                                id="id"
-                                {...register('id', { required: '창고 코드는 필수입니다.' })}
-                                placeholder="예: WH01"
+                                id="storageId"
+                                {...register('storageId', { required: '저장소 코드는 필수입니다.' })}
+                                placeholder="예: STR01"
                                 disabled={isEditMode}
                                 className={isEditMode ? "bg-slate-50" : ""}
                             />
-                            {errors.id && <span className="text-xs text-red-500">{errors.id.message}</span>}
-                            <input type="hidden" {...register('company_id')} />
+                            {errors.storageId && <span className="text-xs text-red-500">{errors.storageId.message}</span>}
+                            <input type="hidden" {...register('companyId')} />
                         </div>
                         <div className="space-y-2">
-                            <Label>창고명 <span className="text-red-500">*</span></Label>
-                            <Input {...register('name', { required: true })} placeholder="창고명 입력" />
-                            {errors.name && <span className="text-red-500 text-xs">창고명은 필수입니다.</span>}
+                            <Label>저장소명 <span className="text-red-500">*</span></Label>
+                            <Input {...register('name', { required: true })} placeholder="저장소명 입력" />
+                            {errors.name && <span className="text-red-500 text-xs">저장소명은 필수입니다.</span>}
                         </div>
 
                         <div className="space-y-2">
                             <Label>사업장 <span className="text-red-500">*</span></Label>
                             <Select
-                                value={watch('plant_id') || ''}
-                                onValueChange={(val: string) => setValue('plant_id', val)}
+                                value={watch('plantId') || ''}
+                                onValueChange={(val: string) => setValue('plantId', val)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="사업장 선택" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {plants.map(plant => (
-                                        <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
+                                        <SelectItem key={plant.plantId} value={plant.plantId}>{plant.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

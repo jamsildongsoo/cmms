@@ -32,7 +32,7 @@ public class MemoComment {
     @Column(name = "author_id", length = 20)
     private String authorId;
 
-    @Column(name = "date", insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "date", insertable = false, updatable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime date;
 
     @Column(name = "content", columnDefinition = "TEXT")

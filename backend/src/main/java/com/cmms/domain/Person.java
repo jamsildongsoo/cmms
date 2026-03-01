@@ -57,9 +57,6 @@ public class Person {
     @Column(name = "last_login_ip", length = 50)
     private String lastLoginIp;
 
-    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1)")
     private String deleteMark = "N";
-
-    @Column(name = "use_yn", length = 1, columnDefinition = "CHAR(1) DEFAULT 'Y'")
-    private String useYn = "Y";
 }

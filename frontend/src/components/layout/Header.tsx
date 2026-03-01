@@ -13,9 +13,9 @@ export function Header() {
     const [plants, setPlants] = useState<Plant[]>([]);
 
     useEffect(() => {
-        if (user?.company_id) {
+        if (user?.companyId) {
             standardService.getAll('plant').then(data => {
-                const myPlants = data.filter(p => p.company_id === user.company_id);
+                const myPlants = data.filter(p => p.companyId === user.companyId);
                 setPlants(myPlants);
                 // If currentPlantId is null but we have plants, set the first one
                 if (!currentPlantId && myPlants.length > 0) {
@@ -31,11 +31,11 @@ export function Header() {
     };
 
     return (
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
+        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 print:hidden">
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2 text-slate-600">
                     <Building2 className="h-5 w-5 text-blue-600" />
-                    <span className="text-sm font-medium text-slate-500">{user?.company_id}</span>
+                    <span className="text-sm font-medium text-slate-500">{user?.companyId}</span>
                     <span className="text-sm font-bold text-slate-900 ml-1">{user?.name} 님</span>
                 </div>
 
@@ -48,8 +48,8 @@ export function Header() {
                             </SelectTrigger>
                             <SelectContent>
                                 {plants.map(p => (
-                                    <SelectItem key={p.id} value={p.id}>
-                                        {p.name} ({p.id})
+                                    <SelectItem key={p.plantId} value={p.plantId}>
+                                        {p.name} ({p.plantId})
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -67,7 +67,7 @@ export function Header() {
                     </div>
                     <div className="text-right hidden md:block">
                         <p className="text-sm font-medium text-slate-900">{user?.name}</p>
-                        <p className="text-xs text-slate-500">{user?.dept_id || '부서 미지정'}</p>
+                        <p className="text-xs text-slate-500">{user?.deptId || '부서 미지정'}</p>
                     </div>
                 </div>
                 <Button variant="ghost" size="icon">

@@ -32,8 +32,8 @@ export default function UserRegisterPage() {
     }, []);
 
     useEffect(() => {
-        if (user?.company_id) {
-            setValue('company_id', user.company_id);
+        if (user?.companyId) {
+            setValue('companyId', user.companyId);
         }
     }, [user, setValue]);
 
@@ -92,15 +92,15 @@ export default function UserRegisterPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="person_id">사번 (ID) <span className="text-red-500">*</span></Label>
-                            <Input id="person_id" {...register('person_id', { required: '사번은 필수입니다.' })} placeholder="사번 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
-                            {errors.person_id && <span className="text-xs text-red-500">{errors.person_id.message}</span>}
+                            <Label htmlFor="personId">사번 (ID) <span className="text-red-500">*</span></Label>
+                            <Input id="personId" {...register('personId', { required: '사번은 필수입니다.' })} placeholder="사번 입력" disabled={isEditMode} className={isEditMode ? 'bg-slate-50' : ''} />
+                            {errors.personId && <span className="text-xs text-red-500">{errors.personId.message}</span>}
                         </div>
                         {!isEditMode && (
                             <div className="space-y-2">
-                                <Label htmlFor="password_hash">초기 비밀번호 <span className="text-red-500">*</span></Label>
-                                <Input id="password_hash" type="password" {...register('password_hash', { required: '초기 비밀번호는 필수입니다.' })} placeholder="비밀번호 입력" />
-                                {errors.password_hash && <span className="text-xs text-red-500">{errors.password_hash.message}</span>}
+                                <Label htmlFor="passwordHash">초기 비밀번호 <span className="text-red-500">*</span></Label>
+                                <Input id="passwordHash" type="password" {...register('passwordHash', { required: '초기 비밀번호는 필수입니다.' })} placeholder="비밀번호 입력" />
+                                {errors.passwordHash && <span className="text-xs text-red-500">{errors.passwordHash.message}</span>}
                             </div>
                         )}
                         <div className="space-y-2">
@@ -110,21 +110,21 @@ export default function UserRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>회사 ID <span className="text-red-500">*</span></Label>
-                            <Input {...register('company_id', { required: true })} disabled className="bg-slate-50" />
+                            <Input {...register('companyId', { required: true })} disabled className="bg-slate-50" />
                         </div>
                         <div className="space-y-2">
                             <Label>부서</Label>
                             <SearchableSelect
-                                items={departments}
-                                value={watch('dept_id') || ''}
-                                onChange={(id) => setValue('dept_id', id)}
+                                items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
+                                value={watch('deptId') || ''}
+                                onChange={(id) => setValue('deptId', id)}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>권한</Label>
-                            <Input {...register('role_id')} placeholder="ADMIN / USER" />
+                            <Input {...register('roleId')} placeholder="ADMIN / USER" />
                         </div>
                         <div className="space-y-2">
                             <Label>이메일</Label>

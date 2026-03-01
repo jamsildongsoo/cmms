@@ -33,13 +33,13 @@ export default function EquipmentRegisterPage() {
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Equipment>({
         defaultValues: {
             status: 'T',
-            inspection_yn: 'Y',
-            psm_yn: 'N',
-            workpermit_yn: 'N',
-            purchase_cost: 0,
-            residual_value: 0,
-            depre_period: 0,
-            inspection_interval: 0,
+            inspectionYn: 'Y',
+            psmYn: 'N',
+            workpermitYn: 'N',
+            purchaseCost: 0,
+            residualValue: 0,
+            deprePeriod: 0,
+            inspectionInterval: 0,
         }
     });
 
@@ -155,10 +155,10 @@ export default function EquipmentRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Row 1: ID(1) / Name(3) */}
                         <div className="space-y-2">
-                            <Label htmlFor="equipment_id">설비 코드</Label>
+                            <Label htmlFor="equipmentId">설비 코드</Label>
                             <Input
-                                id="equipment_id"
-                                {...register('equipment_id')}
+                                id="equipmentId"
+                                {...register('equipmentId')}
                                 placeholder="저장 시 자동 생성"
                                 disabled={true}
                                 className="bg-slate-50"
@@ -171,10 +171,10 @@ export default function EquipmentRegisterPage() {
                         </div>
                         {/* Row 2: Type(1) / Dept(1) / Location(2) */}
                         <div className="space-y-2">
-                            <Label htmlFor="code_item">설비 유형</Label>
+                            <Label htmlFor="codeItem">설비 유형</Label>
                             <Select
-                                value={watch('code_item') || ''}
-                                onValueChange={(val: string) => setValue('code_item', val)}
+                                value={watch('codeItem') || ''}
+                                onValueChange={(val: string) => setValue('codeItem', val)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="유형 선택" />
@@ -188,18 +188,18 @@ export default function EquipmentRegisterPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="dept_id">관리 부서</Label>
+                            <Label htmlFor="deptId">관리 부서</Label>
                             <SearchableSelect
-                                items={departments}
-                                value={watch('dept_id') || ''}
-                                onChange={(id) => setValue('dept_id', id)}
+                                items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
+                                value={watch('deptId') || ''}
+                                onChange={(id) => setValue('deptId', id)}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
                             />
                         </div>
                         <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="install_location">설치 위치</Label>
-                            <Input id="install_location" {...register('install_location')} placeholder="예: A동 지하 1층 기계실" />
+                            <Label htmlFor="installLocation">설치 위치</Label>
+                            <Input id="installLocation" {...register('installLocation')} placeholder="예: A동 지하 1층 기계실" />
                         </div>
                     </CardContent>
                 </Card>
@@ -212,8 +212,8 @@ export default function EquipmentRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         {/* Row: Maker(1) / Model(1) / Spec(1) / Serial(1) */}
                         <div className="space-y-2">
-                            <Label htmlFor="maker_name">제조사</Label>
-                            <Input id="maker_name" {...register('maker_name')} placeholder="예: Atlas Copco" />
+                            <Label htmlFor="makerName">제조사</Label>
+                            <Input id="makerName" {...register('makerName')} placeholder="예: Atlas Copco" />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="model">모델명</Label>
@@ -237,22 +237,22 @@ export default function EquipmentRegisterPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="install_date">설치 일자</Label>
-                            <Input id="install_date" type="date" {...register('install_date')} />
+                            <Label htmlFor="installDate">설치 일자</Label>
+                            <Input id="installDate" type="date" {...register('installDate')} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="purchase_cost">취득 금액</Label>
-                            <Input id="purchase_cost" type="number" {...register('purchase_cost', { valueAsNumber: true })} />
+                            <Label htmlFor="purchaseCost">취득 금액</Label>
+                            <Input id="purchaseCost" type="number" {...register('purchaseCost', { valueAsNumber: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="residual_value">잔존 가액</Label>
-                            <Input id="residual_value" type="number" {...register('residual_value', { valueAsNumber: true })} />
+                            <Label htmlFor="residualValue">잔존 가액</Label>
+                            <Input id="residualValue" type="number" {...register('residualValue', { valueAsNumber: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="depre_method">상각 방법</Label>
+                            <Label htmlFor="depreMethod">상각 방법</Label>
                             <Select
-                                value={watch('depre_method') || ''}
-                                onValueChange={(val: string) => setValue('depre_method', val as any)}
+                                value={watch('depreMethod') || ''}
+                                onValueChange={(val: string) => setValue('depreMethod', val as any)}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
@@ -264,8 +264,8 @@ export default function EquipmentRegisterPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="depre_period">내용 연수 (년)</Label>
-                            <Input id="depre_period" type="number" {...register('depre_period', { valueAsNumber: true })} />
+                            <Label htmlFor="deprePeriod">내용 연수 (년)</Label>
+                            <Input id="deprePeriod" type="number" {...register('deprePeriod', { valueAsNumber: true })} />
                         </div>
                     </CardContent>
                 </Card>
@@ -277,8 +277,8 @@ export default function EquipmentRegisterPage() {
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="psm_yn">PSM 대상 여부</Label>
-                            <Select onValueChange={(val: string) => setValue('psm_yn', val as any)} defaultValue="N">
+                            <Label htmlFor="psmYn">PSM 대상 여부</Label>
+                            <Select onValueChange={(val: string) => setValue('psmYn', val as any)} defaultValue="N">
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>
@@ -289,8 +289,8 @@ export default function EquipmentRegisterPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="inspection_yn">예방 점검 대상</Label>
-                            <Select onValueChange={(val: string) => setValue('inspection_yn', val as any)} defaultValue="Y">
+                            <Label htmlFor="inspectionYn">예방 점검 대상</Label>
+                            <Select onValueChange={(val: string) => setValue('inspectionYn', val as any)} defaultValue="Y">
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>
@@ -301,8 +301,8 @@ export default function EquipmentRegisterPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="workpermit_yn">작업허가 대상</Label>
-                            <Select onValueChange={(val: string) => setValue('workpermit_yn', val as any)} defaultValue="N">
+                            <Label htmlFor="workpermitYn">작업허가 대상</Label>
+                            <Select onValueChange={(val: string) => setValue('workpermitYn', val as any)} defaultValue="N">
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>
@@ -314,12 +314,12 @@ export default function EquipmentRegisterPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="inspection_interval">점검 주기</Label>
-                            <Input id="inspection_interval" type="number" {...register('inspection_interval', { valueAsNumber: true })} />
+                            <Label htmlFor="inspectionInterval">점검 주기</Label>
+                            <Input id="inspectionInterval" type="number" {...register('inspectionInterval', { valueAsNumber: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="inspection_unit">주기 단위</Label>
-                            <Select onValueChange={(val: string) => setValue('inspection_unit', val as any)} defaultValue="MONTH">
+                            <Label htmlFor="inspectionUnit">주기 단위</Label>
+                            <Select onValueChange={(val: string) => setValue('inspectionUnit', val as any)} defaultValue="MONTH">
                                 <SelectTrigger>
                                     <SelectValue placeholder="단위 선택" />
                                 </SelectTrigger>

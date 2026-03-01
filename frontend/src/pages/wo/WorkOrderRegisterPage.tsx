@@ -39,15 +39,15 @@ export default function WorkOrderRegisterPage() {
 
     // Result Mode Inputs (from Query Params)
     const [searchParams] = useSearchParams();
-    const refEntityParam = searchParams.get('ref_entity');
-    const refIdParam = searchParams.get('ref_id');
+    const refEntityParam = searchParams.get('refEntity');
+    const refIdParam = searchParams.get('refId');
 
     const { register, handleSubmit, setValue, watch } = useForm<WorkOrder>({
         defaultValues: {
             status: 'T',
             stage: isResultMode ? 'ACT' : 'PLN', // Force stage based on mode
-            ref_entity: refEntityParam || undefined,
-            ref_id: refIdParam || undefined,
+            refEntity: refEntityParam || undefined,
+            refId: refIdParam || undefined,
         }
     });
 
@@ -62,10 +62,10 @@ export default function WorkOrderRegisterPage() {
         equipmentService.getAll().then(setEquipments);
     }, []);
 
-    const selectedDeptId = watch('dept_id');
+    const selectedDeptId = watch('deptId');
     const filteredPersons = useMemo(() => {
         if (!selectedDeptId) return persons;
-        return persons.filter(p => p.dept_id === selectedDeptId);
+        return persons.filter(p => p.deptId === selectedDeptId);
     }, [selectedDeptId, persons]);
 
     const [workItems, setWorkItems] = useState<WorkItem[]>([
@@ -86,22 +86,26 @@ export default function WorkOrderRegisterPage() {
             workOrderService.getById(refIdParam).then(planData => {
                 if (planData) {
                     setValue('name', planData.name + ' (실적)');
-                    setValue('equipment_id', planData.equipment_id);
-                    setValue('equipment_name', planData.equipment_name);
-                    setValue('dept_id', planData.dept_id);
-                    setValue('person_id', planData.person_id);
-                    setValue('code_item', planData.code_item);
+                    setValue('equipmentId', planData.equipmentId);
+                    setValue('equipmentName', planData.equipmentName);
+                    setValue('deptId', planData.deptId);
+                    setValue('deptName', planData.deptName);
+                    setValue('personId', planData.personId);
+                    setValue('personName', planData.personName);
+                    setValue('codeItem', planData.codeItem);
+                    setValue('cost', planData.cost);
+                    setValue('time', planData.time);
                     setValue('note', planData.note);
                     setValue('stage', 'ACT');
-                    setValue('ref_entity', 'WO');
-                    setValue('ref_id', refIdParam);
+                    setValue('refEntity', 'WO');
+                    setValue('refId', refIdParam);
 
                     if (planData.items && Array.isArray(planData.items)) {
                         setWorkItems(planData.items.map((item: any) => ({
-                            seq: item.seq || item.line_no,
+                            seq: item.seq || item.lineNo,
                             task_name: item.task_name || item.name,
                             method: item.method,
-                            result: '', // Clear result
+                            result: '', // Clear result for performance entry
                             remark: ''
                         })));
                     }
@@ -231,19 +235,21 @@ export default function WorkOrderRegisterPage() {
                 {/* 작업 기본 정보 */}
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-lg">작업 요청 정보</CardTitle>
+                        <CardTitle className="text-lg">
+                            {isResultMode ? '작업 실적 정보' : '작업 요청 정보'}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label>지시번호</Label>
-                            <Input {...register('order_id')} placeholder="자동 생성" disabled className="bg-slate-50" />
+                            <Input {...register('orderId')} placeholder="자동 생성" disabled className="bg-slate-50" />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>작업명 <span className="text-red-500">*</span></Label>
                             <Input {...register('name', { required: true })} placeholder="예: 2호기 모터 소음 조치" disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
-                            <Label>요청일자</Label>
+                            <Label>{isResultMode ? '실적일자' : '요청일자'}</Label>
                             <Input type="date" {...register('date')} disabled={isConfirmed} />
                         </div>
 
@@ -259,13 +265,13 @@ export default function WorkOrderRegisterPage() {
                                     <div className="flex gap-2">
                                         <Input value="WO (지시)" disabled className="bg-slate-50 text-slate-500 w-24" />
                                         <Input
-                                            {...register('ref_id')}
+                                            {...register('refId')}
                                             placeholder="참조 ID"
                                             className={refIdParam ? "bg-slate-50 flex-1" : "flex-1"}
                                             disabled={!!refIdParam}
                                         />
                                     </div>
-                                    <input type="hidden" {...register('ref_entity')} value="WO" />
+                                    <input type="hidden" {...register('refEntity')} value="WO" />
                                 </div>
                             </>
                         )}
@@ -273,27 +279,31 @@ export default function WorkOrderRegisterPage() {
                         <div className="space-y-2 md:col-start-1">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
-                                items={equipments.map(e => ({ ...e, id: e.equipment_id }))}
-                                value={watch('equipment_id') || ''}
+                                items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
+                                value={watch('equipmentId') || ''}
                                 onChange={(val) => {
-                                    const equipment = equipments.find(e => e.equipment_id === val);
-                                    setValue('equipment_id', val);
-                                    setValue('equipment_name', equipment?.name || '');
-                                    if (equipment?.dept_id) {
-                                        setValue('dept_id', equipment.dept_id);
+                                    const equipment = equipments.find(e => e.equipmentId === val);
+                                    setValue('equipmentId', val);
+                                    setValue('equipmentName', equipment?.name || '');
+                                    if (equipment?.deptId) {
+                                        setValue('deptId', equipment.deptId);
                                     }
                                 }}
                                 placeholder="설비 검색..."
-                                displayFormat={(item) => `${item.name} (${item.equipment_id})`}
+                                displayFormat={(item) => `${item.name} (${item.equipmentId})`}
                                 disabled={isConfirmed}
                             />
-                            <input type="hidden" {...register('equipment_name', { required: true })} />
+                            <input type="hidden" {...register('equipmentName', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>작업 유형</Label>
-                            <Select onValueChange={(val: string) => setValue('code_item', val)} defaultValue="고장수리" disabled={isConfirmed}>
+                            <Select 
+                                onValueChange={(val: string) => setValue('codeItem', val)} 
+                                value={watch('codeItem') || ''} 
+                                disabled={isConfirmed}
+                            >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="선택" />
+                                    <SelectValue placeholder="작업 유형 선택" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="고장수리">고장수리</SelectItem>
@@ -302,36 +312,47 @@ export default function WorkOrderRegisterPage() {
                                     <SelectItem value="일반작업">일반작업</SelectItem>
                                 </SelectContent>
                             </Select>
+                            <input type="hidden" {...register('codeItem', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>관리 부서</Label>
                             <SearchableSelect
-                                items={departments}
-                                value={watch('dept_id') || ''}
-                                onChange={(val) => setValue('dept_id', val)}
+                                items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
+                                value={watch('deptId') || ''}
+                                onChange={(val) => {
+                                    const dept = departments.find(d => d.deptId === val);
+                                    setValue('deptId', val);
+                                    setValue('deptName', dept?.name);
+                                }}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
                                 disabled={isConfirmed}
                             />
+                            <input type="hidden" {...register('deptName')} />
                         </div>
                         <div className="space-y-2">
                             <Label>담당자</Label>
                             <SearchableSelect
-                                items={filteredPersons}
-                                value={watch('person_id') || ''}
-                                onChange={(val) => setValue('person_id', val)}
+                                items={filteredPersons.map((p: any) => ({ ...p, id: p.personId }))}
+                                value={watch('personId') || ''}
+                                onChange={(val) => {
+                                    const person = persons.find(p => p.personId === val);
+                                    setValue('personId', val);
+                                    setValue('personName', person?.name);
+                                }}
                                 placeholder="담당자 검색..."
-                                displayFormat={(person) => `${person.name} ${person.position || ''} (${person.person_id})`}
+                                displayFormat={(person) => `${person.name} ${person.position || ''} (${person.personId})`}
                                 disabled={isConfirmed}
                             />
+                            <input type="hidden" {...register('personName')} />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>예상 비용 (원)</Label>
+                            <Label>{isResultMode ? '실적 비용 (원)' : '예상 비용 (원)'}</Label>
                             <Input type="number" {...register('cost', { valueAsNumber: true })} placeholder="0" disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
-                            <Label>예상 시간 (M/D)</Label>
+                            <Label>{isResultMode ? '실적 시간 (M/D)' : '예상 시간 (M/D)'}</Label>
                             <Input type="number" step="0.1" {...register('time', { valueAsNumber: true })} placeholder="0.0" disabled={isConfirmed} />
                         </div>
 

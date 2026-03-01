@@ -4,6 +4,7 @@ import com.cmms.domain.*;
 import com.cmms.service.StandardInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,11 +21,13 @@ public class StandardInfoController {
         return standardInfoService.savePlant(plant);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/plants")
     public List<Plant> getPlants(@RequestParam String companyId) {
         return standardInfoService.getAllPlants(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/plants/{companyId}/{plantId}")
     public ResponseEntity<Plant> getPlant(@PathVariable String companyId, @PathVariable String plantId) {
         return standardInfoService.getPlantById(companyId, plantId)
@@ -32,6 +35,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/plants/{companyId}/{plantId}")
     public ResponseEntity<Void> deletePlant(@PathVariable String companyId, @PathVariable String plantId) {
         standardInfoService.deletePlant(companyId, plantId);
@@ -43,11 +47,13 @@ public class StandardInfoController {
         return standardInfoService.saveDept(dept);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/depts")
     public List<Dept> getDepts(@RequestParam String companyId) {
         return standardInfoService.getAllDepts(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/depts/{companyId}/{deptId}")
     public ResponseEntity<Dept> getDept(@PathVariable String companyId, @PathVariable String deptId) {
         return standardInfoService.getDeptById(companyId, deptId)
@@ -55,6 +61,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/depts/{companyId}/{deptId}")
     public ResponseEntity<Void> deleteDept(@PathVariable String companyId, @PathVariable String deptId) {
         standardInfoService.deleteDept(companyId, deptId);
@@ -66,11 +73,13 @@ public class StandardInfoController {
         return standardInfoService.saveRole(role);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/roles")
     public List<Role> getRoles(@RequestParam String companyId) {
         return standardInfoService.getAllRoles(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/roles/{companyId}/{roleId}")
     public ResponseEntity<Role> getRole(@PathVariable String companyId, @PathVariable String roleId) {
         return standardInfoService.getRoleById(companyId, roleId)
@@ -78,6 +87,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/roles/{companyId}/{roleId}")
     public ResponseEntity<Void> deleteRole(@PathVariable String companyId, @PathVariable String roleId) {
         standardInfoService.deleteRole(companyId, roleId);
@@ -89,11 +99,13 @@ public class StandardInfoController {
         return standardInfoService.savePerson(person);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/persons")
     public List<Person> getPersons(@RequestParam String companyId) {
         return standardInfoService.getAllPersons(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/persons/{companyId}/{personId}")
     public ResponseEntity<Person> getPerson(@PathVariable String companyId, @PathVariable String personId) {
         return standardInfoService.getPersonById(companyId, personId)
@@ -101,6 +113,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/persons/{companyId}/{personId}")
     public ResponseEntity<Void> deletePerson(@PathVariable String companyId, @PathVariable String personId) {
         standardInfoService.deletePerson(companyId, personId);
@@ -112,11 +125,13 @@ public class StandardInfoController {
         return standardInfoService.saveStorage(storage);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/storages")
     public List<Storage> getStorages(@RequestParam String companyId) {
         return standardInfoService.getAllStorages(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/storages/{companyId}/{storageId}")
     public ResponseEntity<Storage> getStorage(@PathVariable String companyId, @PathVariable String storageId) {
         return standardInfoService.getStorageById(companyId, storageId)
@@ -124,6 +139,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/storages/{companyId}/{storageId}")
     public ResponseEntity<Void> deleteStorage(@PathVariable String companyId, @PathVariable String storageId) {
         standardInfoService.deleteStorage(companyId, storageId);
@@ -135,11 +151,13 @@ public class StandardInfoController {
         return standardInfoService.saveBin(bin);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/bins")
-    public List<Bin> getBins() {
-        return standardInfoService.getAllBins();
+    public List<Bin> getBins(@RequestParam String companyId) {
+        return standardInfoService.getAllBins(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/bins/{companyId}/{binId}")
     public ResponseEntity<Bin> getBin(@PathVariable String companyId, @PathVariable String binId) {
         return standardInfoService.getBinById(companyId, binId)
@@ -147,6 +165,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/bins/{companyId}/{binId}")
     public ResponseEntity<Void> deleteBin(@PathVariable String companyId, @PathVariable String binId) {
         standardInfoService.deleteBin(companyId, binId);
@@ -158,11 +177,13 @@ public class StandardInfoController {
         return standardInfoService.saveLocation(location);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/locations")
-    public List<Location> getLocations() {
-        return standardInfoService.getAllLocations();
+    public List<Location> getLocations(@RequestParam String companyId) {
+        return standardInfoService.getAllLocations(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/locations/{companyId}/{binId}/{locationId}")
     public ResponseEntity<Location> getLocation(@PathVariable String companyId, @PathVariable String binId,
             @PathVariable String locationId) {
@@ -171,6 +192,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/locations/{companyId}/{binId}/{locationId}")
     public ResponseEntity<Void> deleteLocation(@PathVariable String companyId, @PathVariable String binId,
             @PathVariable String locationId) {
@@ -178,16 +200,19 @@ public class StandardInfoController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("principal.startsWith(#code.companyId)")
     @PostMapping("/codes")
     public Code createCode(@RequestBody Code code) {
         return standardInfoService.saveCode(code);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/codes")
     public List<Code> getCodes(@RequestParam String companyId) {
         return standardInfoService.getAllCodes(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/codes/{companyId}/{codeId}")
     public ResponseEntity<Code> getCode(@PathVariable String companyId, @PathVariable String codeId) {
         return standardInfoService.getCodeById(companyId, codeId)
@@ -195,12 +220,14 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/codes/{companyId}/{codeId}")
     public ResponseEntity<Void> deleteCode(@PathVariable String companyId, @PathVariable String codeId) {
         standardInfoService.deleteCode(companyId, codeId);
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @PostMapping("/codes/{companyId}/{codeId}/items")
     public CodeItem createCodeItem(@PathVariable String companyId, @PathVariable String codeId,
             @RequestBody CodeItem codeItem) {
@@ -209,11 +236,13 @@ public class StandardInfoController {
         return standardInfoService.saveCodeItem(codeItem);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/codes/{companyId}/{codeId}/items")
     public List<CodeItem> getCodeItemsByCodeId(@PathVariable String companyId, @PathVariable String codeId) {
         return standardInfoService.getCodeItemsByCodeId(companyId, codeId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/codes/{companyId}/{codeId}/items/{itemId}")
     public ResponseEntity<CodeItem> getCodeItem(@PathVariable String companyId, @PathVariable String codeId,
             @PathVariable String itemId) {
@@ -222,6 +251,7 @@ public class StandardInfoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/codes/{companyId}/{codeId}/items/{itemId}")
     public ResponseEntity<Void> deleteCodeItem(@PathVariable String companyId, @PathVariable String codeId,
             @PathVariable String itemId) {

@@ -4,6 +4,7 @@ import com.cmms.domain.*;
 import com.cmms.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,11 +21,13 @@ public class InventoryController {
         return inventoryService.saveStock(stock);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/stocks")
-    public List<InventoryStock> getStocks() {
-        return inventoryService.getAllStocks();
+    public List<InventoryStock> getStocks(@RequestParam String companyId) {
+        return inventoryService.getAllStocks(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/stocks/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}")
     public ResponseEntity<InventoryStock> getStock(@PathVariable String companyId, @PathVariable String storageId,
             @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId) {
@@ -33,6 +36,7 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/stocks/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}")
     public ResponseEntity<Void> deleteStock(@PathVariable String companyId, @PathVariable String storageId,
             @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId) {
@@ -45,11 +49,13 @@ public class InventoryController {
         return inventoryService.saveHistory(history);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/history")
-    public List<InventoryHistory> getHistory() {
-        return inventoryService.getAllHistories();
+    public List<InventoryHistory> getHistory(@RequestParam String companyId) {
+        return inventoryService.getAllHistories(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/history/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}/{historyId}")
     public ResponseEntity<InventoryHistory> getHistory(@PathVariable String companyId, @PathVariable String storageId,
             @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId,
@@ -59,6 +65,7 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/history/{companyId}/{storageId}/{binId}/{locationId}/{inventoryId}/{historyId}")
     public ResponseEntity<Void> deleteHistory(@PathVariable String companyId, @PathVariable String storageId,
             @PathVariable String binId, @PathVariable String locationId, @PathVariable String inventoryId,
@@ -72,11 +79,13 @@ public class InventoryController {
         return inventoryService.saveClosing(closing);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/closings")
-    public List<InventoryClosing> getClosings() {
-        return inventoryService.getAllClosings();
+    public List<InventoryClosing> getClosings(@RequestParam String companyId) {
+        return inventoryService.getAllClosings(companyId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/closings/{companyId}/{storageId}/{inventoryId}/{yyyymm}")
     public ResponseEntity<InventoryClosing> getClosing(@PathVariable String companyId, @PathVariable String storageId,
             @PathVariable String inventoryId, @PathVariable String yyyymm) {
@@ -85,6 +94,7 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/closings/{companyId}/{storageId}/{inventoryId}/{yyyymm}")
     public ResponseEntity<Void> deleteClosing(@PathVariable String companyId, @PathVariable String storageId,
             @PathVariable String inventoryId, @PathVariable String yyyymm) {
@@ -92,6 +102,7 @@ public class InventoryController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("principal.startsWith(#request.companyId)")
     @PostMapping("/transactions")
     public ResponseEntity<Void> processTransaction(@RequestBody com.cmms.dto.InventoryTransactionRequest request) {
         inventoryService.processTransaction(request);

@@ -145,8 +145,8 @@ public class StandardInfoService {
         return binRepository.save(bin);
     }
 
-    public List<Bin> getAllBins() {
-        return binRepository.findAll();
+    public List<Bin> getAllBins(String companyId) {
+        return binRepository.findAllByCompanyId(companyId);
     }
 
     public Optional<Bin> getBinById(String companyId, String binId) {
@@ -164,8 +164,8 @@ public class StandardInfoService {
         return locationRepository.save(location);
     }
 
-    public List<Location> getAllLocations() {
-        return locationRepository.findAll();
+    public List<Location> getAllLocations(String companyId) {
+        return locationRepository.findAllByCompanyId(companyId);
     }
 
     public Optional<Location> getLocationById(String companyId, String binId, String locationId) {

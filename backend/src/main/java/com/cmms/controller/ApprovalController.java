@@ -8,6 +8,7 @@ import com.cmms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class ApprovalController {
 
     private final ApprovalService approvalService;
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/inbox")
     public List<Approval> getInbox(
             @RequestParam String companyId,
@@ -27,11 +29,13 @@ public class ApprovalController {
         return approvalService.getInbox(companyId, personId, type);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/outbox")
     public List<Approval> getOutbox(@RequestParam String companyId, @RequestParam String personId) {
         return approvalService.getOutbox(companyId, personId);
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/{id}")
     public ResponseEntity<Approval> getApproval(@PathVariable String id, @RequestParam String companyId) {
         return approvalService.getApprovalById(companyId, id)
@@ -39,6 +43,7 @@ public class ApprovalController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/{id}/steps")
     public List<ApprovalStep> getSteps(@PathVariable String id, @RequestParam String companyId) {
         return approvalService.getApprovalSteps(companyId, id);
@@ -59,6 +64,7 @@ public class ApprovalController {
         return approvalService.saveApproval(request.getApproval(), request.getSteps(), request.getStatus());
     }
 
+    @PreAuthorize("principal.startsWith(#request.companyId)")
     @PostMapping("/decision")
     public ResponseEntity<Void> processDecision(@RequestBody DecisionRequest request) {
         approvalService.processDecision(

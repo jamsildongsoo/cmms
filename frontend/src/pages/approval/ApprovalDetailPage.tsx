@@ -45,13 +45,13 @@ export default function ApprovalDetailPage() {
             const data = await approvalService.getById(id);
             if (data) {
                 setApproval(data);
-                if (data.file_group_id) {
-                    const companyId = user?.company_id || 'COM-001';
-                    const fileGroup = await systemService.getFileGroup(companyId, data.file_group_id);
+                if (data.fileGroupId) {
+                    const companyId = user?.companyId || 'COM-001';
+                    const fileGroup = await systemService.getFileGroup(companyId, data.fileGroupId);
                     if (fileGroup && fileGroup.items) {
                         setFiles(fileGroup.items.map(item => ({
-                            id: item.line_no.toString(),
-                            name: item.original_name,
+                            id: item.lineNo.toString(),
+                            name: item.originalName,
                             size: item.size,
                             raw: item
                         } as any)));
@@ -94,7 +94,7 @@ export default function ApprovalDetailPage() {
 
     const handleDownload = (file: AttachedFileInfo & { raw?: any }) => {
         if (approval && file.raw) {
-            const url = systemService.getDownloadUrl(approval.company_id, file.raw.file_group_id, file.raw.line_no);
+            const url = systemService.getDownloadUrl(approval.companyId, file.raw.fileGroupId, file.raw.lineNo);
             window.open(url, '_blank');
         }
     };
@@ -114,9 +114,9 @@ export default function ApprovalDetailPage() {
     const statusInfo = STATUS_MAP[approval.status] || { label: approval.status, variant: 'secondary' };
 
     // My Turn Check: status must be 'A' (Submitted/In progress)
-    const currentStep = approval.approval_steps?.find((s: any) => s.line_no === approval.current_step);
+    const currentStep = approval.approval_steps?.find((s: any) => s.lineNo === approval.currentStep);
     const isMyTurn = approval.status === 'A'
-        && currentStep?.person_id === user?.person_id
+        && currentStep?.personId === user?.personId
         && currentStep?.result === '00'
         && currentStep?.decision !== '03'; // 참조/통보형은 승인 버튼 노출 제외
 
@@ -158,15 +158,15 @@ export default function ApprovalDetailPage() {
                             <div className="bg-white p-3 rounded-full border shadow-sm mb-2">
                                 <User className="h-5 w-5 text-slate-500" />
                             </div>
-                            <div className="text-sm font-bold text-center">{approval.requester_name || approval.requester_id}</div>
+                            <div className="text-sm font-bold text-center">{approval.requester_name || approval.requesterId}</div>
                             <div className="text-xs text-muted-foreground">기안</div>
-                            <div className="mt-1 text-xs text-slate-500">{approval.created_at?.split(' ')[0]}</div>
+                            <div className="mt-1 text-xs text-slate-500">{approval.createdAt?.split(' ')[0]}</div>
                         </div>
                         <div className="absolute top-11 left-12 right-12 h-0.5 bg-slate-200 -z-0" />
                         {(approval.approval_steps || []).map((step: any, index: number) => {
-                            const isStepCurrent = approval.status === 'A' && approval.current_step === step.line_no;
+                            const isStepCurrent = approval.status === 'A' && approval.currentStep === step.lineNo;
                             const isApproved = step.result === 'Y';
-                            const isRejected = step.result === 'N' || (approval.status === 'R' && approval.current_step === step.line_no);
+                            const isRejected = step.result === 'N' || (approval.status === 'R' && approval.currentStep === step.lineNo);
 
                             return (
                                 <div key={index} className="flex flex-col items-center min-w-[100px] z-10">
@@ -180,10 +180,10 @@ export default function ApprovalDetailPage() {
                                                 isStepCurrent ? <Clock className="h-5 w-5 text-blue-600 animate-pulse" /> :
                                                     <User className="h-5 w-5 text-slate-300" />}
                                     </div>
-                                    <div className="text-sm font-bold text-center">{step.approver_name || step.person_id}</div>
+                                    <div className="text-sm font-bold text-center">{step.approver_name || step.personId}</div>
                                     <div className="text-xs text-muted-foreground">{DECISION_TYPE_MAP[step.decision as DecisionType] || step.decision}</div>
                                     <div className="mt-1 text-xs text-slate-500">
-                                        {step.decided_at ? step.decided_at.split(' ')[0] : (isStepCurrent ? '검토중' : '-')}
+                                        {step.decidedAt ? step.decidedAt.split(' ')[0] : (isStepCurrent ? '검토중' : '-')}
                                     </div>
                                     {step.comment && (
                                         <div className="mt-1 text-[10px] text-slate-400 max-w-[80px] truncate" title={step.comment}>
@@ -216,15 +216,16 @@ export default function ApprovalDetailPage() {
                             <h4 className="text-sm font-medium text-muted-foreground">기안일시</h4>
                             <div className="p-3 bg-slate-50 rounded-md border text-sm flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-slate-400" />
-                                {approval.created_at}
+                                {approval.createdAt}
                             </div>
                         </div>
                     </div>
                     <div className="space-y-1">
                         <h4 className="text-sm font-medium text-muted-foreground">상세 내용</h4>
-                        <div className="min-h-[300px] p-4 bg-slate-50 rounded-md border text-sm whitespace-pre-wrap">
-                            {approval.content}
-                        </div>
+                        <div
+                            className="min-h-[300px] p-4 bg-slate-50 rounded-md border text-sm rich-text-content"
+                            dangerouslySetInnerHTML={{ __html: approval.content }}
+                        />
                     </div>
                     <Separator />
                     <div className="space-y-2">

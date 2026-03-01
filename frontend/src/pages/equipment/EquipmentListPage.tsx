@@ -49,7 +49,7 @@ export default function EquipmentListPage() {
 
     const filteredList = equipmentList.filter((item) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.equipment_id.toLowerCase().includes(searchTerm.toLowerCase())
+        item.equipmentId.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const getStatusBadge = (status?: string) => {
@@ -119,21 +119,21 @@ export default function EquipmentListPage() {
                                     </tr>
                                 ) : (
                                     filteredList.map((item) => (
-                                        <tr key={item.equipment_id} className="border-b transition-colors hover:bg-slate-50/50 cursor-pointer" onClick={() => navigate(`/master/equipment/${item.equipment_id}`)}>
-                                            <td className="p-4 font-medium">{item.equipment_id}</td>
+                                        <tr key={item.equipmentId} className="border-b transition-colors hover:bg-slate-50/50 cursor-pointer" onClick={() => navigate(`/master/equipment/${item.equipmentId}`)}>
+                                            <td className="p-4 font-medium">{item.equipmentId}</td>
                                             <td className="p-4">{item.name}</td>
                                             <td className="p-4">{getStatusBadge(item.status)}</td>
-                                            <td className="p-4">{item.code_item}</td>
-                                            <td className="p-4">{item.install_location || '-'}</td>
-                                            <td className="p-4">{item.maker_name || '-'}</td>
-                                            <td className="p-4">{item.last_inspection || '-'}</td>
-                                            <td className="p-4">{item.install_date}</td>
+                                            <td className="p-4">{item.codeItem}</td>
+                                            <td className="p-4">{item.installLocation || '-'}</td>
+                                            <td className="p-4">{item.makerName || '-'}</td>
+                                            <td className="p-4">{item.lastInspection || '-'}</td>
+                                            <td className="p-4">{item.installDate}</td>
                                             <td className="p-4 text-center">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={(e) => handleDelete(e, item.equipment_id)}
+                                                    onClick={(e) => handleDelete(e, item.equipmentId)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

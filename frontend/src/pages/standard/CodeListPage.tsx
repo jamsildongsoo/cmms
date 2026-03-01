@@ -15,8 +15,21 @@ export default function CodeListPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
 
-    const loadData = () => {
-        standardService.getAll('code').then(data => setCodes(data));
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const data = await standardService.getAll('code');
+            setCodes(data);
+        } catch (error: any) {
+            console.error("Failed to load codes:", error);
+            toast({
+                title: "조회 실패",
+                description: error.response?.data?.message || "공통코드 목록을 불러오지 못했습니다.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -67,18 +80,18 @@ export default function CodeListPage() {
                                 ) : (
                                     codes.map((item) => (
                                         <tr
-                                            key={item.id}
+                                            key={item.codeId}
                                             className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                            onClick={() => navigate(`/standard/code/${item.id}/edit`)}
+                                            onClick={() => navigate(`/standard/code/${item.codeId}/edit`)}
                                         >
-                                            <td className="px-4 py-3 font-medium">{item.id}</td>
+                                            <td className="px-4 py-3 font-medium">{item.codeId}</td>
                                             <td className="px-4 py-3">{item.name}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={(e) => handleDelete(e, item.id)}
+                                                    onClick={(e) => handleDelete(e, item.codeId)}
                                                     disabled={loading}
                                                 >
                                                     <Trash2 className="h-4 w-4" />

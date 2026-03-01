@@ -1,36 +1,35 @@
 
 export interface Equipment {
-    company_id?: string;
-    plant_id?: string;
-    equipment_id: string; // PK, previously 'code' or 'id'
+    companyId?: string;
+    plantId?: string;
+    equipmentId: string; // PK, previously 'code' or 'id'
     name: string;
-    code_item?: string; // Equipment Type
-    install_location?: string;
+    codeItem?: string; // Equipment Type
+    installLocation?: string;
     status?: 'T' | 'A' | 'C' | 'R' | string; // T:임시, A:결재중, C:확정, R:반려
-    dept_id?: string;
-    maker_name?: string;
+    deptId?: string;
+    makerName?: string;
     model?: string;
     spec?: string;
     serial?: string;
-    install_date?: string;
-    purchase_cost?: number; // NUMERIC(18,2)
-    residual_value?: number; // NUMERIC(18,2)
-    depre_method?: string;
-    depre_period?: number;
-    inspection_yn?: 'Y' | 'N';
-    inspection_interval?: number;
-    inspection_unit?: string;
-    psm_yn?: 'Y' | 'N';
-    workpermit_yn?: 'Y' | 'N';
-    last_inspection?: string;
-    next_inspection?: string;
+    installDate?: string;
+    purchaseCost?: number; // NUMERIC(18,2)
+    residualValue?: number; // NUMERIC(18,2)
+    depreMethod?: string;
+    deprePeriod?: number;
+    inspectionYn?: 'Y' | 'N';
+    inspectionInterval?: number;
+    inspectionUnit?: string;
+    psmYn?: 'Y' | 'N';
+    workpermitYn?: 'Y' | 'N';
+    lastInspection?: string;
+    nextInspection?: string;
     note?: string;
-    file_group_id?: string;
-    use_yn?: 'Y' | 'N';
+    fileGroupId?: string;
 
     // Additional fields for frontend convenience or future use
-    created_at?: string;
-    updated_at?: string;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export const EQUIPMENT_TYPES = [

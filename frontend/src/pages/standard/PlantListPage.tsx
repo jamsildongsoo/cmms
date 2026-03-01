@@ -68,19 +68,19 @@ export default function PlantListPage() {
                                 ) : (
                                     plants.map((item) => (
                                         <tr
-                                            key={item.id}
+                                            key={item.plantId}
                                             className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                            onClick={() => navigate(`/standard/plant/${item.id}/edit`)}
+                                            onClick={() => navigate(`/standard/plant/${item.plantId}/edit`)}
                                         >
-                                            <td className="px-4 py-3 font-medium">{item.id}</td>
+                                            <td className="px-4 py-3 font-medium">{item.plantId}</td>
                                             <td className="px-4 py-3">{item.name}</td>
-                                            <td className="px-4 py-3">{item.company_id}</td>
+                                            <td className="px-4 py-3">{item.companyId}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={(e) => handleDelete(e, item.id)}
+                                                    onClick={(e) => handleDelete(e, item.plantId)}
                                                     disabled={loading}
                                                 >
                                                     <Trash2 className="h-4 w-4" />

@@ -26,6 +26,6 @@ public class Storage {
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
-    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1)")
     private String deleteMark = "N";
 }

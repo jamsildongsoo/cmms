@@ -20,7 +20,22 @@ export default function InspectionListPage() {
 
     const loadInspections = async () => {
         const data = await inspectionService.getAll(filter);
-        setInspections(data);
+        // Sort by ID (Descending)
+        const sortedData = [...data].sort((a, b) => b.inspectionId.localeCompare(a.inspectionId));
+        setInspections(sortedData);
+    };
+
+    const getStageBadge = (stage: string) => {
+        const labels: Record<string, string> = { 'PLN': '계획', 'ACT': '실적' };
+        const styles: Record<string, string> = {
+            'PLN': 'bg-blue-50 text-blue-700 border-blue-200',
+            'ACT': 'bg-purple-50 text-purple-700 border-purple-200'
+        };
+        return (
+            <span className={`px-2 py-0.5 rounded border text-[10px] font-bold ${styles[stage] || 'bg-gray-100'}`}>
+                {labels[stage] || stage}
+            </span>
+        );
     };
 
     const getStatusBadge = (status: string) => {
@@ -83,10 +98,11 @@ export default function InspectionListPage() {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-50 border-b">
                                     <tr>
+                                        <th className="px-4 py-3 font-medium text-slate-500 w-20">구분</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">ID</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">점검명</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">대상설비</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500">예정일자</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500">작업일자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">담당자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">상태</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">관리</th>
@@ -95,46 +111,40 @@ export default function InspectionListPage() {
                                 <tbody>
                                     {inspections.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                                            <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                                                 등록된 점검 내역이 없습니다.
                                             </td>
                                         </tr>
                                     ) : (
                                         inspections.map(plan => (
                                             <tr
-                                                key={plan.inspection_id}
+                                                key={plan.inspectionId}
                                                 className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                                onClick={() => navigate(`/pm/inspection/${plan.inspection_id}`)}
+                                                onClick={() => navigate(`/pm/inspection/${plan.inspectionId}`)}
                                             >
-                                                <td className="px-4 py-3 font-medium">{plan.inspection_id}</td>
+                                                <td className="px-4 py-3">{getStageBadge(plan.stage)}</td>
+                                                <td className="px-4 py-3 font-medium">{plan.inspectionId}</td>
                                                 <td className="px-4 py-3">{plan.name}</td>
-                                                <td className="px-4 py-3 text-slate-600">{plan.equipment_name}</td>
+                                                <td className="px-4 py-3 text-slate-600">{plan.equipmentName}</td>
                                                 <td className="px-4 py-3 text-slate-600">{plan.date}</td>
-                                                <td className="px-4 py-3 text-slate-600">{plan.person_name}</td>
+                                                <td className="px-4 py-3 text-slate-600">{plan.personName}</td>
                                                 <td className="px-4 py-3 text-center">{getStatusBadge(plan.status)}</td>
                                                 <td className="px-4 py-3 text-center">
                                                     <div className="flex items-center justify-center gap-2">
-                                                        {filter === 'PLN' && plan.status === 'S' && (
+                                                        {plan.stage === 'PLN' && (
                                                             <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="h-8 px-2 text-orange-600 border-orange-200 hover:bg-orange-50"
+                                                                className={`h-8 px-2 ${plan.status === 'C' ? 'text-orange-600 border-orange-200 hover:bg-orange-50' : 'text-slate-400 border-slate-200'}`}
+                                                                disabled={plan.status !== 'C'}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    navigate(`/pm/inspection/result/new?ref_entity=IN&ref_id=${plan.inspection_id}`);
+                                                                    navigate(`/pm/inspection/result/new?refEntity=IN&refId=${plan.inspectionId}`);
                                                                 }}
                                                             >
                                                                 실적 입력
                                                             </Button>
                                                         )}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 px-2 text-blue-600 hover:text-blue-800"
-                                                            onClick={(e) => { e.stopPropagation(); navigate(`/pm/inspection/${plan.inspection_id}`); }}
-                                                        >
-                                                            상세
-                                                        </Button>
                                                     </div>
                                                 </td>
                                             </tr>

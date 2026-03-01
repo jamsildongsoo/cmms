@@ -46,7 +46,7 @@ const menuItems: MenuItem[] = [
             { title: "사업장 관리", href: "/standard/plant" },
             { title: "부서 관리", href: "/standard/dept" },
             { title: "사용자 관리", href: "/standard/user" },
-            { title: "창고 관리", href: "/standard/warehouse" },
+            { title: "저장소 관리", href: "/standard/storage" },
             { title: "권한 관리", href: "/standard/role" },
             { title: "공통코드", href: "/standard/code" },
         ],
@@ -128,7 +128,7 @@ export function Sidebar() {
     };
 
     return (
-        <div className="flex h-full w-64 flex-col border-r border-slate-200 bg-white shadow-sm">
+        <div className="flex h-full w-64 flex-col border-r border-slate-200 bg-white shadow-sm print:hidden">
             <div className="flex h-16 items-center border-b border-slate-200 px-6">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CMMS</h1>
             </div>

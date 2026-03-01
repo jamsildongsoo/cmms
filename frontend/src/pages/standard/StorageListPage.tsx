@@ -11,11 +11,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from '@/components/ui/use-toast';
-import { standardService, type Warehouse, type Plant } from '@/services/standardService';
+import { standardService, type Storage, type Plant } from '@/services/standardService';
 
-export default function WarehouseListPage() {
+export default function StorageListPage() {
     const navigate = useNavigate();
-    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+    const [storages, setStorages] = useState<Storage[]>([]);
     const [plants, setPlants] = useState<Plant[]>([]);
 
     // Filter State
@@ -28,22 +28,22 @@ export default function WarehouseListPage() {
     }, []);
 
     const loadData = async () => {
-        const [warehouseData, plantData] = await Promise.all([
-            standardService.getAll('warehouse'),
+        const [storageData, plantData] = await Promise.all([
+            standardService.getAll('storage'),
             standardService.getAll('plant')
         ]);
-        setWarehouses(warehouseData);
+        setStorages(storageData);
         setPlants(plantData);
     };
 
-    const filteredWarehouses = selectedPlantId === "ALL"
-        ? warehouses
-        : warehouses.filter(w => w.plant_id === selectedPlantId);
+    const filteredStorages = selectedPlantId === "ALL"
+        ? storages
+        : storages.filter(w => w.plantId === selectedPlantId);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (storageId: string) => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
         try {
-            await standardService.delete('warehouse', id);
+            await standardService.delete('storage', storageId);
             toast({ title: "성공", description: "삭제되었습니다." });
             loadData();
         } catch (error) {
@@ -53,25 +53,25 @@ export default function WarehouseListPage() {
     };
 
     const getPlantName = (plantId: string) => {
-        return plants.find(p => p.id === plantId)?.name || plantId;
+        return plants.find(p => p.plantId === plantId)?.name || plantId;
     };
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">창고 관리</h1>
-                    <p className="text-muted-foreground">자재를 보관하는 창고를 관리합니다.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">저장소 관리</h1>
+                    <p className="text-muted-foreground">자재를 보관하는 저장소를 관리합니다.</p>
                 </div>
-                <Button onClick={() => navigate('/standard/warehouse/new')} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" /> 창고 등록
+                <Button onClick={() => navigate('/standard/storage/new')} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="mr-2 h-4 w-4" /> 저장소 등록
                 </Button>
             </div>
 
             <Card>
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">창고 목록</CardTitle>
+                        <CardTitle className="text-lg">저장소 목록</CardTitle>
                         <div className="w-[200px]">
                             <Select value={selectedPlantId} onValueChange={setSelectedPlantId}>
                                 <SelectTrigger>
@@ -80,7 +80,7 @@ export default function WarehouseListPage() {
                                 <SelectContent>
                                     <SelectItem value="ALL">전체 사업장</SelectItem>
                                     {plants.map(plant => (
-                                        <SelectItem key={plant.id} value={plant.id}>{plant.name}</SelectItem>
+                                        <SelectItem key={plant.plantId} value={plant.plantId}>{plant.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -93,25 +93,25 @@ export default function WarehouseListPage() {
                             <thead className="bg-slate-50 border-b">
                                 <tr>
                                     <th className="px-4 py-3 font-medium text-slate-500 w-[15%]">ID</th>
-                                    <th className="px-4 py-3 font-medium text-slate-500 w-[20%]">창고명</th>
+                                    <th className="px-4 py-3 font-medium text-slate-500 w-[20%]">저장소명</th>
                                     <th className="px-4 py-3 font-medium text-slate-500 w-[20%]">사업장</th>
                                     <th className="px-4 py-3 font-medium text-slate-500 w-[30%]">위치 상세</th>
                                     <th className="px-4 py-3 font-medium text-slate-500 w-[15%] text-center">관리</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {filteredWarehouses.length === 0 ? (
-                                    <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">등록된 창고가 없습니다.</td></tr>
+                                {filteredStorages.length === 0 ? (
+                                    <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">등록된 저장소가 없습니다.</td></tr>
                                 ) : (
-                                    filteredWarehouses.map((item) => (
+                                    filteredStorages.map((item) => (
                                         <tr
-                                            key={item.id}
+                                            key={item.storageId}
                                             className="hover:bg-slate-50 cursor-pointer"
-                                            onClick={() => navigate(`/standard/warehouse/${item.id}/edit`)}
+                                            onClick={() => navigate(`/standard/storage/${item.storageId}/edit`)}
                                         >
-                                            <td className="px-4 py-3 font-mono text-slate-600">{item.id}</td>
+                                            <td className="px-4 py-3 font-mono text-slate-600">{item.storageId}</td>
                                             <td className="px-4 py-3 font-medium">{item.name}</td>
-                                            <td className="px-4 py-3">{getPlantName(item.plant_id)}</td>
+                                            <td className="px-4 py-3">{getPlantName(item.plantId)}</td>
                                             <td className="px-4 py-3 text-slate-600">{item.location || '-'}</td>
                                             <td className="px-4 py-3 text-center">
                                                 <div className="flex items-center justify-center gap-2">
@@ -121,7 +121,7 @@ export default function WarehouseListPage() {
                                                         className="h-8 w-8 text-slate-500 hover:text-red-600"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleDelete(item.id);
+                                                            handleDelete(item.storageId);
                                                         }}
                                                     >
                                                         <Trash2 className="h-4 w-4" />

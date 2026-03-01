@@ -29,8 +29,8 @@ export default function InspectionRegisterPage() {
     const isResultMode = location.pathname.includes('/result'); // Detects /pm/inspection/result/new
 
     // Result Mode Inputs (from Query Params)
-    const refEntityParam = searchParams.get('ref_entity');
-    const refIdParam = searchParams.get('ref_id');
+    const refEntityParam = searchParams.get('refEntity');
+    const refIdParam = searchParams.get('refId');
 
     // Data for SearchableSelect
     const [equipments, setEquipments] = useState<Equipment[]>([]);
@@ -47,7 +47,7 @@ export default function InspectionRegisterPage() {
 
     // Local state for items
     const [items, setItems] = useState<InspectionItem[]>([
-        { seq: 1, name: '', method: '', std_val: undefined, unit: '' },
+        { seq: 1, name: '', method: '', stdVal: undefined, unit: '' },
     ]);
 
     const { register, setValue, getValues, watch } = useForm<Inspection>({
@@ -55,8 +55,8 @@ export default function InspectionRegisterPage() {
             status: 'T',
             stage: isResultMode ? 'ACT' : 'PLN', // Force stage based on mode
             date: new Date().toISOString().split('T')[0],
-            ref_entity: refEntityParam || undefined,
-            ref_id: refIdParam || undefined,
+            refEntity: refEntityParam || undefined,
+            refId: refIdParam || undefined,
         }
     });
 
@@ -78,16 +78,19 @@ export default function InspectionRegisterPage() {
                 if (planData) {
                     // Pre-fill from plan
                     setValue('name', planData.name + ' (실적)');
-                    setValue('equipment_name', planData.equipment_name);
-                    setValue('person_name', planData.person_name);
+                    setValue('equipmentId', planData.equipmentId);
+                    setValue('equipmentName', planData.equipmentName);
+                    setValue('deptId', planData.deptId);
+                    setValue('deptName', planData.deptName);
+                    setValue('personId', planData.personId);
+                    setValue('personName', planData.personName);
+                    setValue('codeItem', planData.codeItem);
                     setValue('note', planData.note);
-                    setValue('equipment_id', planData.equipment_id);
 
-                    // Copy items (reset results just in case, though they should be empty in plan)
+                    // Copy items (reset results for new entry)
                     const planItems = (planData.items || []).map(item => ({
                         ...item,
-                        result: undefined, // Clear result for new entry
-                        remarks: undefined
+                        resultVal: undefined
                     }));
                     setItems(planItems);
                 }
@@ -96,7 +99,7 @@ export default function InspectionRegisterPage() {
     }, [id, isEditMode, isResultMode, refIdParam, setValue]);
 
     const addItem = () => {
-        setItems(prev => [...prev, { seq: prev.length + 1, name: '', method: '', std_val: undefined, unit: '' }]);
+        setItems(prev => [...prev, { seq: prev.length + 1, name: '', method: '', stdVal: undefined, unit: '' }]);
     };
 
     const removeItem = (seq: number) => {
@@ -247,12 +250,12 @@ export default function InspectionRegisterPage() {
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">참조 구분</Label>
                                     <Input value="IN (점검)" disabled className="bg-slate-50 text-slate-500" />
-                                    <input type="hidden" {...register('ref_entity')} value="IN" />
+                                    <input type="hidden" {...register('refEntity')} value="IN" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-muted-foreground">참조 ID</Label>
                                     <Input
-                                        {...register('ref_id')}
+                                        {...register('refId')}
                                         placeholder={id ? '' : '참조할 계획 ID 입력'}
                                         disabled={!!id}
                                         className={!!id ? "bg-slate-50" : ""}
@@ -265,8 +268,8 @@ export default function InspectionRegisterPage() {
                         <div className="space-y-2 lg:col-start-1">
                             <Label>점검 유형 <span className="text-red-500">*</span></Label>
                             <Select
-                                value={watch('code_item') || ''}
-                                onValueChange={(val: string) => setValue('code_item', val)}
+                                value={watch('codeItem') || ''}
+                                onValueChange={(val: string) => setValue('codeItem', val)}
                                 disabled={!isPlanEditable && !isResultEditable}
                             >
                                 <SelectTrigger>
@@ -274,64 +277,64 @@ export default function InspectionRegisterPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {inspTypes.map(type => (
-                                        <SelectItem key={type.item_id} value={type.item_id}>{type.name}</SelectItem>
+                                        <SelectItem key={type.itemId} value={type.itemId}>{type.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <input type="hidden" {...register('code_item', { required: true })} />
+                            <input type="hidden" {...register('codeItem', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
-                                items={equipments.map(e => ({ ...e, id: e.equipment_id }))}
-                                value={watch('equipment_id') || ''}
+                                items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
+                                value={watch('equipmentId') || ''}
                                 onChange={(val) => {
-                                    const equipment = equipments.find(e => e.equipment_id === val);
-                                    setValue('equipment_id', val);
-                                    setValue('equipment_name', equipment?.name || '');
-                                    if (equipment?.dept_id) {
-                                        setValue('dept_id', equipment.dept_id);
-                                        const dept = departments.find(d => d.id === equipment.dept_id);
-                                        setValue('dept_name', dept?.name);
+                                    const equipment = equipments.find(e => e.equipmentId === val);
+                                    setValue('equipmentId', val);
+                                    setValue('equipmentName', equipment?.name || '');
+                                    if (equipment?.deptId) {
+                                        setValue('deptId', equipment.deptId);
+                                        const dept = departments.find(d => d.deptId === equipment.deptId);
+                                        setValue('deptName', dept?.name);
                                     }
                                 }}
                                 placeholder="설비 검색..."
-                                displayFormat={(item) => `${item.name} (${item.equipment_id})`}
+                                displayFormat={(item) => `${item.name} (${item.equipmentId})`}
                                 disabled={!isPlanEditable && !isResultEditable}
                             />
-                            <input type="hidden" {...register('equipment_name', { required: true })} />
+                            <input type="hidden" {...register('equipmentName', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>관리 부서</Label>
                             <SearchableSelect
-                                items={departments}
-                                value={watch('dept_id') || ''}
+                                items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
+                                value={watch('deptId') || ''}
                                 onChange={(val) => {
-                                    const dept = departments.find(d => d.id === val);
-                                    setValue('dept_id', val);
-                                    setValue('dept_name', dept?.name);
+                                    const dept = departments.find(d => d.deptId === val);
+                                    setValue('deptId', val);
+                                    setValue('deptName', dept?.name);
                                 }}
                                 placeholder="부서 검색..."
                                 displayFormat={(item) => item.name}
                                 disabled={!isPlanEditable && !isResultEditable}
                             />
-                            <input type="hidden" {...register('dept_name')} />
+                            <input type="hidden" {...register('deptName')} />
                         </div>
                         <div className="space-y-2">
                             <Label>담당자</Label>
                             <SearchableSelect
-                                items={persons.filter(p => !watch('dept_id') || p.dept_id === watch('dept_id'))}
-                                value={watch('person_id') || ''}
+                                items={persons.filter(p => !watch('deptId') || p.deptId === watch('deptId')).map(p => ({ ...p, id: p.personId }))}
+                                value={watch('personId') || ''}
                                 onChange={(val) => {
-                                    const person = persons.find(p => p.person_id === val);
-                                    setValue('person_id', val);
-                                    setValue('person_name', person?.name);
+                                    const person = persons.find(p => p.personId === val);
+                                    setValue('personId', val);
+                                    setValue('personName', person?.name);
                                 }}
                                 placeholder="담당자 검색..."
                                 displayFormat={(item) => `${item.name} (${item.position || ''})`}
                                 disabled={!isPlanEditable && !isResultEditable}
                             />
-                            <input type="hidden" {...register('person_name')} />
+                            <input type="hidden" {...register('personName')} />
                         </div>
 
                         {/* Row 3 - Full Width Description */}
@@ -398,8 +401,8 @@ export default function InspectionRegisterPage() {
                                                 <td className="p-3">
                                                     <Input
                                                         type="number"
-                                                        value={item.std_val || ''}
-                                                        onChange={(e) => updateItem(item.seq, 'std_val', parseFloat(e.target.value))}
+                                                        value={item.stdVal || ''}
+                                                        onChange={(e) => updateItem(item.seq, 'stdVal', parseFloat(e.target.value))}
                                                         disabled={!isPlanEditable}
                                                         placeholder="0.0"
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none text-right" : "text-right"}
@@ -418,14 +421,14 @@ export default function InspectionRegisterPage() {
                                                     {isResultEditable ? (
                                                         <Input
                                                             type="number"
-                                                            value={item.result_val || ''}
-                                                            onChange={(e) => updateItem(item.seq, 'result_val', parseFloat(e.target.value))}
+                                                            value={item.resultVal || ''}
+                                                            onChange={(e) => updateItem(item.seq, 'resultVal', parseFloat(e.target.value))}
                                                             placeholder="0"
                                                             className="h-8 text-right"
                                                         />
                                                     ) : (
                                                         <span className="font-bold text-slate-700">
-                                                            {item.result_val !== undefined ? item.result_val : '-'}
+                                                            {item.resultVal !== undefined ? item.resultVal : '-'}
                                                         </span>
                                                     )}
                                                 </td>

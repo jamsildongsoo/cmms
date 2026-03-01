@@ -45,11 +45,11 @@ export default function CompanyListPage() {
                                 ) : (
                                     companies.map((item) => (
                                         <tr
-                                            key={item.id}
+                                            key={item.companyId}
                                             className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                            onClick={() => navigate(`/standard/company/${item.id}/edit`)}
+                                            onClick={() => navigate(`/standard/company/${item.companyId}/edit`)}
                                         >
-                                            <td className="px-4 py-3 font-medium">{item.id}</td>
+                                            <td className="px-4 py-3 font-medium">{item.companyId}</td>
                                             <td className="px-4 py-3">{item.name}</td>
                                             <td className="px-4 py-3">{item.bizno || '-'}</td>
                                             <td className="px-4 py-3">{item.email || '-'}</td>

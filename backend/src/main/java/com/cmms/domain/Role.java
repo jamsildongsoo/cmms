@@ -29,6 +29,6 @@ public class Role {
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
-    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1) DEFAULT 'N'")
+    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1)")
     private String deleteMark = "N";
 }

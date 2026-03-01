@@ -5,7 +5,7 @@ import { useAuthStore } from "@/features/auth/useAuthStore";
 export const inspectionService = {
     getAll: async (filter?: 'ALL' | 'PLN' | 'ACT'): Promise<Inspection[]> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<Inspection[]>(`/api/tx/inspections?companyId=${companyId}`);
             let data = response.data;
@@ -21,7 +21,7 @@ export const inspectionService = {
 
     getById: async (id: string): Promise<Inspection | undefined> => {
         try {
-            const companyId = useAuthStore.getState().user?.company_id;
+            const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
             const response = await api.get<Inspection>(`/api/tx/inspections/${companyId}/${id}`);
             return response.data;
@@ -32,7 +32,7 @@ export const inspectionService = {
     },
 
     create: async (data: Inspection): Promise<Inspection> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         const currentPlantId = useAuthStore.getState().currentPlantId;
         if (!companyId) throw new Error("User not authenticated");
 
@@ -42,7 +42,7 @@ export const inspectionService = {
         };
 
         const payload = {
-            inspection: { ...sanitizedData, company_id: companyId, plant_id: (data as any).plant_id || currentPlantId || 'P0001' },
+            inspection: { ...sanitizedData, companyId: companyId, plantId: (data as any).plantId || currentPlantId || 'P0001' },
             items: data.items
         };
         const response = await api.post<Inspection>('/api/tx/inspections', payload);
@@ -73,7 +73,7 @@ export const inspectionService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.company_id;
+        const companyId = useAuthStore.getState().user?.companyId;
         if (!companyId) throw new Error("User not authenticated");
         await api.delete(`/api/tx/inspections/${companyId}/${id}`);
     }

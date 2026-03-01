@@ -78,23 +78,23 @@ export default function MaterialMasterPage() {
                                 ) : (
                                     materials.map((item) => (
                                         <tr
-                                            key={item.inventory_id}
+                                            key={item.inventoryId}
                                             className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
-                                            onClick={() => navigate(`/master/material/${item.inventory_id}/edit`)}
+                                            onClick={() => navigate(`/master/material/${item.inventoryId}/edit`)}
                                         >
-                                            <td className="h-12 px-4 font-mono text-xs">{item.inventory_id}</td>
+                                            <td className="h-12 px-4 font-mono text-xs">{item.inventoryId}</td>
                                             <td className="h-12 px-4 font-medium">{item.name}</td>
                                             <td className="h-12 px-4">{getStatusBadge(item.status)}</td>
                                             <td className="h-12 px-4 text-slate-600">{item.spec || '-'}</td>
                                             <td className="h-12 px-4">{item.unit}</td>
-                                            <td className="h-12 px-4">{item.code_item || '-'}</td>
-                                            <td className="h-12 px-4">{item.maker_name || '-'}</td>
+                                            <td className="h-12 px-4">{item.codeItem || '-'}</td>
+                                            <td className="h-12 px-4">{item.makerName || '-'}</td>
                                             <td className="h-12 px-4 text-center">
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                    onClick={(e) => handleDelete(e, item.inventory_id!)}
+                                                    onClick={(e) => handleDelete(e, item.inventoryId!)}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
