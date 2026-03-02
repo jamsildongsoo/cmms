@@ -49,7 +49,9 @@ CREATE TABLE IF NOT EXISTS person (
     title VARCHAR(50),
     note TEXT,
     delete_mark CHAR(1) DEFAULT 'N',
+    last_login_ip VARCHAR(20),
     last_login_at TIMESTAMP,
+    last_login_plant_id VARCHAR(20),
     CONSTRAINT pk_person PRIMARY KEY (company_id, person_id)
 );
 
@@ -151,6 +153,7 @@ CREATE TABLE IF NOT EXISTS inspection (
     company_id VARCHAR(20) NOT NULL,
     inspection_id VARCHAR(20) NOT NULL,
     plant_id VARCHAR(20),
+    equipment_id VARCHAR(20),
     name VARCHAR(100) NOT NULL,
     stage VARCHAR(20), -- PLN:계획, ACT:실적
     code_item VARCHAR(20), -- 점검 유형 (순찰, 계측값점검 등)

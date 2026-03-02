@@ -49,7 +49,9 @@ CREATE TABLE IF NOT EXISTS person (
     title VARCHAR(50),
     note TEXT,
     delete_mark CHAR(1) DEFAULT 'N',
+    last_login_ip VARCHAR(20),
     last_login_at TIMESTAMP,
+    last_login_plant_id VARCHAR(20),
     CONSTRAINT pk_person PRIMARY KEY (company_id, person_id)
 );
 

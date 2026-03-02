@@ -84,7 +84,6 @@ export default function InspectionDetailPage() {
     if (!inspection) return <div className="p-8 text-center text-red-500">데이터를 찾을 수 없습니다.</div>;
 
     const isEditable = inspection.status === 'P'; // Only editable when In Progress
-    const isCompleted = inspection.status === 'C';
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
@@ -228,7 +227,7 @@ export default function InspectionDetailPage() {
                                                     <span className="font-bold">{item.resultVal || '-'}</span>
                                                 )}
                                             </td>
-                                            <td className="p-3 text-slate-500 text-xs">{item.remark || '-'}</td>
+                                            <td className="p-3 text-slate-500 text-xs">{(item as any).remark || '-'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -251,7 +250,7 @@ export default function InspectionDetailPage() {
                     name: item.name,
                     method: item.method,
                     result: item.resultVal,
-                    remark: item.remark
+                    remark: (item as any).remark
                 }))}
                 note={inspection.note}
                 companyName={user?.companyId}

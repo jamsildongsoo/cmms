@@ -115,6 +115,24 @@ export default function InspectionRegisterPage() {
         if (targetStatus === 'C' && !window.confirm("확정된 데이터는 수정할 수 없습니다. 확정하시겠습니까?")) return;
         if (targetStatus === 'A' && !window.confirm("상신하시겠습니까? 이후 수정이 불가능합니다.")) return;
         const formData = getValues();
+
+        if (!formData.equipmentId) {
+            toast({ title: "필수 항목 누락", description: "대상 설비를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!formData.deptId) {
+            toast({ title: "필수 항목 누락", description: "관리 부서를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!formData.personId) {
+            toast({ title: "필수 항목 누락", description: "담당자를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!formData.codeItem) {
+            toast({ title: "필수 항목 누락", description: "점검 유형을 선택해주세요.", variant: "destructive" });
+            return;
+        }
+
         const dataToSave: Inspection = {
             ...formData,
             status: targetStatus,
@@ -305,7 +323,7 @@ export default function InspectionRegisterPage() {
                             <input type="hidden" {...register('equipmentName', { required: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label>관리 부서</Label>
+                            <Label>관리 부서 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
                                 value={watch('deptId') || ''}
@@ -321,7 +339,7 @@ export default function InspectionRegisterPage() {
                             <input type="hidden" {...register('deptName')} />
                         </div>
                         <div className="space-y-2">
-                            <Label>담당자</Label>
+                            <Label>담당자 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={persons.filter(p => !watch('deptId') || p.deptId === watch('deptId')).map(p => ({ ...p, id: p.personId }))}
                                 value={watch('personId') || ''}

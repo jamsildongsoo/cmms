@@ -9,18 +9,30 @@ interface AuthState {
     isAuthenticated: boolean;
     currentPlantId: string | null;
     setPlantId: (plantId: string) => void;
-    login: (companyId: string, id: string, password: string) => Promise<void>;
+    login: (companyId: string, id: string, password: string) => Promise<any>;
     logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             user: null,
             token: null,
             isAuthenticated: false,
             currentPlantId: null,
-            setPlantId: (plantId: string) => set({ currentPlantId: plantId }),
+            setPlantId: async (plantId: string) => {
+                set({ currentPlantId: plantId });
+                const state = get();
+                if (state.user && state.token) {
+                    try {
+                        await axios.put(`/api/auth/plant?companyId=${state.user.companyId}&plantId=${plantId}`, null, {
+                            headers: { Authorization: `Bearer ${state.token}` }
+                        });
+                    } catch (e) {
+                        console.error('Failed to update plant in DB', e);
+                    }
+                }
+            },
             login: async (companyId: string, id: string, password: string) => {
                 try {
                     const response = await axios.post('/api/auth/login', {
@@ -37,13 +49,23 @@ export const useAuthStore = create<AuthState>()(
                     // Fetch plants to set default
                     try {
                         const plants = await standardService.getAll('plant');
-                        const defaultPlant = plants.find(p => p.companyId === user.companyId);
+
+                        let defaultPlant;
+                        if (user.lastLoginPlantId) {
+                            defaultPlant = plants.find(p => p.plantId === user.lastLoginPlantId && p.companyId === user.companyId);
+                        }
+
+                        if (!defaultPlant) {
+                            defaultPlant = plants.find(p => p.companyId === user.companyId);
+                        }
+
                         if (defaultPlant) {
-                            set({ currentPlantId: defaultPlant.id });
+                            set({ currentPlantId: defaultPlant.plantId });
                         }
                     } catch (e) {
                         console.error("Failed to fetch default plant", e);
                     }
+                    return user;
                 } catch (error) {
                     throw new Error('Invalid credentials');
                 }

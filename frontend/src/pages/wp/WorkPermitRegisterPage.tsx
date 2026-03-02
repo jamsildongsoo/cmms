@@ -80,6 +80,23 @@ export default function WorkPermitRegisterPage() {
         if (actionType === 'C' && !window.confirm("확정하시겠습니까? (안전 담당자 승인 단계로 넘어갑니다)")) return;
         if (actionType === 'A' && !window.confirm("허가 신청을 상신하시겠습니까?")) return;
 
+        if (!data.equipmentId) {
+            toast({ title: "필수 항목 누락", description: "대상 설비를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!data.deptId) {
+            toast({ title: "필수 항목 누락", description: "신청 부서를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!data.personId) {
+            toast({ title: "필수 항목 누락", description: "신청자를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!data.wpTypes || data.wpTypes.length === 0) {
+            toast({ title: "필수 항목 누락", description: "특별 작업 유형을 1개 이상 선택해주세요.", variant: "destructive" });
+            return;
+        }
+
         try {
             setLoading(true);
             const payload = {
@@ -198,7 +215,7 @@ export default function WorkPermitRegisterPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label>대상 설비</Label>
+                            <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
                                 value={watch('equipmentId') || ''}
@@ -217,7 +234,7 @@ export default function WorkPermitRegisterPage() {
                             <input type="hidden" {...register('equipmentName')} />
                         </div>
                         <div className="space-y-2">
-                            <Label>신청 부서</Label>
+                            <Label>신청 부서 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
                                 value={watch('deptId') || ''}
@@ -228,7 +245,7 @@ export default function WorkPermitRegisterPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>신청자</Label>
+                            <Label>신청자 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={filteredPersons.map((p: any) => ({ ...p, id: p.personId }))}
                                 value={watch('personId') || ''}
@@ -248,7 +265,7 @@ export default function WorkPermitRegisterPage() {
 
                         {/* Special Work Types Selection */}
                         <div className="col-span-1 md:col-span-4 space-y-3 border rounded-md p-4 bg-slate-50">
-                            <Label className="font-semibold">특별 작업 유형 (중복 선택 가능)</Label>
+                            <Label className="font-semibold">특별 작업 유형 (중복 선택 가능) <span className="text-red-500">*</span></Label>
                             <div className="flex flex-wrap gap-4">
                                 {['HOT', 'CONF', 'ELEC', 'HIGH', 'HEVY'].map((type) => (
                                     <div key={type} className="flex items-center space-x-2">

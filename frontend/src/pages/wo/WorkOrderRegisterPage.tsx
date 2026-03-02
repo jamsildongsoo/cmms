@@ -129,6 +129,23 @@ export default function WorkOrderRegisterPage() {
         if (actionType === 'C' && !window.confirm("확정된 데이터는 수정할 수 없습니다. 확정하시겠습니까?")) return;
         if (actionType === 'A' && !window.confirm("상신하시겠습니까? 이후 수정이 불가능합니다.")) return;
 
+        if (!data.equipmentId) {
+            toast({ title: "필수 항목 누락", description: "대상 설비를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!data.deptId) {
+            toast({ title: "필수 항목 누락", description: "관리 부서를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!data.personId) {
+            toast({ title: "필수 항목 누락", description: "담당자를 선택해주세요.", variant: "destructive" });
+            return;
+        }
+        if (!data.codeItem) {
+            toast({ title: "필수 항목 누락", description: "작업 유형을 선택해주세요.", variant: "destructive" });
+            return;
+        }
+
         try {
             setLoading(true);
             const payload = {
@@ -296,10 +313,10 @@ export default function WorkOrderRegisterPage() {
                             <input type="hidden" {...register('equipmentName', { required: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label>작업 유형</Label>
-                            <Select 
-                                onValueChange={(val: string) => setValue('codeItem', val)} 
-                                value={watch('codeItem') || ''} 
+                            <Label>작업 유형 <span className="text-red-500">*</span></Label>
+                            <Select
+                                onValueChange={(val: string) => setValue('codeItem', val)}
+                                value={watch('codeItem') || ''}
                                 disabled={isConfirmed}
                             >
                                 <SelectTrigger>
@@ -315,7 +332,7 @@ export default function WorkOrderRegisterPage() {
                             <input type="hidden" {...register('codeItem', { required: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label>관리 부서</Label>
+                            <Label>관리 부서 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={departments.map((d: any) => ({ ...d, id: d.deptId }))}
                                 value={watch('deptId') || ''}
@@ -331,7 +348,7 @@ export default function WorkOrderRegisterPage() {
                             <input type="hidden" {...register('deptName')} />
                         </div>
                         <div className="space-y-2">
-                            <Label>담당자</Label>
+                            <Label>담당자 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
                                 items={filteredPersons.map((p: any) => ({ ...p, id: p.personId }))}
                                 value={watch('personId') || ''}

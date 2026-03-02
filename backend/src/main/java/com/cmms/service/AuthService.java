@@ -9,6 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.time.LocalDateTime;
+
+import com.cmms.dto.LoginResult;
 
 @Slf4j
 @Service
@@ -20,7 +23,7 @@ public class AuthService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Transactional
-    public Optional<Person> login(String companyId, String personId, String password) {
+    public Optional<LoginResult> login(String companyId, String personId, String password, String clientIp) {
         log.info("Attempting login - Company ID: [{}], Person ID: [{}], Password: [{}]", companyId, personId, password);
         log.info("Valid Bcrypt for 1234: {}", passwordEncoder.encode("1234"));
 
@@ -42,11 +45,14 @@ public class AuthService {
             // Validate password against hashed password
             if (isMatch) {
                 log.info("Login successful for user [{}]", personId);
-                // Update Login Info
-                person.setLastLoginAt(java.time.LocalDateTime.now());
-                person.setLastLoginIp("127.0.0.1"); // Placeholder, in real app get from Request
+                // Capture previous login info before updating
+                LocalDateTime prevLoginAt = person.getLastLoginAt();
+                String prevLoginIp = person.getLastLoginIp();
 
-                return Optional.of(person);
+                person.setLastLoginAt(java.time.LocalDateTime.now());
+                person.setLastLoginIp(clientIp);
+
+                return Optional.of(new LoginResult(person, prevLoginAt, prevLoginIp));
             } else {
                 log.warn("Login failed for user [{}]: Password mismatch", personId);
             }
@@ -54,5 +60,18 @@ public class AuthService {
             log.warn("Login failed: Person not found for Company ID [{}] and Person ID [{}]", companyId, personId);
         }
         return Optional.empty();
+    }
+
+    @Transactional
+    public void updateLastLoginPlantId(String companyId, String personId, String plantId) {
+        Optional<Person> personOpt = personRepository.findById(new PersonId(companyId, personId));
+        if (personOpt.isPresent()) {
+            Person person = personOpt.get();
+            person.setLastLoginPlantId(plantId);
+            log.info("Updated last login plant ID for user [{}] to [{}]", personId, plantId);
+        } else {
+            log.warn("Failed to update plant ID: Person not found for Company ID [{}] and Person ID [{}]", companyId,
+                    personId);
+        }
     }
 }

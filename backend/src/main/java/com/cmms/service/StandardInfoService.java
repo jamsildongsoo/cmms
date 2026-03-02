@@ -3,6 +3,7 @@ package com.cmms.service;
 import com.cmms.domain.*;
 import com.cmms.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class StandardInfoService {
     private final LocationRepository locationRepository;
     private final CodeRepository codeRepository;
     private final CodeItemRepository codeItemRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // Plant
     @Transactional
@@ -96,6 +98,12 @@ public class StandardInfoService {
     // Person
     @Transactional
     public Person savePerson(Person person) {
+        if (person.getPasswordHash() != null && !person.getPasswordHash().isEmpty()) {
+            // BCrypt 해시 패턴($2a$, $2b$ 등)으로 시작하지 않으면 평문으로 간주하고 암호화
+            if (!person.getPasswordHash().startsWith("$2a$") && !person.getPasswordHash().startsWith("$2b$")) {
+                person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
+            }
+        }
         return personRepository.save(person);
     }
 
