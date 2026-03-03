@@ -40,3 +40,30 @@ backend/bin/
 
 # OS
 Thumbs.db
+
+# Certificates
+*.pem
+*.ppk
+*.crt
+*.key
+*.p12
+*.jks
+
+# Uploaded Files
+/uploads/
+/uploaded/
+/files/
+
+# Additional Logs & Build
+/logs/
+/log/
+/target/
+
+# Archives and Compressed Files
+*.tar
+*.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+*.bz2
