@@ -28,6 +28,9 @@ public class Inspection extends BaseEntity {
     @Column(name = "plant_id", length = 20)
     private String plantId;
 
+    @Column(name = "equipment_id", length = 20)
+    private String equipmentId;
+
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 

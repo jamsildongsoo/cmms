@@ -67,7 +67,8 @@ export default function MaterialRegisterPage() {
                 });
         }
         return () => { isMounted = false; };
-    }, [id, isEditMode, setValue, navigate, toast]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, isEditMode, setValue]);
 
     const onSubmit = async (data: Material) => {
         try {
@@ -167,7 +168,7 @@ export default function MaterialRegisterPage() {
                         {/* Row 2: 자재유형(1) / 기본단위(1) / 관리부서(2) */}
                         <div className="space-y-2">
                             <Label>자재 유형</Label>
-                            <Select onValueChange={(val: string) => setValue('codeItem', val)} defaultValue={watch('codeItem') || ''}>
+                            <Select value={watch('codeItem') || ''} onValueChange={(val: string) => setValue('codeItem', val)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="유형 선택" />
                                 </SelectTrigger>
@@ -184,7 +185,7 @@ export default function MaterialRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>기본 단위</Label>
-                            <Select onValueChange={(val: string) => setValue('unit', val)} defaultValue={watch('unit') || 'EA'}>
+                            <Select value={watch('unit') || ''} onValueChange={(val: string) => setValue('unit', val)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="단위 선택" />
                                 </SelectTrigger>

@@ -103,11 +103,11 @@ export default function InspectionDetailPage() {
                                     inspection.status === 'P' ? 'bg-orange-100 text-orange-700' :
                                         inspection.status === 'C' ? 'bg-green-100 text-green-700' : 'bg-slate-100'
                                     }`}>
-                                    {inspection.status === 'T' && '임시 저장'}
+                                    {inspection.status === 'T' && '계획 임시 저장'}
                                     {inspection.status === 'A' && '결재 중'}
                                     {inspection.status === 'S' && '계획 확정'}
-                                    {inspection.status === 'P' && '진행 중'}
-                                    {inspection.status === 'C' && '완료 됨'}
+                                    {inspection.status === 'P' && '점검 진행 중'}
+                                    {inspection.status === 'C' && '점검 완료'}
                                 </span>
                             </div>
                         </div>
@@ -170,10 +170,7 @@ export default function InspectionDetailPage() {
                             <Label className="text-muted-foreground text-xs">{inspection.actualDate ? '실적 일자' : '예정 일자'}</Label>
                             <div className="font-medium text-sm">{inspection.actualDate || inspection.date}</div>
                         </div>
-                        <div className="space-y-1">
-                            <Label className="text-muted-foreground text-xs">단계</Label>
-                            <div className="font-medium text-sm">{inspection.stage === 'PLN' ? '계획' : '실적'}</div>
-                        </div>
+                        {/* Removed Stage */}
                         <div className="space-y-1">
                             <Label className="text-muted-foreground text-xs">대상 설비</Label>
                             <div className="font-medium text-sm">{inspection.equipmentName || inspection.equipmentId || '-'}</div>

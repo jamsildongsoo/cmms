@@ -17,6 +17,9 @@ import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
 import { WPTemplateCard } from '@/components/wp/WPTemplateCard';
 import { WP_TEMPLATES } from '@/constants/wpTemplates';
+import { ApprovalLineModal } from '@/components/approval/ApprovalLineModal';
+import { approvalService, type ApprovalStep } from '@/services/approvalService';
+import { useAuthStore } from '@/features/auth/useAuthStore';
 
 export default function WorkPermitRegisterPage() {
     const navigate = useNavigate();
@@ -26,6 +29,10 @@ export default function WorkPermitRegisterPage() {
     const [actionType, setActionType] = useState<'T' | 'C' | 'A'>('T');
     const isEditMode = !!id;
 
+    // Approval Modal State
+    const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+    const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
+    const { user } = useAuthStore();
 
     const { register, handleSubmit, setValue, watch } = useForm<WorkPermit>({
         defaultValues: {
@@ -99,20 +106,30 @@ export default function WorkPermitRegisterPage() {
 
         try {
             setLoading(true);
+            const saveStatus = actionType === 'A' ? 'T' : actionType;
             const payload = {
                 ...data,
-                status: actionType
+                status: saveStatus
             };
 
+            let savedPermit: any;
             if (isEditMode && id) {
-                await workPermitService.update(id, payload);
+                savedPermit = await workPermitService.update(id, payload);
             } else {
-                await workPermitService.create(payload);
+                savedPermit = await workPermitService.create(payload);
+            }
+
+            if (actionType === 'A') {
+                setPendingApprovalData({
+                    refId: savedPermit.permitId || id,
+                    title: `[허가] ${data.name}`
+                });
+                setIsApprovalModalOpen(true);
+                return;
             }
 
             let message = "정보가 저장되었습니다.";
             if (actionType === 'C') message = "허가 신청이 확정되었습니다.";
-            if (actionType === 'A') message = "허가 신청이 상신되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/wp/work-permit');
@@ -133,6 +150,26 @@ export default function WorkPermitRegisterPage() {
             navigate('/wp/work-permit');
         } catch (error) {
             toast({ title: "오류", description: "삭제 실패", variant: "destructive" });
+        }
+    };
+
+    const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
+        if (!pendingApprovalData) return;
+        try {
+            await approvalService.save({
+                title: pendingApprovalData.title,
+                status: 'A',
+                refEntity: 'WP',
+                refId: pendingApprovalData.refId,
+                requesterId: user?.personId || ''
+            }, steps, 'A');
+
+            toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
+            setIsApprovalModalOpen(false);
+            navigate('/wp/work-permit');
+        } catch (error: any) {
+            console.error(error);
+            toast({ title: "오류", description: "결재 상신 중 오류가 발생했습니다.", variant: "destructive" });
         }
     };
 
@@ -217,7 +254,7 @@ export default function WorkPermitRegisterPage() {
                         <div className="space-y-2">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
-                                items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
+                                items={equipments.filter(e => e.status === 'C').map(e => ({ ...e, id: e.equipmentId }))}
                                 value={watch('equipmentId') || ''}
                                 onChange={(val) => {
                                     const equipment = equipments.find(e => e.equipmentId === val);
@@ -352,6 +389,12 @@ export default function WorkPermitRegisterPage() {
                     })}
                 </div>
             </form>
+
+            <ApprovalLineModal
+                open={isApprovalModalOpen}
+                onOpenChange={setIsApprovalModalOpen}
+                onSubmit={handleApprovalSubmit}
+            />
         </div>
     );
 }

@@ -231,18 +231,20 @@ export default function DashboardPage() {
                 <div className="space-y-6">
                     {/* WO Top 5 */}
                     <Card className="shadow-sm border-t-4 border-t-indigo-500">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                             <CardTitle className="text-md font-semibold text-slate-800">설비별 작업지시 TOP 5</CardTitle>
-                            <Select value={woCriteria} onValueChange={setWoCriteria}>
-                                <SelectTrigger className="w-[100px] h-8 text-xs">
-                                    <SelectValue placeholder="기준" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="count">건수 기준</SelectItem>
-                                    <SelectItem value="cost">비용 기준</SelectItem>
-                                    <SelectItem value="time">시간 기준</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="ml-auto">
+                                <Select value={woCriteria} onValueChange={setWoCriteria}>
+                                    <SelectTrigger className="w-[100px] h-8 text-xs">
+                                        <SelectValue placeholder="기준" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="count">건수 기준</SelectItem>
+                                        <SelectItem value="cost">비용 기준</SelectItem>
+                                        <SelectItem value="time">시간 기준</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[230px] w-full">
@@ -271,16 +273,18 @@ export default function DashboardPage() {
 
                     {/* WP Top 5 */}
                     <Card className="shadow-sm border-t-4 border-t-orange-500">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                        <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
                             <CardTitle className="text-md font-semibold text-slate-800">설비별 작업허가 TOP 5</CardTitle>
-                            <Select value={wpCriteria} onValueChange={setWpCriteria}>
-                                <SelectTrigger className="w-[100px] h-8 text-xs">
-                                    <SelectValue placeholder="기준" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="count">허가건수 기준</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            <div className="ml-auto">
+                                <Select value={wpCriteria} onValueChange={setWpCriteria}>
+                                    <SelectTrigger className="w-[100px] h-8 text-xs">
+                                        <SelectValue placeholder="기준" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="count">허가건수 기준</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="h-[230px] w-full">

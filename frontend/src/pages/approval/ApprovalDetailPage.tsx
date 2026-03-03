@@ -94,8 +94,7 @@ export default function ApprovalDetailPage() {
 
     const handleDownload = (file: AttachedFileInfo & { raw?: any }) => {
         if (approval && file.raw) {
-            const url = systemService.getDownloadUrl(approval.companyId, file.raw.fileGroupId, file.raw.lineNo);
-            window.open(url, '_blank');
+            systemService.downloadFile(approval.companyId, file.raw.fileGroupId, file.raw.lineNo, file.name || file.raw.originalName);
         }
     };
 

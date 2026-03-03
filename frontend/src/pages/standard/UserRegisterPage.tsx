@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { standardService } from '@/services/standardService';
-import type { Person, Dept } from '@/services/standardService';
+import type { Person, Dept, Role } from '@/services/standardService';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 
@@ -25,10 +25,12 @@ export default function UserRegisterPage() {
 
     // Department data for SearchableSelect
     const [departments, setDepartments] = useState<Dept[]>([]);
+    const [roles, setRoles] = useState<Role[]>([]);
     const user = useAuthStore((state) => state.user);
 
     useEffect(() => {
         standardService.getAll('dept').then(setDepartments);
+        standardService.getAll('role').then(setRoles);
     }, []);
 
     useEffect(() => {
@@ -124,7 +126,13 @@ export default function UserRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>권한</Label>
-                            <Input {...register('roleId')} placeholder="ADMIN / USER" />
+                            <SearchableSelect
+                                items={roles.map((r: any) => ({ ...r, id: r.roleId }))}
+                                value={watch('roleId') || ''}
+                                onChange={(id) => setValue('roleId', id)}
+                                placeholder="권한 선택..."
+                                displayFormat={(role) => `${role.name}`}
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label>이메일</Label>

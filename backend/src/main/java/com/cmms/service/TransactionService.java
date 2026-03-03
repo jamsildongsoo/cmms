@@ -70,6 +70,7 @@ public class TransactionService {
             // Update header fields
             existing.setName(inspection.getName());
             existing.setPlantId(inspection.getPlantId());
+            existing.setEquipmentId(inspection.getEquipmentId());
             existing.setStage(inspection.getStage());
             existing.setCodeItem(inspection.getCodeItem());
             existing.setDeptId(inspection.getDeptId());

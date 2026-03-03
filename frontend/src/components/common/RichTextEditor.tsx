@@ -47,6 +47,9 @@ const MenuButton = ({
                     variant={isActive ? "secondary" : "ghost"}
                     size="icon"
                     className={`h-8 w-8 ${isActive ? 'bg-slate-200' : ''}`}
+                    onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent editor focus loss
+                    }}
                     onClick={onClick}
                     disabled={disabled}
                 >
@@ -54,7 +57,7 @@ const MenuButton = ({
                 </Button>
             </TooltipTrigger>
             <TooltipContent>
-                <p>{tooltip}</p>
+                <p className="text-xs">{tooltip}</p>
             </TooltipContent>
         </Tooltip>
     </TooltipProvider>
@@ -155,51 +158,49 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
                     <TableIcon className="h-4 w-4" />
                 </MenuButton>
 
-                {editor.isActive('table') && (
-                    <>
-                        <MenuButton onClick={() => editor.chain().focus().addColumnBefore().run()} tooltip="열 추가 (이전)">
-                            <div className="relative">
-                                <Columns className="h-4 w-4" />
-                                <span className="absolute -top-1 -left-1 text-[8px] font-bold">+</span>
-                            </div>
-                        </MenuButton>
-                        <MenuButton onClick={() => editor.chain().focus().addColumnAfter().run()} tooltip="열 추가 (이후)">
-                            <div className="relative">
-                                <Columns className="h-4 w-4" />
-                                <span className="absolute -top-1 -right-1 text-[8px] font-bold">+</span>
-                            </div>
-                        </MenuButton>
-                        <MenuButton onClick={() => editor.chain().focus().deleteColumn().run()} tooltip="열 삭제">
-                            <div className="relative">
-                                <Columns className="h-4 w-4 opacity-50" />
-                                <span className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-[10px] font-bold">×</span>
-                            </div>
-                        </MenuButton>
+                <div className="flex gap-1 border-l pl-1 border-slate-300 ml-1">
+                    <MenuButton onClick={() => editor.chain().focus().addColumnBefore().run()} disabled={!editor.can().addColumnBefore()} tooltip="열 추가 (이전)">
+                        <div className="relative">
+                            <Columns className="h-4 w-4" />
+                            <span className="absolute -top-1 -left-1 text-[8px] font-bold">+</span>
+                        </div>
+                    </MenuButton>
+                    <MenuButton onClick={() => editor.chain().focus().addColumnAfter().run()} disabled={!editor.can().addColumnAfter()} tooltip="열 추가 (이후)">
+                        <div className="relative">
+                            <Columns className="h-4 w-4" />
+                            <span className="absolute -top-1 -right-1 text-[8px] font-bold">+</span>
+                        </div>
+                    </MenuButton>
+                    <MenuButton onClick={() => editor.chain().focus().deleteColumn().run()} disabled={!editor.can().deleteColumn()} tooltip="열 삭제">
+                        <div className="relative">
+                            <Columns className="h-4 w-4 opacity-50" />
+                            <span className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-[10px] font-bold">×</span>
+                        </div>
+                    </MenuButton>
 
-                        <MenuButton onClick={() => editor.chain().focus().addRowBefore().run()} tooltip="행 추가 (이전)">
-                            <div className="relative">
-                                <Rows className="h-4 w-4" />
-                                <span className="absolute -top-1 -left-1 text-[8px] font-bold">+</span>
-                            </div>
-                        </MenuButton>
-                        <MenuButton onClick={() => editor.chain().focus().addRowAfter().run()} tooltip="행 추가 (이후)">
-                            <div className="relative">
-                                <Rows className="h-4 w-4" />
-                                <span className="absolute -top-1 -right-1 text-[8px] font-bold">+</span>
-                            </div>
-                        </MenuButton>
-                        <MenuButton onClick={() => editor.chain().focus().deleteRow().run()} tooltip="행 삭제">
-                            <div className="relative">
-                                <Rows className="h-4 w-4 opacity-50" />
-                                <span className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-[10px] font-bold">×</span>
-                            </div>
-                        </MenuButton>
+                    <MenuButton onClick={() => editor.chain().focus().addRowBefore().run()} disabled={!editor.can().addRowBefore()} tooltip="행 추가 (이전)">
+                        <div className="relative">
+                            <Rows className="h-4 w-4" />
+                            <span className="absolute -top-1 -left-1 text-[8px] font-bold">+</span>
+                        </div>
+                    </MenuButton>
+                    <MenuButton onClick={() => editor.chain().focus().addRowAfter().run()} disabled={!editor.can().addRowAfter()} tooltip="행 추가 (이후)">
+                        <div className="relative">
+                            <Rows className="h-4 w-4" />
+                            <span className="absolute -top-1 -right-1 text-[8px] font-bold">+</span>
+                        </div>
+                    </MenuButton>
+                    <MenuButton onClick={() => editor.chain().focus().deleteRow().run()} disabled={!editor.can().deleteRow()} tooltip="행 삭제">
+                        <div className="relative">
+                            <Rows className="h-4 w-4 opacity-50" />
+                            <span className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-[10px] font-bold">×</span>
+                        </div>
+                    </MenuButton>
 
-                        <MenuButton onClick={() => editor.chain().focus().deleteTable().run()} tooltip="표 삭제">
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                        </MenuButton>
-                    </>
-                )}
+                    <MenuButton onClick={() => editor.chain().focus().deleteTable().run()} disabled={!editor.can().deleteTable()} tooltip="표 삭제">
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                    </MenuButton>
+                </div>
             </div>
 
             {/* Editor Content */}

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import api from '@/utils/api';
 import { useAuthStore } from "@/features/auth/useAuthStore";
 
@@ -46,7 +45,7 @@ export interface TransactionItem {
     storageId: string; // items need storage
     current_stock?: number;
     qty: number;
-    unit_price?: number;
+    unitPrice?: number;
     ref?: string;
     name?: string; // Added for UI display
     spec?: string; // Added for UI display
@@ -132,10 +131,10 @@ export const inventoryService = {
                 inventoryId: item.inventoryId,
                 storageId: item.storageId || 'STR-001',
                 qty: item.qty,
-                unit_price: item.unit_price || 0
+                unitPrice: item.unitPrice || 0
             }))
         };
-        await axios.post('/api/inv/transactions', payload);
+        await api.post('/api/inv/transactions', payload);
     },
 
     createTransaction: async (): Promise<InventoryTransaction> => {

@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileStorageService {
 
-    @Value("${file.upload-dir:c:/cmms/uploads}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     private final SystemService systemService;

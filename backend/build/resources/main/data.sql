@@ -22,7 +22,13 @@ INSERT INTO bin (company_id, bin_id, name, storage_id) VALUES ('1000', 'B0002', 
 INSERT INTO location (company_id, location_id, name, storage_id, bin_id) VALUES ('1000', 'L0001', 'Shelf 1', 'S0001', 'B0001') ON CONFLICT (company_id, location_id) DO NOTHING;
 INSERT INTO location (company_id, location_id, name, storage_id, bin_id) VALUES ('1000', 'L0002', 'Shelf 2', 'S0002', 'B0002') ON CONFLICT (company_id, location_id) DO NOTHING;
 
--- 5. Person
+-- 5. Role
+INSERT INTO role (company_id, role_id, name, note, delete_mark) VALUES ('1000', 'SYSTEM', 'System Administrator', 'Full system access', 'N') ON CONFLICT (company_id, role_id) DO NOTHING;
+INSERT INTO role (company_id, role_id, name, note, delete_mark) VALUES ('1000', 'ADMIN', 'Administrator', 'Company admin access', 'N') ON CONFLICT (company_id, role_id) DO NOTHING;
+INSERT INTO role (company_id, role_id, name, note, delete_mark) VALUES ('1000', 'MANAGER', 'Manager', 'Manager access', 'N') ON CONFLICT (company_id, role_id) DO NOTHING;
+INSERT INTO role (company_id, role_id, name, note, delete_mark) VALUES ('1000', 'USER', 'General User', 'Standard access', 'N') ON CONFLICT (company_id, role_id) DO NOTHING;
+
+-- 6. Person
 -- BCrypt hashed password for '1234' is '$2a$10$7yC0urP.xRDm1rJLps/DaOKh5xll1RmZ2.Fbd6voR5.LYSr4EveaC'
 INSERT INTO person (company_id, person_id, name, dept_id, role_id, password_hash, email, position, delete_mark) 
 VALUES ('1000', 'admin', 'Admin User', 'D0000', 'ADMIN', '$2a$10$7yC0urP.xRDm1rJLps/DaOKh5xll1RmZ2.Fbd6voR5.LYSr4EveaC', 'admin@test.com', 'Manager', 'N') ON CONFLICT (company_id, person_id) DO NOTHING;
@@ -40,26 +46,26 @@ VALUES ('1000', 'user3', 'Maintenance User', 'M1001', 'USER', '$2a$10$7yC0urP.xR
 -- 6. Common Code (Code & CodeItem)
 
 -- [EQ_TYPE] Equipment Type
-INSERT INTO code (company_id, code_id, name) VALUES ('1000', 'EQ_TYPE', 'Equipment Type') ON CONFLICT (company_id, code_id) DO NOTHING;
+INSERT INTO code (company_id, code_id, name, delete_mark) VALUES ('1000', 'EQ_TYPE', 'Equipment Type', 'N') ON CONFLICT (company_id, code_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'EQ_TYPE', 'MECH', 'Mechanical') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'EQ_TYPE', 'ELEC', 'Electrical') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'EQ_TYPE', 'INST', 'Instrument') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'EQ_TYPE', 'UTIL', 'Utility') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 
 -- [MAT_TYPE] Material Type (Inventory)
-INSERT INTO code (company_id, code_id, name) VALUES ('1000', 'MAT_TYPE', 'Material Type') ON CONFLICT (company_id, code_id) DO NOTHING;
+INSERT INTO code (company_id, code_id, name, delete_mark) VALUES ('1000', 'MAT_TYPE', 'Material Type', 'N') ON CONFLICT (company_id, code_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'MAT_TYPE', 'SPARE', 'Spare Parts') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'MAT_TYPE', 'CONS', 'Consumables') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'MAT_TYPE', 'TOOL', 'Tools') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 
 -- [INSP_TYPE] Inspection Type
-INSERT INTO code (company_id, code_id, name) VALUES ('1000', 'INSP_TYPE', 'Inspection Type') ON CONFLICT (company_id, code_id) DO NOTHING;
+INSERT INTO code (company_id, code_id, name, delete_mark) VALUES ('1000', 'INSP_TYPE', 'Inspection Type', 'N') ON CONFLICT (company_id, code_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'INSP_TYPE', 'PATROL', 'Patrol Inspection') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'INSP_TYPE', 'MEASURE', 'Measurement') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'INSP_TYPE', 'PM', 'Preventive Maintenance') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 
 -- [WO_TYPE] Work Order Type
-INSERT INTO code (company_id, code_id, name) VALUES ('1000', 'WO_TYPE', 'Work Order Type') ON CONFLICT (company_id, code_id) DO NOTHING;
+INSERT INTO code (company_id, code_id, name, delete_mark) VALUES ('1000', 'WO_TYPE', 'Work Order Type', 'N') ON CONFLICT (company_id, code_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_TYPE', 'BM', 'Breakdown Maint') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_TYPE', 'PM', 'Preventive Maint') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;
 INSERT INTO code_item (company_id, code_id, item_id, name) VALUES ('1000', 'WO_TYPE', 'CM', 'Corrective Maint') ON CONFLICT (company_id, code_id, item_id) DO NOTHING;

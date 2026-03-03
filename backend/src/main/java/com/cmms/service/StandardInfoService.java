@@ -79,7 +79,7 @@ public class StandardInfoService {
     }
 
     public List<Role> getAllRoles(String companyId) {
-        return roleRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        return roleRepository.findByCompanyIdAndDeleteMarkOrderByRoleIdAsc(companyId, "N");
     }
 
     public Optional<Role> getRoleById(String companyId, String roleId) {

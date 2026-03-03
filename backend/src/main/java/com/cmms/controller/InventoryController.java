@@ -16,6 +16,7 @@ public class InventoryController {
 
     private final InventoryService inventoryService;
 
+    @PreAuthorize("principal.startsWith(#stock.companyId)")
     @PostMapping("/stocks")
     public InventoryStock createStock(@RequestBody InventoryStock stock) {
         return inventoryService.saveStock(stock);
@@ -44,6 +45,7 @@ public class InventoryController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("principal.startsWith(#history.companyId)")
     @PostMapping("/history")
     public InventoryHistory createHistory(@RequestBody InventoryHistory history) {
         return inventoryService.saveHistory(history);
@@ -74,6 +76,7 @@ public class InventoryController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("principal.startsWith(#closing.companyId)")
     @PostMapping("/closings")
     public InventoryClosing createClosing(@RequestBody InventoryClosing closing) {
         return inventoryService.saveClosing(closing);

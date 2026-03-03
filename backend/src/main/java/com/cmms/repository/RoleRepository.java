@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, RoleId> {
-    List<Role> findAllByCompanyIdAndDeleteMark(String companyId, String deleteMark);
+    List<Role> findByCompanyIdAndDeleteMarkOrderByRoleIdAsc(String companyId, String deleteMark);
 }

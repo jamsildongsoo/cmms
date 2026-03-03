@@ -59,8 +59,14 @@ export interface Person extends BaseStandard {
   lastLoginIp?: string; // Added
 }
 
+export interface Role extends BaseStandard {
+  companyId: string;
+  roleId: string;
+  note?: string;
+}
+
 // Standard entity type
-export type StandardType = 'company' | 'plant' | 'dept' | 'person' | 'code' | 'storage';
+export type StandardType = 'company' | 'plant' | 'dept' | 'person' | 'code' | 'storage' | 'role';
 
 import { useAuthStore } from "@/features/auth/useAuthStore";
 
@@ -75,7 +81,8 @@ export const standardService = {
       dept: 'std/depts',
       person: 'std/persons',
       code: 'std/codes',
-      storage: 'std/storages'
+      storage: 'std/storages',
+      role: 'std/roles'
     };
 
     let url = `/api/${pathMap[type]}`;
@@ -98,7 +105,8 @@ export const standardService = {
       dept: 'std/depts',
       person: 'std/persons',
       code: 'std/codes',
-      storage: 'std/storages'
+      storage: 'std/storages',
+      role: 'std/roles'
     };
 
     let url = `/api/${pathMap[type]}`;
@@ -126,7 +134,8 @@ export const standardService = {
       dept: 'std/depts',
       person: 'std/persons',
       code: 'std/codes',
-      storage: 'std/storages'
+      storage: 'std/storages',
+      role: 'std/roles'
     };
 
     // Inject companyId if not present
@@ -154,7 +163,8 @@ export const standardService = {
       dept: 'std/depts',
       person: 'std/persons',
       code: 'std/codes',
-      storage: 'std/storages'
+      storage: 'std/storages',
+      role: 'std/roles'
     };
 
     let url = `/api/${pathMap[type]}`;

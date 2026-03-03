@@ -108,8 +108,7 @@ export default function MemoDetailPage() {
             const companyId = memo.companyId;
             const fileGroupId = file.raw.fileGroupId;
             const lineNo = file.raw.lineNo;
-            const url = systemService.getDownloadUrl(companyId, fileGroupId, lineNo);
-            window.open(url, '_blank');
+            systemService.downloadFile(companyId, fileGroupId, lineNo, file.name || file.raw.originalName);
         }
     };
 

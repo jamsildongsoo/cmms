@@ -16,6 +16,9 @@ import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { standardService, type Dept, type Person, type CodeItem } from '@/services/standardService';
 import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
+import { ApprovalLineModal } from '@/components/approval/ApprovalLineModal';
+import { approvalService, type ApprovalStep } from '@/services/approvalService';
+import { useAuthStore } from '@/features/auth/useAuthStore';
 
 export default function InspectionRegisterPage() {
     const navigate = useNavigate();
@@ -44,6 +47,11 @@ export default function InspectionRegisterPage() {
         standardService.getAll('person').then(setPersons);
         standardService.getCodeItems('INSP_TYPE').then(setInspTypes).catch(() => console.error("INSP_TYPE fetch error"));
     }, []);
+
+    // Approval Modal State
+    const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+    const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
+    const { user } = useAuthStore();
 
     // Local state for items
     const [items, setItems] = useState<InspectionItem[]>([
@@ -140,15 +148,29 @@ export default function InspectionRegisterPage() {
         };
 
         try {
+            let savedInspection: any;
+            // When submitting for approval, first save as Temporary ('T')
+            const saveStatus = targetStatus === 'A' ? 'T' : targetStatus;
+            const payload = { ...dataToSave, status: saveStatus };
+
             if (isEditMode && id) {
-                await inspectionService.update(id, dataToSave);
+                savedInspection = await inspectionService.update(id, payload);
             } else {
-                await inspectionService.create(dataToSave);
+                savedInspection = await inspectionService.create(payload);
+            }
+
+            if (targetStatus === 'A') {
+                // If it was an Approval request, save the temp data and open the modal
+                setPendingApprovalData({
+                    refId: savedInspection.inspectionId || id,
+                    title: `[점검] ${dataToSave.name}`
+                });
+                setIsApprovalModalOpen(true);
+                return;
             }
 
             let message = "정보가 저장되었습니다.";
             if (targetStatus === 'C') message = "정보가 확정되었습니다.";
-            if (targetStatus === 'A') message = "결재 상신되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/pm/inspection');
@@ -175,6 +197,26 @@ export default function InspectionRegisterPage() {
         }
     };
 
+    const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
+        if (!pendingApprovalData) return;
+        try {
+            await approvalService.save({
+                title: pendingApprovalData.title,
+                status: 'A',
+                refEntity: 'INSPECTION',
+                refId: pendingApprovalData.refId,
+                requesterId: user?.personId || ''
+            }, steps, 'A');
+
+            toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
+            setIsApprovalModalOpen(false);
+            navigate('/pm/inspection');
+        } catch (error: any) {
+            console.error(error);
+            toast({ title: "오류", description: "결재 상신 중 오류가 발생했습니다.", variant: "destructive" });
+        }
+    };
+
     // UI State Logic
     const currentStatus = watch('status');
     const isConfirmed = currentStatus === 'C';
@@ -193,10 +235,15 @@ export default function InspectionRegisterPage() {
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">
-                            {isResultMode ? '점검 실적 등록' : (isEditMode ? '점검 계획 수정' : '점검 계획 등록')}
-                        </h1>
-                        <p className="text-muted-foreground">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold tracking-tight">
+                                {isResultMode ? '점검 실적 등록' : (isEditMode ? '점검 계획 수정' : '점검 계획 등록')}
+                            </h1>
+                            <span className="bg-slate-100 text-slate-700 font-medium px-2.5 py-1 rounded text-sm">
+                                {isResultMode ? '실적' : '계획'}
+                            </span>
+                        </div>
+                        <p className="text-muted-foreground mt-1">
                             {isResultMode ? '점검 결과를 입력하고 완료합니다.' : '예방 점검 계획을 수립하고 확정합니다.'}
                         </p>
                     </div>
@@ -284,27 +331,9 @@ export default function InspectionRegisterPage() {
 
                         {/* Row 2: Type, Equipment, Dept, Person */}
                         <div className="space-y-2 lg:col-start-1">
-                            <Label>점검 유형 <span className="text-red-500">*</span></Label>
-                            <Select
-                                value={watch('codeItem') || ''}
-                                onValueChange={(val: string) => setValue('codeItem', val)}
-                                disabled={!isPlanEditable && !isResultEditable}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="점검 유형 선택" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {inspTypes.map(type => (
-                                        <SelectItem key={type.itemId} value={type.itemId}>{type.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <input type="hidden" {...register('codeItem', { required: true })} />
-                        </div>
-                        <div className="space-y-2">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
-                                items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
+                                items={equipments.filter(e => e.status === 'C').map(e => ({ ...e, id: e.equipmentId }))}
                                 value={watch('equipmentId') || ''}
                                 onChange={(val) => {
                                     const equipment = equipments.find(e => e.equipmentId === val);
@@ -321,6 +350,24 @@ export default function InspectionRegisterPage() {
                                 disabled={!isPlanEditable && !isResultEditable}
                             />
                             <input type="hidden" {...register('equipmentName', { required: true })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>점검 유형 <span className="text-red-500">*</span></Label>
+                            <Select
+                                value={watch('codeItem') || ''}
+                                onValueChange={(val: string) => setValue('codeItem', val)}
+                                disabled={!isPlanEditable && !isResultEditable}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="점검 유형 선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {inspTypes.map(type => (
+                                        <SelectItem key={type.itemId} value={type.itemId}>{type.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <input type="hidden" {...register('codeItem', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>관리 부서 <span className="text-red-500">*</span></Label>
@@ -473,6 +520,12 @@ export default function InspectionRegisterPage() {
                     </CardContent>
                 </Card>
             </form>
+
+            <ApprovalLineModal
+                open={isApprovalModalOpen}
+                onOpenChange={setIsApprovalModalOpen}
+                onSubmit={handleApprovalSubmit}
+            />
         </div>
     );
 }

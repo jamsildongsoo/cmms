@@ -155,7 +155,7 @@ export default function LoginPage() {
                     </form>
                 </CardContent>
                 <CardFooter className="flex justify-center text-sm text-slate-500">
-                    Repower Energy CMMS
+                    Hankook Plant Service CMMS
                 </CardFooter>
             </Card>
         </div>

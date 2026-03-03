@@ -20,10 +20,19 @@ public class ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final ApprovalStepRepository approvalStepRepository;
     private final SystemService systemService;
+    private final ApprovalHtmlService approvalHtmlService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Approval saveApproval(Approval approval, List<ApprovalStep> steps, String targetStatus) {
         // targetStatus: T (Temporary), A (Approving/Submitted)
+
+        // Generate HTML Body if upper entity is provided and status is moving to A
+        if ("A".equals(targetStatus) && approval.getRefEntity() != null && approval.getRefId() != null) {
+            String generatedHtml = approvalHtmlService.generateHtmlBody(approval.getCompanyId(),
+                    approval.getRefEntity(), approval.getRefId());
+            approval.setContent(generatedHtml);
+        }
         if (approval.getApprovalId() == null || approval.getApprovalId().isBlank()) {
             approval.setApprovalId(systemService.generateId(approval.getCompanyId(), "APPROVAL",
                     java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMM"))));
@@ -85,12 +94,20 @@ public class ApprovalService {
         if ("REJECT".equals(decision)) {
             currentStep.setResult("N"); // Rejected
             approval.setStatus("R"); // Rejected
+            if (approval.getRefEntity() != null && approval.getRefId() != null) {
+                eventPublisher.publishEvent(new com.cmms.event.ApprovalCompletedEvent(
+                        this, companyId, approval.getRefEntity(), approval.getRefId(), "R", approvalId));
+            }
         } else {
             currentStep.setResult("Y"); // Approved
             if (approval.getCurrentStep() < steps.size()) {
                 approval.setCurrentStep(approval.getCurrentStep() + 1);
             } else {
                 approval.setStatus("C"); // Confirmed/Finished
+                if (approval.getRefEntity() != null && approval.getRefId() != null) {
+                    eventPublisher.publishEvent(new com.cmms.event.ApprovalCompletedEvent(
+                            this, companyId, approval.getRefEntity(), approval.getRefId(), "C", approvalId));
+                }
             }
         }
 

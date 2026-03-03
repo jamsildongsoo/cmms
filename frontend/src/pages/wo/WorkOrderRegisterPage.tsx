@@ -16,6 +16,9 @@ import { SearchableSelect } from '@/components/common/SearchableSelect';
 import type { WorkOrder } from '@/types/workOrder';
 import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
+import { ApprovalLineModal } from '@/components/approval/ApprovalLineModal';
+import { approvalService, type ApprovalStep } from '@/services/approvalService';
+import { useAuthStore } from '@/features/auth/useAuthStore';
 
 interface WorkItem {
     seq: number;
@@ -33,6 +36,11 @@ export default function WorkOrderRegisterPage() {
     const [actionType, setActionType] = useState<'T' | 'C' | 'A'>('T');
     const location = useLocation();
 
+    // Approval Modal State
+    const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+    const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
+    const { user } = useAuthStore();
+
     // Mode Detection
     const isEditMode = !!id;
     const isResultMode = location.pathname.includes('/result'); // Detects /wo/work-order/result/new
@@ -46,6 +54,7 @@ export default function WorkOrderRegisterPage() {
         defaultValues: {
             status: 'T',
             stage: isResultMode ? 'ACT' : 'PLN', // Force stage based on mode
+            date: new Date().toISOString().split('T')[0],
             refEntity: refEntityParam || undefined,
             refId: refIdParam || undefined,
         }
@@ -148,21 +157,31 @@ export default function WorkOrderRegisterPage() {
 
         try {
             setLoading(true);
+            const saveStatus = actionType === 'A' ? 'T' : actionType;
             const payload = {
                 ...data,
-                status: actionType,
+                status: saveStatus,
                 items: workItems
             };
 
+            let savedWorkOrder: any;
             if (isEditMode && id) {
-                await workOrderService.update(id, payload);
+                savedWorkOrder = await workOrderService.update(id, payload);
             } else {
-                await workOrderService.create(payload);
+                savedWorkOrder = await workOrderService.create(payload);
+            }
+
+            if (actionType === 'A') {
+                setPendingApprovalData({
+                    refId: savedWorkOrder.orderId || id,
+                    title: `[작업] ${data.name}`
+                });
+                setIsApprovalModalOpen(true);
+                return;
             }
 
             let message = "정보가 저장되었습니다.";
             if (actionType === 'C') message = "작업 정보가 확정되었습니다.";
-            if (actionType === 'A') message = "결재 상신되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/wo/work-order');
@@ -183,6 +202,26 @@ export default function WorkOrderRegisterPage() {
             navigate('/wo/work-order');
         } catch (error: any) {
             toast({ title: "오류", description: "삭제 중 오류 발생", variant: "destructive" });
+        }
+    };
+
+    const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
+        if (!pendingApprovalData) return;
+        try {
+            await approvalService.save({
+                title: pendingApprovalData.title,
+                status: 'A',
+                refEntity: 'WO',
+                refId: pendingApprovalData.refId,
+                requesterId: user?.personId || ''
+            }, steps, 'A');
+
+            toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
+            setIsApprovalModalOpen(false);
+            navigate('/wo/work-order');
+        } catch (error: any) {
+            console.error(error);
+            toast({ title: "오류", description: "결재 상신 중 오류가 발생했습니다.", variant: "destructive" });
         }
     };
 
@@ -296,7 +335,7 @@ export default function WorkOrderRegisterPage() {
                         <div className="space-y-2 md:col-start-1">
                             <Label>대상 설비 <span className="text-red-500">*</span></Label>
                             <SearchableSelect
-                                items={equipments.map(e => ({ ...e, id: e.equipmentId }))}
+                                items={equipments.filter(e => e.status === 'C').map(e => ({ ...e, id: e.equipmentId }))}
                                 value={watch('equipmentId') || ''}
                                 onChange={(val) => {
                                     const equipment = equipments.find(e => e.equipmentId === val);
@@ -449,6 +488,12 @@ export default function WorkOrderRegisterPage() {
                     </CardContent>
                 </Card>
             </form>
+
+            <ApprovalLineModal
+                open={isApprovalModalOpen}
+                onOpenChange={setIsApprovalModalOpen}
+                onSubmit={handleApprovalSubmit}
+            />
         </div>
     );
 }

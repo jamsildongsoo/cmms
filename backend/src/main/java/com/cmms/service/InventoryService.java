@@ -148,7 +148,7 @@ public class InventoryService {
             // I'll leave ID generation to a simple logic for now or inject SystemService.
             // Let's inject SystemService.
 
-            history.setHistoryId("HIST-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 1000));
+            history.setHistoryId(java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20));
 
             history.setTxType(request.getType());
             history.setTxDate(request.getDate() != null ? request.getDate() : java.time.LocalDateTime.now());

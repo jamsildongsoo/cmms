@@ -33,9 +33,6 @@ export default function EquipmentRegisterPage() {
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Equipment>({
         defaultValues: {
             status: 'T',
-            inspectionYn: 'Y',
-            psmYn: 'N',
-            workpermitYn: 'N',
             purchaseCost: 0,
             residualValue: 0,
             deprePeriod: 0,
@@ -71,7 +68,8 @@ export default function EquipmentRegisterPage() {
                 });
         }
         return () => { isMounted = false; };
-    }, [id, isEditMode, setValue, navigate, toast]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, isEditMode, setValue]);
 
     const onSubmit = async (data: Equipment) => {
         try {
@@ -278,7 +276,7 @@ export default function EquipmentRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
                             <Label htmlFor="psmYn">PSM 대상 여부</Label>
-                            <Select onValueChange={(val: string) => setValue('psmYn', val as any)} defaultValue="N">
+                            <Select value={watch('psmYn') || ''} onValueChange={(val: string) => setValue('psmYn', val as any)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>
@@ -290,7 +288,7 @@ export default function EquipmentRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="inspectionYn">예방 점검 대상</Label>
-                            <Select onValueChange={(val: string) => setValue('inspectionYn', val as any)} defaultValue="Y">
+                            <Select value={watch('inspectionYn') || ''} onValueChange={(val: string) => setValue('inspectionYn', val as any)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>
@@ -302,7 +300,7 @@ export default function EquipmentRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="workpermitYn">작업허가 대상</Label>
-                            <Select onValueChange={(val: string) => setValue('workpermitYn', val as any)} defaultValue="N">
+                            <Select value={watch('workpermitYn') || ''} onValueChange={(val: string) => setValue('workpermitYn', val as any)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="선택" />
                                 </SelectTrigger>
@@ -319,7 +317,7 @@ export default function EquipmentRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="inspectionUnit">주기 단위</Label>
-                            <Select onValueChange={(val: string) => setValue('inspectionUnit', val as any)} defaultValue="MONTH">
+                            <Select value={watch('inspectionUnit') || ''} onValueChange={(val: string) => setValue('inspectionUnit', val as any)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="단위 선택" />
                                 </SelectTrigger>

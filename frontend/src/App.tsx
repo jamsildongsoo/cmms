@@ -18,6 +18,8 @@ import UserRegisterPage from '@/pages/standard/UserRegisterPage';
 import CodeListPage from '@/pages/standard/CodeListPage';
 import CodeRegisterPage from '@/pages/standard/CodeRegisterPage';
 import CodeItemRegisterPage from '@/pages/standard/CodeItemRegisterPage';
+import RoleListPage from '@/pages/standard/RoleListPage';
+import RoleRegisterPage from '@/pages/standard/RoleRegisterPage';
 import ProfilePage from '@/pages/standard/ProfilePage';
 import PasswordPage from '@/pages/standard/PasswordPage';
 
@@ -60,7 +62,6 @@ import ApprovalOutboxPage from '@/pages/approval/ApprovalOutboxPage';
 import ApprovalDetailPage from '@/pages/approval/ApprovalDetailPage';
 
 // Common
-import PlaceholderPage from '@/components/common/PlaceholderPage';
 import { useAuthStore } from '@/features/auth/useAuthStore';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -99,10 +100,11 @@ function App() {
             <Route path="standard/storage/:id/edit" element={<StorageRegisterPage />} />
 
             <Route path="standard/user" element={<UserListPage />} />
-            <Route path="standard/user/new" element={<UserRegisterPage />} />
             <Route path="standard/user/:id/edit" element={<UserRegisterPage />} />
 
-            <Route path="standard/role" element={<PlaceholderPage title="권한 관리" />} />
+            <Route path="standard/role" element={<RoleListPage />} />
+            <Route path="standard/role/new" element={<RoleRegisterPage />} />
+            <Route path="standard/role/:id/edit" element={<RoleRegisterPage />} />
 
             <Route path="standard/code" element={<CodeListPage />} />
             <Route path="standard/code/new" element={<CodeRegisterPage />} />
