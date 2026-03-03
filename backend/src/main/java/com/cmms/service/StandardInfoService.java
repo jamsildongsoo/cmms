@@ -124,6 +124,20 @@ public class StandardInfoService {
         });
     }
 
+    @Transactional
+    public void changePassword(String companyId, String personId, String currentPassword, String newPassword) {
+        Person person = personRepository.findById(new PersonId(companyId, personId))
+                .filter(p -> p.getDeleteMark() == null || "N".equals(p.getDeleteMark()))
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(currentPassword, person.getPasswordHash())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        person.setPasswordHash(passwordEncoder.encode(newPassword));
+        personRepository.save(person);
+    }
+
     // Storage
     @Transactional
     public Storage saveStorage(Storage storage) {

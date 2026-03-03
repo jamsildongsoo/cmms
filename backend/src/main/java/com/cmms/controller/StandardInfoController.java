@@ -114,6 +114,19 @@ public class StandardInfoController {
     }
 
     @PreAuthorize("principal.startsWith(#companyId)")
+    @PostMapping("/persons/{companyId}/{personId}/password")
+    public ResponseEntity<?> changePassword(@PathVariable String companyId, @PathVariable String personId,
+            @RequestBody java.util.Map<String, String> payload) {
+        try {
+            standardInfoService.changePassword(companyId, personId, payload.get("currentPassword"),
+                    payload.get("newPassword"));
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("principal.startsWith(#companyId)")
     @DeleteMapping("/persons/{companyId}/{personId}")
     public ResponseEntity<Void> deletePerson(@PathVariable String companyId, @PathVariable String personId) {
         standardInfoService.deletePerson(companyId, personId);

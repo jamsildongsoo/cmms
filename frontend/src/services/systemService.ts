@@ -49,5 +49,28 @@ export const systemService = {
             console.error("Failed to download file", error);
             throw error;
         }
+    },
+
+    // Upload a single file
+    uploadFile: async (
+        file: File,
+        companyId: string,
+        fileGroupId?: string,
+        refEntity?: string,
+        refId?: string
+    ): Promise<FileGroup> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('companyId', companyId);
+        if (fileGroupId) formData.append('fileGroupId', fileGroupId);
+        if (refEntity) formData.append('refEntity', refEntity);
+        if (refId) formData.append('refId', refId);
+
+        const response = await api.post('/api/sys/files/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
     }
 };

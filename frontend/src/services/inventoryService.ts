@@ -107,8 +107,34 @@ export const inventoryService = {
         try {
             const companyId = useAuthStore.getState().user?.companyId;
             if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<InventoryTransaction[]>(`/api/inv/history?companyId=${companyId}`);
-            return response.data;
+
+            const response = await api.get<any[]>(`/api/inv/history?companyId=${companyId}`);
+
+            // UI를 위해 품목 정보 같이 불러오기 (이름, 규격 등)
+            const materials = await inventoryService.getAllMaterials();
+
+            return response.data.map(item => {
+                const material = materials.find(m => m.inventoryId === item.inventoryId);
+                return {
+                    history_id: item.historyId,
+                    type: item.txType,
+                    date: item.txDate ? item.txDate.replace('T', ' ').substring(0, 16) : '-',
+                    inventoryId: item.inventoryId,
+                    qty: item.qty,
+                    amount: item.amount,
+                    refEntity: item.refEntity,
+                    refId: item.refId,
+
+                    // UI convenience fields
+                    name: material ? material.name : item.inventoryId,
+                    spec: material?.spec || '-',
+                    unit: material?.unit || 'EA',
+                    storage: item.storageId,
+                    user: item.createdBy || 'SYSTEM',
+                    ref: item.refId || '-',
+                    companyId: item.companyId,
+                } as InventoryTransaction;
+            });
         } catch (error) {
             console.error("Failed to fetch transactions", error);
             return [];

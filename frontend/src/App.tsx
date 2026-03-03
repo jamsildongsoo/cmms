@@ -100,6 +100,7 @@ function App() {
             <Route path="standard/storage/:id/edit" element={<StorageRegisterPage />} />
 
             <Route path="standard/user" element={<UserListPage />} />
+            <Route path="standard/user/new" element={<UserRegisterPage />} />
             <Route path="standard/user/:id/edit" element={<UserRegisterPage />} />
 
             <Route path="standard/role" element={<RoleListPage />} />

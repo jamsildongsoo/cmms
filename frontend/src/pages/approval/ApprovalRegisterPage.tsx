@@ -16,6 +16,7 @@ import { standardService, type Person } from '@/services/standardService';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 import { FileAttachment, type AttachedFile } from '@/components/common/FileAttachment';
 import { RichTextEditor } from '@/components/common/RichTextEditor';
+import { systemService } from '@/services/systemService';
 
 import { approvalService, type Approval, type ApprovalStep, type DecisionType } from '@/services/approvalService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
@@ -122,10 +123,29 @@ export default function ApprovalRegisterPage() {
 
         try {
             setLoading(true);
+
+            // Upload files first if any
+            let fileGroupId: string | undefined = undefined;
+            if (attachedFiles.length > 0 && currentUser?.companyId) {
+                for (const file of attachedFiles) {
+                    if (file.file && file.isNew) {
+                        const uploadedGroup = await systemService.uploadFile(
+                            file.file,
+                            currentUser.companyId,
+                            fileGroupId
+                        );
+                        if (uploadedGroup?.fileGroupId) {
+                            fileGroupId = uploadedGroup.fileGroupId;
+                        }
+                    }
+                }
+            }
+
             const approvalData: Partial<Approval> = {
                 title: titleRef.current.value,
                 content: content,
                 requesterId: currentUser?.personId,
+                fileGroupId: fileGroupId,
             };
 
             const steps: Partial<ApprovalStep>[] = approvalLine.map((item, index) => ({

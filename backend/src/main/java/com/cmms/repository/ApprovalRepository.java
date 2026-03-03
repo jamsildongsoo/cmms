@@ -34,7 +34,7 @@ public interface ApprovalRepository extends JpaRepository<Approval, ApprovalId> 
                         "  SELECT s.approvalId FROM ApprovalStep s " +
                         "  WHERE s.companyId = :companyId " +
                         "  AND s.personId = :personId " +
-                        "  AND s.result IN ('01', '02', '03', '04')" + // 01:Approve, 02:Agree, 03:Notify, 04:Reject
+                        "  AND s.result IN ('Y', 'N')" + // Y:Approve/Agree, N:Reject
                         ")")
         List<Approval> findCompletedInbox(@Param("companyId") String companyId, @Param("personId") String personId);
 
