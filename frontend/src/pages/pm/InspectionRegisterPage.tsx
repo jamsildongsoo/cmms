@@ -199,9 +199,68 @@ export default function InspectionRegisterPage() {
 
     const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
         if (!pendingApprovalData) return;
+
+        // Generate HTML content for approval based on current form state
+        const formData = getValues();
+        const stageLabel = formData.stage === 'ACT' ? '실적' : '계획';
+        const content = `
+            <div style="font-family: sans-serif; padding: 10px;">
+                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">점검 ${stageLabel} 상세</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">점검명</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.name}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">${formData.stage === 'ACT' ? '실적일' : '예정일'}</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">부서</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.deptName || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">담당자</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.personName || '-'}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">비고</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.note || '-'}</td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 20px;">점검 항목 내역</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="border: 1px solid #333; padding: 6px; text-align: center; width: 40px;">No.</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">점검 항목</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">점검 방법</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: right; width: 80px;">기준값</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: center; width: 60px;">단위</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: right; width: 80px;">결과값</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map((item, idx) => `
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${idx + 1}</td>
+                                <td style="border: 1px solid #333; padding: 6px;">${item.name || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 6px;">${item.method || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 6px; text-align: right;">${item.stdVal !== undefined ? item.stdVal : '-'}</td>
+                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${item.unit || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 6px; text-align: right; font-weight: bold;">${item.resultVal !== undefined ? item.resultVal : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
         try {
             await approvalService.save({
                 title: pendingApprovalData.title,
+                content: content,
                 status: 'A',
                 refEntity: 'INSPECTION',
                 refId: pendingApprovalData.refId,

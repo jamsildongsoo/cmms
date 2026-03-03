@@ -207,9 +207,70 @@ export default function WorkOrderRegisterPage() {
 
     const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
         if (!pendingApprovalData) return;
+
+        // Generate HTML content for approval
+        const formData = watch();
+        const stageLabel = formData.stage === 'ACT' ? '실적' : '요청';
+        const content = `
+            <div style="font-family: sans-serif; padding: 10px;">
+                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">작업 ${stageLabel} 상세</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">작업명</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.name}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">${formData.stage === 'ACT' ? '실적일' : '요청일'}</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">부서</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.deptName || '-'} (${formData.deptId || ''})</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">담당자</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.personName || '-'}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">유형</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.codeItem || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">비용/시간</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.cost?.toLocaleString() || 0}원 / ${formData.time || 0}M/D</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">내용</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.note || '-'}</td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 20px;">작업 상세 내역</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                        <tr style="background-color: #f0f0f0;">
+                            <th style="border: 1px solid #333; padding: 6px; text-align: center; width: 40px;">No.</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">작업내용</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">작업방법</th>
+                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">조치결과</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${workItems.map((item, idx) => `
+                            <tr>
+                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${idx + 1}</td>
+                                <td style="border: 1px solid #333; padding: 6px;">${item.task_name || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 6px;">${item.method || '-'}</td>
+                                <td style="border: 1px solid #333; padding: 6px;">${item.result || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
         try {
             await approvalService.save({
                 title: pendingApprovalData.title,
+                content: content,
                 status: 'A',
                 refEntity: 'WO',
                 refId: pendingApprovalData.refId,

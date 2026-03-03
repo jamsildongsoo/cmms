@@ -1,8 +1,5 @@
 package com.cmms.service;
 
-import com.cmms.domain.Inspection;
-import com.cmms.domain.WorkOrder;
-import com.cmms.domain.WorkPermit;
 import com.cmms.event.ApprovalCompletedEvent;
 import com.cmms.repository.InspectionRepository;
 import com.cmms.repository.WorkOrderRepository;
@@ -35,9 +32,11 @@ public class ApprovalEventListener {
 
         switch (entity) {
             case "INSPECTION":
+            case "IN":
                 inspectionRepository.findById(new InspectionId(event.getCompanyId(), event.getRefId()))
                         .ifPresent(inspection -> {
                             inspection.setStatus(event.getFinalStatus());
+                            inspection.setApprovalId(event.getApprovalId());
                             inspectionRepository.save(inspection);
                         });
                 break;
@@ -46,6 +45,7 @@ public class ApprovalEventListener {
                 workOrderRepository.findById(new WorkOrderId(event.getCompanyId(), event.getRefId()))
                         .ifPresent(order -> {
                             order.setStatus(event.getFinalStatus());
+                            order.setApprovalId(event.getApprovalId());
                             workOrderRepository.save(order);
                         });
                 break;
@@ -54,6 +54,7 @@ public class ApprovalEventListener {
                 workPermitRepository.findById(new WorkPermitId(event.getCompanyId(), event.getRefId()))
                         .ifPresent(permit -> {
                             permit.setStatus(event.getFinalStatus());
+                            permit.setApprovalId(event.getApprovalId());
                             workPermitRepository.save(permit);
                         });
                 break;

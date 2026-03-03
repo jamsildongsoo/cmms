@@ -155,9 +155,68 @@ export default function WorkPermitRegisterPage() {
 
     const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
         if (!pendingApprovalData) return;
+
+        // Generate HTML content for approval
+        const formData = watch();
+        const typeLabels: Record<string, string> = { 'HOT': '화기', 'CONF': '밀폐', 'ELEC': '전기', 'HIGH': '고소', 'HEVY': '중량물' };
+        const selectedTypeNames = (formData.wpTypes || []).map(t => typeLabels[t] || t).join(', ');
+
+        const content = `
+            <div style="font-family: sans-serif; padding: 10px;">
+                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">작업허가 신청 상세</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">작업명</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.name}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">신청일</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">부서</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.deptId || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">신청자</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.personName || '-'}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">작업종류</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${selectedTypeNames || '-'}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">작업기간</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.startDt?.replace('T', ' ')} ~ ${formData.endDt?.replace('T', ' ')}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">장소</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.location || '-'}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">작업내용</th>
+                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.workSummary || '-'}</td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 20px;">위험성 평가 및 안전대책</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px;">
+                    <tr>
+                        <th style="border: 1px solid #333; padding: 8px; background-color: #f0f0f0; width: 100px;">위험요인</th>
+                        <td style="border: 1px solid #333; padding: 8px;">${formData.hazardFactor || '-'}</td>
+                    </tr>
+                    <tr>
+                        <th style="border: 1px solid #333; padding: 8px; background-color: #f0f0f0;">안전대책</th>
+                        <td style="border: 1px solid #333; padding: 8px;">${formData.safetyFactor || '-'}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+
         try {
             await approvalService.save({
                 title: pendingApprovalData.title,
+                content: content,
                 status: 'A',
                 refEntity: 'WP',
                 refId: pendingApprovalData.refId,
