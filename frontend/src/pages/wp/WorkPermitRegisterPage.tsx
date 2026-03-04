@@ -31,6 +31,7 @@ export default function WorkPermitRegisterPage() {
 
     // Approval Modal State
     const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+    const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
     const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
     const { user } = useAuthStore();
 
@@ -154,62 +155,110 @@ export default function WorkPermitRegisterPage() {
     };
 
     const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
-        if (!pendingApprovalData) return;
+        if (!pendingApprovalData || isSubmittingApproval) return;
+
+        setIsSubmittingApproval(true);
 
         // Generate HTML content for approval
         const formData = watch();
-        const typeLabels: Record<string, string> = { 'HOT': '화기', 'CONF': '밀폐', 'ELEC': '전기', 'HIGH': '고소', 'HEVY': '중량물' };
+        const typeLabels: Record<string, string> = {
+            'HOT': '화기',
+            'CONF': '밀폐',
+            'ELEC': '전기',
+            'HIGH': '고소',
+            'HEAVY': '중량물',
+            'HEVY': '중량물',
+            'DIG': '굴착'
+        };
         const selectedTypeNames = (formData.wpTypes || []).map(t => typeLabels[t] || t).join(', ');
+
+        // Render a safety check table for the approval body
+        const renderCheckTable = (title: string, templateKey: string, data: Record<string, any> | undefined) => {
+            const template = WP_TEMPLATES[templateKey];
+            if (!template) return `<h3>${title}</h3><p>템플릿 없음</p>`;
+
+            return `
+                <h3 style="margin-top: 15px; border-left: 4px solid #f97316; padding-left: 10px; font-size: 14px;">${title}</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px;">
+                    <tr style="background-color: #f3f4f6;">
+                        <th style="border: 1px solid #333; padding: 5px; width: 40px; text-align: center;">확인</th>
+                        <th style="border: 1px solid #333; padding: 5px; text-align: left;">안전 점검 항목</th>
+                    </tr>
+                    ${template.questions.length > 0 ? template.questions.map(q => `
+                        <tr>
+                            <td style="border: 1px solid #333; padding: 5px; text-align: center; font-weight: bold;">
+                                ${q.type === 'checkbox' ? (data?.[q.id] ? 'V' : '') : (data?.[q.id] || '')}
+                            </td>
+                            <td style="border: 1px solid #333; padding: 5px;">${q.label}</td>
+                        </tr>
+                    `).join('') : `<tr><td colspan="2" style="border: 1px solid #333; padding: 5px; text-align: center;">내역 없음</td></tr>`}
+                </table>
+            `;
+        };
+
+        let safetyContent = renderCheckTable('공통 안전 조치 사항', 'COM', formData.checksheetJsonCom);
+
+        // Always show these categories as per user request
+        ['HOT', 'CONF', 'ELEC', 'HIGH', 'HEAVY', 'DIG'].forEach(type => {
+            let data: any = undefined;
+            if (type === 'HOT') data = formData.checksheetJsonHot;
+            else if (type === 'CONF') data = formData.checksheetJsonConf;
+            else if (type === 'ELEC') data = formData.checksheetJsonElec;
+            else if (type === 'HIGH') data = formData.checksheetJsonHigh;
+            else if (type === 'DIG') data = formData.checksheetJsonDig;
+            else if (type === 'HEAVY' || type === 'HEVY') data = (formData as any).checksheetJsonHeavy || (formData as any).checksheetJsonHevy;
+
+            safetyContent += renderCheckTable(`${typeLabels[type]} 작업 안전 조치`, type, data);
+        });
 
         const content = `
             <div style="font-family: sans-serif; padding: 10px;">
                 <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">작업허가 신청 상세</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">작업명</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.name}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9; width: 100px;">작업명</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${formData.name}</td>
                     </tr>
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">신청일</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">설비</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.equipmentName || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9; width: 100px;">신청일</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.date}</td>
                     </tr>
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">부서</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.deptId || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">신청자</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.personName || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">부서</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.deptId || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">신청자</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.personName || '-'}</td>
                     </tr>
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">작업종류</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${selectedTypeNames || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">작업종류</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${selectedTypeNames || '-'}</td>
                     </tr>
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">작업기간</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.startDt?.replace('T', ' ')} ~ ${formData.endDt?.replace('T', ' ')}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">작업기간</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${formData.startDt?.replace('T', ' ')} ~ ${formData.endDt?.replace('T', ' ')}</td>
                     </tr>
                     <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">장소</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.location || '-'}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">작업내용</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.workSummary || '-'}</td>
+                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">장소</th>
+                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${formData.location || '-'}</td>
                     </tr>
                 </table>
 
-                <h3 style="margin-top: 20px;">위험성 평가 및 안전대책</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px;">
+                <h3 style="margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 5px;">위험성 평가 및 안전대책</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
                     <tr>
-                        <th style="border: 1px solid #333; padding: 8px; background-color: #f0f0f0; width: 100px;">위험요인</th>
-                        <td style="border: 1px solid #333; padding: 8px;">${formData.hazardFactor || '-'}</td>
+                        <th style="border: 1px solid #333; padding: 6px; background-color: #f0f0f0; width: 100px;">위험요인</th>
+                        <td style="border: 1px solid #333; padding: 6px;">${formData.hazardFactor || '-'}</td>
                     </tr>
                     <tr>
-                        <th style="border: 1px solid #333; padding: 8px; background-color: #f0f0f0;">안전대책</th>
-                        <td style="border: 1px solid #333; padding: 8px;">${formData.safetyFactor || '-'}</td>
+                        <th style="border: 1px solid #333; padding: 6px; background-color: #f0f0f0;">안전대책</th>
+                        <td style="border: 1px solid #333; padding: 6px;">${formData.safetyFactor || '-'}</td>
                     </tr>
                 </table>
+
+                <h3 style="margin-top: 20px; border-bottom: 2px solid #333; padding-bottom: 5px;">안전 조치 이행 여부</h3>
+                ${safetyContent}
             </div>
         `;
 
@@ -223,12 +272,17 @@ export default function WorkPermitRegisterPage() {
                 requesterId: user?.personId || ''
             }, steps, 'A');
 
+            // UPDATE: Change work permit status to 'A' (Approving)
+            await workPermitService.update(pendingApprovalData.refId, { status: 'A' });
+
             toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
             setIsApprovalModalOpen(false);
             navigate('/wp/work-permit');
         } catch (error: any) {
             console.error(error);
             toast({ title: "오류", description: "결재 상신 중 오류가 발생했습니다.", variant: "destructive" });
+        } finally {
+            setIsSubmittingApproval(false);
         }
     };
 
@@ -453,6 +507,7 @@ export default function WorkPermitRegisterPage() {
                 open={isApprovalModalOpen}
                 onOpenChange={setIsApprovalModalOpen}
                 onSubmit={handleApprovalSubmit}
+                isSubmitting={isSubmittingApproval}
             />
         </div>
     );

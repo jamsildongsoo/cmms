@@ -45,7 +45,7 @@ public class ApprovalController {
 
     @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/{id}/steps")
-    public List<ApprovalStep> getSteps(@PathVariable String id, @RequestParam String companyId) {
+    public List<com.cmms.dto.ApprovalStepDetailDto> getSteps(@PathVariable String id, @RequestParam String companyId) {
         return approvalService.getApprovalSteps(companyId, id);
     }
 

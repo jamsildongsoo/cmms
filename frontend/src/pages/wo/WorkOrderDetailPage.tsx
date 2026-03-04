@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { WorkOrderPrint } from '@/components/common/WorkOrderPrint';
 import { useAuthStore } from '@/features/auth/useAuthStore';
+import { approvalService, type ApprovalStep } from '@/services/approvalService';
 
 export default function WorkOrderDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -17,13 +18,20 @@ export default function WorkOrderDetailPage() {
     const { toast } = useToast();
     const { user } = useAuthStore();
     const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
+    const [approvalSteps, setApprovalSteps] = useState<ApprovalStep[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!id) return;
         setLoading(true);
-        workOrderService.getById(id).then(data => {
+        workOrderService.getById(id).then(async data => {
             setWorkOrder(data || null);
+            if (data?.approvalId) {
+                const approval = await approvalService.getById(data.approvalId);
+                if (approval?.approval_steps) {
+                    setApprovalSteps(approval.approval_steps);
+                }
+            }
             setLoading(false);
         });
     }, [id]);
@@ -71,12 +79,14 @@ export default function WorkOrderDetailPage() {
                                 </span>
                                 <span className={`text-sm font-medium px-2 py-0.5 rounded ${workOrder.status === 'C' ? 'bg-green-100 text-green-700' :
                                     workOrder.status === 'A' ? 'bg-blue-100 text-blue-700' :
-                                        workOrder.status === 'REQ' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100'
+                                        workOrder.status === 'REQ' ? 'bg-yellow-100 text-yellow-700' :
+                                            workOrder.status === 'R' ? 'bg-red-100 text-red-700' : 'bg-slate-100'
                                     }`}>
                                     {workOrder.status === 'T' && '임시 저장'}
                                     {workOrder.status === 'REQ' && '요청'}
                                     {workOrder.status === 'A' && '결재 중'}
                                     {workOrder.status === 'C' && '완료 됨'}
+                                    {workOrder.status === 'R' && '반려'}
                                 </span>
                             </div>
                         </div>
@@ -218,6 +228,7 @@ export default function WorkOrderDetailPage() {
                 }))}
                 note={workOrder.note}
                 companyName={user?.companyId}
+                approvalSteps={approvalSteps}
             />
         </div>
     );

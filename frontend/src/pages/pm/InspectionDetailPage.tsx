@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { InspectionPrint } from '@/components/common/InspectionPrint';
 import { useAuthStore } from '@/features/auth/useAuthStore';
+import { approvalService, type Approval } from '@/services/approvalService';
 
 export default function InspectionDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -17,16 +18,28 @@ export default function InspectionDetailPage() {
     const { user } = useAuthStore();
     const [inspection, setInspection] = useState<Inspection | null>(null);
     const [items, setItems] = useState<InspectionItem[]>([]);
+    const [approval, setApproval] = useState<Approval | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const loadData = () => {
+    const loadData = async () => {
         if (!id) return;
         setLoading(true);
-        inspectionService.getById(id).then(data => {
+        try {
+            const data = await inspectionService.getById(id);
             setInspection(data || null);
             setItems(data?.items || []);
+
+            if (data?.approvalId) {
+                const appData = await approvalService.getById(data.approvalId);
+                setApproval(appData || null);
+            } else {
+                setApproval(null);
+            }
+        } catch (error) {
+            console.error("Failed to load data", error);
+        } finally {
             setLoading(false);
-        });
+        }
     };
 
     useEffect(() => {
@@ -101,13 +114,15 @@ export default function InspectionDetailPage() {
                                 <span className="text-slate-300">|</span>
                                 <span className={`text-sm font-medium px-2 py-0.5 rounded ${inspection.status === 'S' ? 'bg-blue-100 text-blue-700' :
                                     inspection.status === 'P' ? 'bg-orange-100 text-orange-700' :
-                                        inspection.status === 'C' ? 'bg-green-100 text-green-700' : 'bg-slate-100'
+                                        inspection.status === 'C' ? 'bg-green-100 text-green-700' :
+                                            inspection.status === 'R' ? 'bg-red-100 text-red-700' : 'bg-slate-100'
                                     }`}>
                                     {inspection.status === 'T' && '계획 임시 저장'}
                                     {inspection.status === 'A' && '결재 중'}
                                     {inspection.status === 'S' && '계획 확정'}
                                     {inspection.status === 'P' && '점검 진행 중'}
                                     {inspection.status === 'C' && '점검 완료'}
+                                    {inspection.status === 'R' && '반려'}
                                 </span>
                             </div>
                         </div>
@@ -251,6 +266,7 @@ export default function InspectionDetailPage() {
                 }))}
                 note={inspection.note}
                 companyName={user?.companyId}
+                approvalSteps={approval?.approval_steps}
             />
         </div>
     );

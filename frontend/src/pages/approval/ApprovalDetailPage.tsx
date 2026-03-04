@@ -180,7 +180,9 @@ export default function ApprovalDetailPage() {
                                                     <User className="h-5 w-5 text-slate-300" />}
                                     </div>
                                     <div className="text-sm font-bold text-center">{step.approver_name || step.personId}</div>
-                                    <div className="text-xs text-muted-foreground">{DECISION_TYPE_MAP[step.decision as DecisionType] || step.decision}</div>
+                                    <div className="text-xs text-muted-foreground">
+                                        {step.result === 'N' ? '반려' : (DECISION_TYPE_MAP[step.decision as DecisionType] || step.decision)}
+                                    </div>
                                     <div className="mt-1 text-xs text-slate-500">
                                         {step.decidedAt ? step.decidedAt.split(' ')[0] : (isStepCurrent ? '검토중' : '-')}
                                     </div>

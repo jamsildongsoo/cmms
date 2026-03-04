@@ -133,7 +133,7 @@ public class ApprovalService {
                 .filter(a -> a.getDeleteMark() == null || "N".equals(a.getDeleteMark()));
     }
 
-    public List<ApprovalStep> getApprovalSteps(String companyId, String approvalId) {
-        return approvalStepRepository.findAllByCompanyIdAndApprovalIdOrderByLineNoAsc(companyId, approvalId);
+    public List<com.cmms.dto.ApprovalStepDetailDto> getApprovalSteps(String companyId, String approvalId) {
+        return approvalStepRepository.findEnrichedSteps(companyId, approvalId);
     }
 }

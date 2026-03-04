@@ -12,6 +12,7 @@ import { WPValueCard } from '@/components/wp/WPValueCard';
 import { WP_TEMPLATES } from '@/constants/wpTemplates';
 import { WorkPermitPrint } from '@/components/common/WorkPermitPrint';
 import { useAuthStore } from '@/features/auth/useAuthStore';
+import { approvalService, type ApprovalStep } from '@/services/approvalService';
 
 export default function WorkPermitDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -19,13 +20,20 @@ export default function WorkPermitDetailPage() {
     const { toast } = useToast();
     const { user } = useAuthStore();
     const [permit, setPermit] = useState<WorkPermit | null>(null);
+    const [approvalSteps, setApprovalSteps] = useState<ApprovalStep[]>([]);
     const [loading, setLoading] = useState(true);
 
     const loadData = () => {
         if (!id) return;
         setLoading(true);
-        workPermitService.getById(id).then(data => {
+        workPermitService.getById(id).then(async data => {
             setPermit(data || null);
+            if (data?.approvalId) {
+                const approval = await approvalService.getById(data.approvalId);
+                if (approval?.approval_steps) {
+                    setApprovalSteps(approval.approval_steps);
+                }
+            }
             setLoading(false);
         });
     };
@@ -95,6 +103,15 @@ export default function WorkPermitDetailPage() {
                                         {type === 'DIG' && '굴착'}
                                     </span>
                                 ))}
+                                <span className={`text-sm font-medium px-2 py-0.5 rounded ml-2 ${permit.status === 'C' ? 'bg-green-100 text-green-700' :
+                                    permit.status === 'A' ? 'bg-orange-100 text-orange-700' :
+                                        permit.status === 'R' ? 'bg-red-100 text-red-700' : 'bg-slate-100'
+                                    }`}>
+                                    {permit.status === 'T' && '임시 저장'}
+                                    {permit.status === 'A' && '승인 대기'}
+                                    {permit.status === 'C' && '승인 완료'}
+                                    {permit.status === 'R' && '반려'}
+                                </span>
                                 <span className="text-muted-foreground ml-2">| {permit.name}</span>
                             </div>
                         </div>
@@ -229,7 +246,7 @@ export default function WorkPermitDetailPage() {
             </div>
 
             {/* Work Permit Specific Print Form */}
-            <WorkPermitPrint permit={permit} companyName={user?.companyId} />
+            <WorkPermitPrint permit={permit} companyName={user?.companyId} approvalSteps={approvalSteps} />
         </div>
     );
 }

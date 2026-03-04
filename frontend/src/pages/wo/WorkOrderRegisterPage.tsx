@@ -38,6 +38,7 @@ export default function WorkOrderRegisterPage() {
 
     // Approval Modal State
     const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+    const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
     const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
     const { user } = useAuthStore();
 
@@ -206,7 +207,9 @@ export default function WorkOrderRegisterPage() {
     };
 
     const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
-        if (!pendingApprovalData) return;
+        if (!pendingApprovalData || isSubmittingApproval) return;
+
+        setIsSubmittingApproval(true);
 
         // Generate HTML content for approval
         const formData = watch();
@@ -277,12 +280,17 @@ export default function WorkOrderRegisterPage() {
                 requesterId: user?.personId || ''
             }, steps, 'A');
 
+            // UPDATE: Change work order status to 'A' (Approving)
+            await workOrderService.update(pendingApprovalData.refId, { status: 'A' });
+
             toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
             setIsApprovalModalOpen(false);
             navigate('/wo/work-order');
         } catch (error: any) {
             console.error(error);
             toast({ title: "오류", description: "결재 상신 중 오류가 발생했습니다.", variant: "destructive" });
+        } finally {
+            setIsSubmittingApproval(false);
         }
     };
 
@@ -554,6 +562,7 @@ export default function WorkOrderRegisterPage() {
                 open={isApprovalModalOpen}
                 onOpenChange={setIsApprovalModalOpen}
                 onSubmit={handleApprovalSubmit}
+                isSubmitting={isSubmittingApproval}
             />
         </div>
     );

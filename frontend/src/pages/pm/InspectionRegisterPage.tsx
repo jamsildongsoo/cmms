@@ -50,6 +50,7 @@ export default function InspectionRegisterPage() {
 
     // Approval Modal State
     const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+    const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
     const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
     const { user } = useAuthStore();
 
@@ -198,14 +199,18 @@ export default function InspectionRegisterPage() {
     };
 
     const handleApprovalSubmit = async (steps: ApprovalStep[]) => {
-        if (!pendingApprovalData) return;
+        if (!pendingApprovalData || isSubmittingApproval) return;
+
+        setIsSubmittingApproval(true);
 
         // Generate HTML content for approval based on current form state
         const formData = getValues();
-        const stageLabel = formData.stage === 'ACT' ? '실적' : '계획';
+        const isAct = formData.stage === 'ACT';
+        const titleLabel = isAct ? '점검 실적' : '점검 계획';
+
         const content = `
             <div style="font-family: sans-serif; padding: 10px;">
-                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">점검 ${stageLabel} 상세</h2>
+                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">${titleLabel} 상세</h2>
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
                     <tr>
                         <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">점검명</th>
@@ -214,7 +219,7 @@ export default function InspectionRegisterPage() {
                     <tr>
                         <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
                         <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">${formData.stage === 'ACT' ? '실적일' : '예정일'}</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">${isAct ? '실적일' : '예정일'}</th>
                         <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
                     </tr>
                     <tr>
@@ -229,7 +234,7 @@ export default function InspectionRegisterPage() {
                     </tr>
                 </table>
 
-                <h3 style="margin-top: 20px;">점검 항목 내역</h3>
+                <h3 style="margin-top: 20px;">점검 항목 및 내역</h3>
                 <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                     <thead>
                         <tr style="background-color: #f0f0f0;">
@@ -259,7 +264,7 @@ export default function InspectionRegisterPage() {
 
         try {
             await approvalService.save({
-                title: pendingApprovalData.title,
+                title: `[${titleLabel}] ${formData.name}`,
                 content: content,
                 status: 'A',
                 refEntity: 'INSPECTION',
@@ -267,12 +272,17 @@ export default function InspectionRegisterPage() {
                 requesterId: user?.personId || ''
             }, steps, 'A');
 
+            // UPDATE: Change inspection status to 'A' (Approving)
+            await inspectionService.update(pendingApprovalData.refId, { status: 'A' });
+
             toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
             setIsApprovalModalOpen(false);
             navigate('/pm/inspection');
         } catch (error: any) {
             console.error(error);
             toast({ title: "오류", description: "결재 상신 중 오류가 발생했습니다.", variant: "destructive" });
+        } finally {
+            setIsSubmittingApproval(false);
         }
     };
 
@@ -584,6 +594,7 @@ export default function InspectionRegisterPage() {
                 open={isApprovalModalOpen}
                 onOpenChange={setIsApprovalModalOpen}
                 onSubmit={handleApprovalSubmit}
+                isSubmitting={isSubmittingApproval}
             />
         </div>
     );

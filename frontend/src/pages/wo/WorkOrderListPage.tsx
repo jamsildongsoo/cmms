@@ -22,11 +22,11 @@ export default function WorkOrderListPage() {
         const data = await workOrderService.getAll();
         // Sort by ID (Descending)
         let filtered = [...data].sort((a, b) => b.orderId.localeCompare(a.orderId));
-        
+
         if (filter !== 'ALL') {
             filtered = filtered.filter(wo => wo.stage === filter);
         }
-        
+
         setWorkOrders(filtered);
     };
 
@@ -48,13 +48,15 @@ export default function WorkOrderListPage() {
             'T': 'bg-slate-100 text-slate-800 border-slate-200',
             'A': 'bg-orange-100 text-orange-800 border-orange-200',
             'C': 'bg-green-100 text-green-800 border-green-200',
-            'REQ': 'bg-yellow-100 text-yellow-800 border-yellow-200'
+            'REQ': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'R': 'bg-red-100 text-red-800 border-red-200'
         };
-        const labels: Record<string, string> = { 
-            'T': '임시', 
-            'A': '결재중', 
+        const labels: Record<string, string> = {
+            'T': '임시',
+            'A': '결재중',
             'C': '완료',
-            'REQ': '요청'
+            'REQ': '요청',
+            'R': '반려'
         };
         return (
             <span className={`px-2 py-0.5 rounded border text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800'}`}>

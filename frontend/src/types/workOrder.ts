@@ -5,11 +5,12 @@ export interface WorkOrder {
     equipmentId?: string;
     equipmentName: string;
     date: string; // Request Date
-    status?: 'REQ' | 'T' | 'A' | 'C'; // Requested, Temp, Assigned, Completed
+    status?: 'REQ' | 'T' | 'A' | 'C' | 'R'; // Requested, Temp, Assigned, Completed, Rejected
     stage?: 'PLN' | 'ACT';
     refEntity?: string; // WO, IN
     refId?: string;
     cost?: number;
+    approvalId?: string;
     note?: string; // description -> note
     priority?: string; // High, Medium, Low
     dueDate?: string;

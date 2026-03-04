@@ -26,7 +26,7 @@ export interface WorkPermit {
     startDt: string;
     endDt: string;
     personName: string;
-    status: 'T' | 'A' | 'C'; // Temp, Approved, Completed(Closed)
+    status: 'T' | 'A' | 'C' | 'R'; // Temp, Approved, Completed(Closed), Rejected
 
     // Dynamic Form Data (JSON)
     checksheetJsonCom?: Record<string, any>; // Common (Mandatory)

@@ -45,6 +45,9 @@ export interface ApprovalStep {
     decidedAt?: string;
     comment?: string;
 
+    personName?: string;
+    position?: string;
+    role?: string;
     // For UI convenience
     approver_name?: string;
     approver_position?: string;

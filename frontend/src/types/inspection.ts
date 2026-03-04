@@ -14,13 +14,14 @@ export interface Inspection {
     note?: string;
     codeItem: string; // e.g. 'Regular', 'Spot'
     stage: 'PLN' | 'ACT'; // Plan | Action
-    status: 'T' | 'S' | 'P' | 'C' | 'A'; // Temp(Draft) | Scheduled(Confirmed) | Progress | Complete | Approval
+    status: 'T' | 'S' | 'P' | 'C' | 'A' | 'R'; // Temp(Draft) | Scheduled(Confirmed) | Progress | Complete | Approval | Rejected
     date: string; // plan_date -> date (Backend sync)
     actualDate?: string;
 
     // References
     refEntity?: string; // e.g. 'IN', 'WO'
     refId?: string;     // ID of the referenced entity
+    approvalId?: string;
 
     equipmentId?: string;
     equipmentName?: string;
