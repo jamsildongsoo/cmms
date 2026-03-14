@@ -2,22 +2,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import type { UseFormWatch, UseFormSetValue } from 'react-hook-form';
 import type { WPCategoryTemplate, WorkPermit } from '@/types/workPermit';
 import { cn } from '@/utils/cn';
 
 interface WPTemplateCardProps {
     template: WPCategoryTemplate;
-    register: UseFormRegister<WorkPermit>;
     watch: UseFormWatch<WorkPermit>;
     setValue: UseFormSetValue<WorkPermit>;
     disabled?: boolean;
 }
 
-export function WPTemplateCard({ template, register, watch, setValue, disabled }: WPTemplateCardProps) {
-    const jsonKey = `checksheet_json_${template.id}` as keyof WorkPermit;
-    
-    // Helper to get current value for checkbox (React Hook Form with JSON objects can be tricky)
+/** template.id → camelCase key matching WorkPermit type & Java entity */
+function toJsonKey(id: string): keyof WorkPermit {
+    return `checksheetJson${id.charAt(0).toUpperCase()}${id.slice(1)}` as keyof WorkPermit;
+}
+
+export function WPTemplateCard({ template, watch, setValue, disabled }: WPTemplateCardProps) {
+    const jsonKey = toJsonKey(template.id);
+
     const getVal = (id: string) => {
         const data = watch(jsonKey) as Record<string, any>;
         return data ? data[id] : false;
@@ -55,7 +58,11 @@ export function WPTemplateCard({ template, register, watch, setValue, disabled }
                                 </Label>
                                 <Input
                                     id={`${template.id}-${q.id}`}
-                                    {...register(`${jsonKey}.${q.id}` as any)}
+                                    value={(getVal(q.id) as string) || ''}
+                                    onChange={(e) => {
+                                        const current = (watch(jsonKey) as Record<string, any>) || {};
+                                        setValue(jsonKey, { ...current, [q.id]: e.target.value });
+                                    }}
                                     placeholder={q.placeholder}
                                     disabled={disabled}
                                     className={cn("bg-white/50 focus:bg-white", disabled && "bg-slate-50")}

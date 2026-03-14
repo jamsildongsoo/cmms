@@ -1,5 +1,6 @@
 package com.cmms.service;
 
+import com.cmms.common.domain.CommonStatus;
 import com.cmms.domain.*;
 import com.cmms.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +13,47 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@lombok.extern.slf4j.Slf4j
 public class TransactionService {
 
     private final InspectionRepository inspectionRepository;
     private final WorkOrderRepository workOrderRepository;
     private final WorkPermitRepository workPermitRepository;
+    private final EquipmentRepository equipmentRepository;
+    private final PersonRepository personRepository;
+    private final DeptRepository deptRepository;
     private final com.cmms.common.security.SecurityUtil securityUtil;
     private final SystemService systemService;
+
+    private record NameMaps(java.util.Map<String, String> equipment, java.util.Map<String, String> person, java.util.Map<String, String> dept) {}
+
+    private NameMaps loadNameMaps(String companyId) {
+        var equipMap = equipmentRepository.findAllByCompanyIdAndDeleteMark(companyId, "N").stream()
+                .collect(java.util.stream.Collectors.toMap(Equipment::getEquipmentId, Equipment::getName, (a, b) -> a));
+        var personMap = personRepository.findAllByCompanyIdAndDeleteMark(companyId, "N").stream()
+                .collect(java.util.stream.Collectors.toMap(Person::getPersonId, Person::getName, (a, b) -> a));
+        var deptMap = deptRepository.findAllByCompanyIdAndDeleteMark(companyId, "N").stream()
+                .collect(java.util.stream.Collectors.toMap(Dept::getDeptId, Dept::getName, (a, b) -> a));
+        return new NameMaps(equipMap, personMap, deptMap);
+    }
+
+    private void enrichInspection(Inspection i, NameMaps maps) {
+        if (i.getEquipmentId() != null) i.setEquipmentName(maps.equipment().getOrDefault(i.getEquipmentId(), null));
+        if (i.getPersonId() != null) i.setPersonName(maps.person().getOrDefault(i.getPersonId(), null));
+        if (i.getDeptId() != null) i.setDeptName(maps.dept().getOrDefault(i.getDeptId(), null));
+    }
+
+    private void enrichWorkOrder(WorkOrder o, NameMaps maps) {
+        if (o.getEquipmentId() != null) o.setEquipmentName(maps.equipment().getOrDefault(o.getEquipmentId(), null));
+        if (o.getPersonId() != null) o.setPersonName(maps.person().getOrDefault(o.getPersonId(), null));
+        if (o.getDeptId() != null) o.setDeptName(maps.dept().getOrDefault(o.getDeptId(), null));
+    }
+
+    private void enrichWorkPermit(WorkPermit p, NameMaps maps) {
+        if (p.getEquipmentId() != null) p.setEquipmentName(maps.equipment().getOrDefault(p.getEquipmentId(), null));
+        if (p.getPersonId() != null) p.setPersonName(maps.person().getOrDefault(p.getPersonId(), null));
+        if (p.getDeptId() != null) p.setDeptName(maps.dept().getOrDefault(p.getDeptId(), null));
+    }
 
     // Helper
     private String getMonthKey(java.time.LocalDate date) {
@@ -35,8 +70,9 @@ public class TransactionService {
         }
         Inspection inspection = request.getInspection();
         List<InspectionItem> items = request.getItems();
-
         securityUtil.validateCompanyId(inspection.getCompanyId());
+        log.info("[TransactionService] saveInspection: ID={}, Status={}, Items={}",
+                inspection.getInspectionId(), inspection.getStatus(), items != null ? items.size() : 0);
 
         if (inspection.getInspectionId() == null || inspection.getInspectionId().isBlank()) {
             inspection.setInspectionId(systemService.generateId(inspection.getCompanyId(), "INSPECTION",
@@ -44,7 +80,7 @@ public class TransactionService {
             if (inspection.getStage() == null)
                 inspection.setStage("PLN");
             if (inspection.getStatus() == null)
-                inspection.setStatus("T");
+                inspection.setStatus(CommonStatus.TEMPORARY);
 
             if (items != null) {
                 int lineNo = 1;
@@ -63,7 +99,7 @@ public class TransactionService {
                     .findById(new InspectionId(inspection.getCompanyId(), inspection.getInspectionId()))
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 점검 데이터입니다."));
 
-            if ("C".equals(existing.getStatus())) {
+            if (existing.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 점검 데이터는 수정할 수 없습니다.");
             }
 
@@ -117,8 +153,6 @@ public class TransactionService {
                 }
             }
 
-            // Re-assign items. JPA orphanRemoval will handle deletions of items removed
-            // from the list.
             if (existing.getItems() == null) {
                 existing.setItems(new java.util.ArrayList<>());
             } else {
@@ -131,7 +165,10 @@ public class TransactionService {
     }
 
     public List<Inspection> getAllInspections(String companyId) {
-        return inspectionRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        List<Inspection> list = inspectionRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        NameMaps maps = loadNameMaps(companyId);
+        list.forEach(i -> enrichInspection(i, maps));
+        return list;
     }
 
     public Optional<Inspection> getInspectionById(String companyId, String inspectionId) {
@@ -140,28 +177,25 @@ public class TransactionService {
         opt.ifPresent(i -> {
             if (i.getItems() != null)
                 i.getItems().size();
+            NameMaps maps = loadNameMaps(companyId);
+            enrichInspection(i, maps);
         });
         return opt;
     }
 
-    public List<InspectionItem> getInspectionItems(String companyId, String inspectionId) {
-        // Need custom query or simple findAll and filter?
-        // With composite key, findAllById is specific.
-        // Better: findAll() and filter stream? Or add findByCompanyIdAndInspectionId to
-        // repo?
-        // Ideally add findByCompanyIdAndInspectionId to Repo.
-        return java.util.Collections.emptyList(); // Placeholder, need to update repo first to be efficient
-    }
-
     @Transactional
-    public void deleteInspection(String companyId, String inspectionId) {
-        inspectionRepository.findById(new InspectionId(companyId, inspectionId)).ifPresent(inspection -> {
-            if ("C".equals(inspection.getStatus())) {
+    public boolean deleteInspection(String companyId, String inspectionId) {
+        return inspectionRepository.findById(new InspectionId(companyId, inspectionId)).map(inspection -> {
+            if (inspection.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 점검 데이터는 삭제할 수 없습니다.");
+            }
+            if (inspection.getStatus() == CommonStatus.APPROVAL) {
+                throw new IllegalStateException("결재 진행 중인 점검 데이터는 삭제할 수 없습니다.");
             }
             inspection.setDeleteMark("Y");
             inspectionRepository.save(inspection);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // WorkOrder
@@ -172,8 +206,9 @@ public class TransactionService {
         }
         WorkOrder order = request.getWorkOrder();
         List<WorkOrderItem> items = request.getItems();
-
         securityUtil.validateCompanyId(order.getCompanyId());
+        log.info("[TransactionService] saveWorkOrder: ID={}, Status={}, Items={}",
+                order.getOrderId(), order.getStatus(), items != null ? items.size() : 0);
 
         if (order.getOrderId() == null || order.getOrderId().isBlank()) {
             order.setOrderId(
@@ -182,7 +217,7 @@ public class TransactionService {
             if (order.getStage() == null)
                 order.setStage("PLN");
             if (order.getStatus() == null)
-                order.setStatus("T");
+                order.setStatus(CommonStatus.TEMPORARY);
 
             if (items != null) {
                 int lineNo = 1;
@@ -200,7 +235,7 @@ public class TransactionService {
             WorkOrder existing = workOrderRepository.findById(new WorkOrderId(order.getCompanyId(), order.getOrderId()))
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 작업 데이터입니다."));
 
-            if ("C".equals(existing.getStatus())) {
+            if (existing.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 작업 데이터는 수정할 수 없습니다.");
             }
 
@@ -261,7 +296,10 @@ public class TransactionService {
     }
 
     public List<WorkOrder> getAllWorkOrders(String companyId) {
-        return workOrderRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        List<WorkOrder> list = workOrderRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        NameMaps maps = loadNameMaps(companyId);
+        list.forEach(o -> enrichWorkOrder(o, maps));
+        return list;
     }
 
     public Optional<WorkOrder> getWorkOrderById(String companyId, String orderId) {
@@ -270,19 +308,25 @@ public class TransactionService {
         opt.ifPresent(o -> {
             if (o.getItems() != null)
                 o.getItems().size();
+            NameMaps maps = loadNameMaps(companyId);
+            enrichWorkOrder(o, maps);
         });
         return opt;
     }
 
     @Transactional
-    public void deleteWorkOrder(String companyId, String orderId) {
-        workOrderRepository.findById(new WorkOrderId(companyId, orderId)).ifPresent(order -> {
-            if ("C".equals(order.getStatus())) {
+    public boolean deleteWorkOrder(String companyId, String orderId) {
+        return workOrderRepository.findById(new WorkOrderId(companyId, orderId)).map(order -> {
+            if (order.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 작업 데이터는 삭제할 수 없습니다.");
+            }
+            if (order.getStatus() == CommonStatus.APPROVAL) {
+                throw new IllegalStateException("결재 진행 중인 작업 데이터는 삭제할 수 없습니다.");
             }
             order.setDeleteMark("Y");
             workOrderRepository.save(order);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // WorkPermit
@@ -293,8 +337,9 @@ public class TransactionService {
         }
         WorkPermit permit = request.getWorkPermit();
         List<WorkPermitItem> items = request.getItems();
-
         securityUtil.validateCompanyId(permit.getCompanyId());
+        log.info("[TransactionService] saveWorkPermit: ID={}, Status={}, Items={}",
+                permit.getPermitId(), permit.getStatus(), items != null ? items.size() : 0);
 
         if (permit.getPermitId() == null || permit.getPermitId().isBlank()) {
             permit.setPermitId(systemService.generateId(permit.getCompanyId(), "WORK_PERMIT",
@@ -302,7 +347,7 @@ public class TransactionService {
             if (permit.getStage() == null)
                 permit.setStage("PLN");
             if (permit.getStatus() == null)
-                permit.setStatus("T");
+                permit.setStatus(CommonStatus.TEMPORARY);
 
             if (items != null) {
                 int lineNo = 1;
@@ -321,7 +366,7 @@ public class TransactionService {
                     .findById(new WorkPermitId(permit.getCompanyId(), permit.getPermitId()))
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 작업허가 데이터입니다."));
 
-            if ("C".equals(existing.getStatus())) {
+            if (existing.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 작업허가 데이터는 수정할 수 없습니다.");
             }
 
@@ -347,6 +392,7 @@ public class TransactionService {
             existing.setChecksheetJsonElec(permit.getChecksheetJsonElec());
             existing.setChecksheetJsonHigh(permit.getChecksheetJsonHigh());
             existing.setChecksheetJsonDig(permit.getChecksheetJsonDig());
+            existing.setChecksheetJsonHeavy(permit.getChecksheetJsonHeavy());
             existing.setFileGroupId(permit.getFileGroupId());
             existing.setStatus(permit.getStatus() != null ? permit.getStatus() : existing.getStatus());
 
@@ -394,7 +440,10 @@ public class TransactionService {
     }
 
     public List<WorkPermit> getAllWorkPermits(String companyId) {
-        return workPermitRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        List<WorkPermit> list = workPermitRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        NameMaps maps = loadNameMaps(companyId);
+        list.forEach(p -> enrichWorkPermit(p, maps));
+        return list;
     }
 
     public Optional<WorkPermit> getWorkPermitById(String companyId, String permitId) {
@@ -403,18 +452,24 @@ public class TransactionService {
         opt.ifPresent(p -> {
             if (p.getItems() != null)
                 p.getItems().size();
+            NameMaps maps = loadNameMaps(companyId);
+            enrichWorkPermit(p, maps);
         });
         return opt;
     }
 
     @Transactional
-    public void deleteWorkPermit(String companyId, String permitId) {
-        workPermitRepository.findById(new WorkPermitId(companyId, permitId)).ifPresent(permit -> {
-            if ("C".equals(permit.getStatus())) {
+    public boolean deleteWorkPermit(String companyId, String permitId) {
+        return workPermitRepository.findById(new WorkPermitId(companyId, permitId)).map(permit -> {
+            if (permit.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 작업허가 데이터는 삭제할 수 없습니다.");
+            }
+            if (permit.getStatus() == CommonStatus.APPROVAL) {
+                throw new IllegalStateException("결재 진행 중인 작업허가 데이터는 삭제할 수 없습니다.");
             }
             permit.setDeleteMark("Y");
             workPermitRepository.save(permit);
-        });
+            return true;
+        }).orElse(false);
     }
 }

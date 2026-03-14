@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import { inventoryService } from '@/services/inventoryService';
 import type { Material, TransactionType, TransactionItem } from '@/services/inventoryService';
-import { standardService, type Storage } from '@/services/standardService';
+import { standardService, type Storage, type Bin, type Location } from '@/services/standardService';
 
 interface ProcessingForm {
     type: TransactionType;
@@ -23,6 +23,8 @@ export default function InventoryProcessingPage() {
     const { toast } = useToast();
     const [materials, setMaterials] = useState<Material[]>([]);
     const [warehouses, setWarehouses] = useState<Storage[]>([]);
+    const [bins, setBins] = useState<Bin[]>([]);
+    const [locations, setLocations] = useState<Location[]>([]);
 
     const { register, control, handleSubmit, setValue, watch } = useForm<ProcessingForm>({
         defaultValues: {
@@ -41,6 +43,8 @@ export default function InventoryProcessingPage() {
     useEffect(() => {
         inventoryService.getAllMaterials().then(setMaterials);
         standardService.getAll('storage').then(setWarehouses);
+        standardService.getAll('bin').then(setBins);
+        standardService.getAll('location').then(setLocations);
     }, []);
 
     const handleMaterialChange = (index: number, inventoryId: string) => {
@@ -62,6 +66,15 @@ export default function InventoryProcessingPage() {
                 return;
             }
 
+            const missingFields = validItems.some(item =>
+                !item.storageId || !item.binId || !item.locationId ||
+                (data.type === 'MOVE' && (!item.toStorageId || !item.toBinId || !item.toLocationId))
+            );
+            if (missingFields) {
+                toast({ title: "경고", description: "창고, BIN, 위치를 모두 선택해주세요.", variant: "destructive" });
+                return;
+            }
+
             await inventoryService.processTransaction(data.type, validItems);
             toast({ title: "성공", description: "재고 처리가 완료되었습니다." });
             navigate('/inventory/status');
@@ -72,7 +85,7 @@ export default function InventoryProcessingPage() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6 pb-10">
+        <div className="max-w-7xl mx-auto space-y-6 pb-10">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/inventory/status')}>
@@ -139,15 +152,26 @@ export default function InventoryProcessingPage() {
                     </div>
 
                     {/* Table: Items */}
-                    <div className="border rounded-md overflow-hidden">
-                        <table className="w-full text-sm text-left">
+                    <div className="border rounded-md overflow-x-auto">
+                        <table className="w-full text-sm text-left min-w-[1200px]">
                             <thead className="bg-slate-50 border-b">
                                 <tr>
-                                    <th className="h-10 px-4 font-medium text-slate-500 w-[30%]">자재 번호</th>
-                                    <th className="h-10 px-4 font-medium text-slate-500 w-[20%]">창고</th>
-                                    <th className="h-10 px-4 font-medium text-slate-500 w-[15%] text-right">수량</th>
-                                    <th className="h-10 px-4 font-medium text-slate-500 w-[25%]">참조 번호</th>
-                                    <th className="h-10 px-4 font-medium text-slate-500 w-[10%]"></th>
+                                    <th className="h-10 px-4 font-medium text-slate-500">자재 번호</th>
+                                    <th className="h-10 px-4 font-medium text-slate-500">{watchType === 'MOVE' ? 'FROM 창고' : '창고'}</th>
+                                    <th className="h-10 px-4 font-medium text-slate-500">{watchType === 'MOVE' ? 'FROM BIN' : 'BIN'}</th>
+                                    <th className="h-10 px-4 font-medium text-slate-500">{watchType === 'MOVE' ? 'FROM 위치' : '위치'}</th>
+                                    {watchType === 'MOVE' && (
+                                        <>
+                                            <th className="h-10 px-4 font-medium text-slate-500">TO 창고</th>
+                                            <th className="h-10 px-4 font-medium text-slate-500">TO BIN</th>
+                                            <th className="h-10 px-4 font-medium text-slate-500">TO 위치</th>
+                                        </>
+                                    )}
+                                    <th className="h-10 px-4 font-medium text-slate-500 text-right w-[120px]">
+                                        {watchType === 'ADJUST' ? '실사 수량' : '수량'}
+                                    </th>
+                                    <th className="h-10 px-4 font-medium text-slate-500 w-[160px]">참조 번호</th>
+                                    <th className="h-10 px-4 font-medium text-slate-500 w-[50px]"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
@@ -173,7 +197,11 @@ export default function InventoryProcessingPage() {
                                         <td className="p-2">
                                             <Select
                                                 value={watch(`items.${index}.storageId`)}
-                                                onValueChange={(val: string) => setValue(`items.${index}.storageId`, val)}
+                                                onValueChange={(val: string) => {
+                                                    setValue(`items.${index}.storageId`, val);
+                                                    setValue(`items.${index}.binId`, '');
+                                                    setValue(`items.${index}.locationId`, '');
+                                                }}
                                             >
                                                 <SelectTrigger className="h-9">
                                                     <SelectValue placeholder="창고 선택" />
@@ -188,10 +216,110 @@ export default function InventoryProcessingPage() {
                                             </Select>
                                         </td>
                                         <td className="p-2">
+                                            <Select
+                                                value={watch(`items.${index}.binId`) || ''}
+                                                onValueChange={(val: string) => {
+                                                    setValue(`items.${index}.binId` as any, val);
+                                                    setValue(`items.${index}.locationId`, '');
+                                                }}
+                                            >
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="BIN 선택" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {bins.filter(b => b.storageId === watch(`items.${index}.storageId`)).map(b => (
+                                                        <SelectItem key={b.binId} value={b.binId}>
+                                                            {b.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </td>
+                                        <td className="p-2">
+                                            <Select
+                                                value={watch(`items.${index}.locationId`) || ''}
+                                                onValueChange={(val: string) => setValue(`items.${index}.locationId` as any, val)}
+                                            >
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="위치 선택" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {locations.filter(l => l.storageId === watch(`items.${index}.storageId`) && (!watch(`items.${index}.binId`) || l.binId === watch(`items.${index}.binId`))).map(l => (
+                                                        <SelectItem key={l.locationId} value={l.locationId}>
+                                                            {l.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </td>
+                                        {watchType === 'MOVE' && (
+                                            <>
+                                                <td className="p-2">
+                                                    <Select
+                                                        value={watch(`items.${index}.toStorageId` as any) || ''}
+                                                        onValueChange={(val: string) => {
+                                                            setValue(`items.${index}.toStorageId` as any, val);
+                                                            setValue(`items.${index}.toBinId` as any, '');
+                                                            setValue(`items.${index}.toLocationId` as any, '');
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="h-9">
+                                                            <SelectValue placeholder="도착 창고" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {warehouses.map(w => (
+                                                                <SelectItem key={w.storageId} value={w.storageId}>
+                                                                    {w.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </td>
+                                                <td className="p-2">
+                                                    <Select
+                                                        value={watch(`items.${index}.toBinId` as any) || ''}
+                                                        onValueChange={(val: string) => {
+                                                            setValue(`items.${index}.toBinId` as any, val);
+                                                            setValue(`items.${index}.toLocationId` as any, '');
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="h-9">
+                                                            <SelectValue placeholder="BIN 선택" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {bins.filter(b => b.storageId === watch(`items.${index}.toStorageId` as any)).map(b => (
+                                                                <SelectItem key={b.binId} value={b.binId}>
+                                                                    {b.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </td>
+                                                <td className="p-2">
+                                                    <Select
+                                                        value={watch(`items.${index}.toLocationId` as any) || ''}
+                                                        onValueChange={(val: string) => setValue(`items.${index}.toLocationId` as any, val)}
+                                                    >
+                                                        <SelectTrigger className="h-9">
+                                                            <SelectValue placeholder="위치 선택" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {locations.filter(l => l.storageId === watch(`items.${index}.toStorageId` as any) && (!watch(`items.${index}.toBinId` as any) || l.binId === watch(`items.${index}.toBinId` as any))).map(l => (
+                                                                <SelectItem key={l.locationId} value={l.locationId}>
+                                                                    {l.name}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </td>
+                                            </>
+                                        )}
+                                        <td className="p-2">
                                             <Input
                                                 type="number"
                                                 {...register(`items.${index}.qty`, { valueAsNumber: true })}
                                                 className="h-9 text-right font-bold"
+                                                placeholder={watchType === 'ADJUST' ? '실사 수량' : '0'}
                                             />
                                         </td>
                                         <td className="p-2">

@@ -101,7 +101,7 @@ export function ApprovalLineModal({ open, onOpenChange, onSubmit, isSubmitting =
             lineNo: idx + 1,
             personId: s.personId,
             decision: s.decision,
-            result: '00' // 미결
+            result: 'P' // 미결(Pending)
         }));
 
         onSubmit(approvalSteps);

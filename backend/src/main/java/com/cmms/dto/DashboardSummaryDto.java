@@ -10,9 +10,7 @@ public class DashboardSummaryDto {
 
     @Data
     public static class InspectionSummary {
-        private int planCount;
         private int completedCount;
-        private int completionRate;
     }
 
     @Data

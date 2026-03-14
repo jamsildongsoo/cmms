@@ -1,5 +1,6 @@
 package com.cmms.domain;
 
+import com.cmms.common.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -13,7 +14,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "location")
 @IdClass(LocationId.class)
-public class Location {
+public class Location extends BaseEntity {
 
     @Id
     @Column(name = "company_id", length = 20, nullable = false)

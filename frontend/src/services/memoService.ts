@@ -1,6 +1,4 @@
 import api from '@/utils/api';
-import { useAuthStore } from "@/features/auth/useAuthStore";
-
 
 export interface Memo {
     companyId: string;
@@ -34,48 +32,36 @@ export interface MemoComment {
 }
 
 export const memoService = {
-    getAllMemos: async (companyId: string): Promise<Memo[]> => {
-        const response = await api.get(`/api/memo?companyId=${companyId}`);
+    getAllMemos: async (): Promise<Memo[]> => {
+        const response = await api.get('/api/memo');
         return response.data;
     },
 
-    getMemoById: async (companyId: string, id: string): Promise<Memo> => {
-        const response = await api.get(`/api/memo/${id}?companyId=${companyId}`);
+    getMemoById: async (id: string): Promise<Memo> => {
+        const response = await api.get(`/api/memo/${id}`);
         return response.data;
     },
 
     createMemo: async (memo: Partial<Memo>): Promise<Memo> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        const payload = { ...memo, companyId: companyId };
-        const response = await api.post('/api/memo', payload);
+        const response = await api.post('/api/memo', memo);
         return response.data;
     },
 
-    deleteMemo: async (id: string, personId: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        await api.delete(`/api/memo/${id}?companyId=${companyId}&personId=${personId}`);
+    deleteMemo: async (id: string): Promise<void> => {
+        await api.delete(`/api/memo/${id}`);
     },
 
     getComments: async (id: string): Promise<MemoComment[]> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        const response = await api.get(`/api/memo/${id}/comments?companyId=${companyId}`);
+        const response = await api.get(`/api/memo/${id}/comments`);
         return response.data;
     },
 
     addComment: async (id: string, content: string): Promise<MemoComment> => {
-        const user = useAuthStore.getState().user;
-        if (!user?.companyId || !user?.personId) throw new Error("User not authenticated");
-        const payload = { authorId: user.personId, content };
-        const response = await api.post(`/api/memo/${id}/comments?companyId=${user.companyId}`, payload);
+        const response = await api.post(`/api/memo/${id}/comments`, { content });
         return response.data;
     },
 
     deleteComment: async (id: string, commentId: number): Promise<void> => {
-        const user = useAuthStore.getState().user;
-        if (!user?.companyId || !user?.personId) throw new Error("User not authenticated");
-        await api.delete(`/api/memo/${id}/comments/${commentId}?companyId=${user.companyId}&personId=${user.personId}`);
+        await api.delete(`/api/memo/${id}/comments/${commentId}`);
     }
 };

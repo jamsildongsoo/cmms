@@ -88,7 +88,7 @@ export default function PasswordPage() {
                                 type="password"
                                 {...register('newPassword', {
                                     required: '새 비밀번호를 입력해주세요.',
-                                    minLength: { value: 4, message: '최소 4자 이상 입력해주세요.' }
+                                    minLength: { value: 8, message: '최소 8자 이상 입력해주세요.' }
                                 })}
                             />
                             {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}

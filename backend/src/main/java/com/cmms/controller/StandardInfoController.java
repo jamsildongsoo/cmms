@@ -1,10 +1,11 @@
 package com.cmms.controller;
 
+import com.cmms.common.security.SecurityUtil;
 import com.cmms.domain.*;
 import com.cmms.service.StandardInfoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,259 +17,243 @@ public class StandardInfoController {
 
     private final StandardInfoService standardInfoService;
 
+    // Plant
     @PostMapping("/plants")
-    public Plant createPlant(@RequestBody Plant plant) {
+    public Plant createPlant(@RequestBody Plant plant, Authentication auth) {
+        plant.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.savePlant(plant);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/plants")
-    public List<Plant> getPlants(@RequestParam String companyId) {
-        return standardInfoService.getAllPlants(companyId);
+    public List<Plant> getPlants(Authentication auth) {
+        return standardInfoService.getAllPlants(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/plants/{companyId}/{plantId}")
-    public ResponseEntity<Plant> getPlant(@PathVariable String companyId, @PathVariable String plantId) {
-        return standardInfoService.getPlantById(companyId, plantId)
+    @GetMapping("/plants/{plantId}")
+    public ResponseEntity<Plant> getPlant(@PathVariable String plantId, Authentication auth) {
+        return standardInfoService.getPlantById(SecurityUtil.getCompanyId(auth), plantId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/plants/{companyId}/{plantId}")
-    public ResponseEntity<Void> deletePlant(@PathVariable String companyId, @PathVariable String plantId) {
-        standardInfoService.deletePlant(companyId, plantId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/plants/{plantId}")
+    public ResponseEntity<Void> deletePlant(@PathVariable String plantId, Authentication auth) {
+        return standardInfoService.deletePlant(SecurityUtil.getCompanyId(auth), plantId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    // Dept
     @PostMapping("/depts")
-    public Dept createDept(@RequestBody Dept dept) {
+    public Dept createDept(@RequestBody Dept dept, Authentication auth) {
+        dept.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.saveDept(dept);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/depts")
-    public List<Dept> getDepts(@RequestParam String companyId) {
-        return standardInfoService.getAllDepts(companyId);
+    public List<Dept> getDepts(Authentication auth) {
+        return standardInfoService.getAllDepts(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/depts/{companyId}/{deptId}")
-    public ResponseEntity<Dept> getDept(@PathVariable String companyId, @PathVariable String deptId) {
-        return standardInfoService.getDeptById(companyId, deptId)
+    @GetMapping("/depts/{deptId}")
+    public ResponseEntity<Dept> getDept(@PathVariable String deptId, Authentication auth) {
+        return standardInfoService.getDeptById(SecurityUtil.getCompanyId(auth), deptId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/depts/{companyId}/{deptId}")
-    public ResponseEntity<Void> deleteDept(@PathVariable String companyId, @PathVariable String deptId) {
-        standardInfoService.deleteDept(companyId, deptId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/depts/{deptId}")
+    public ResponseEntity<Void> deleteDept(@PathVariable String deptId, Authentication auth) {
+        return standardInfoService.deleteDept(SecurityUtil.getCompanyId(auth), deptId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    // Role
     @PostMapping("/roles")
-    public Role createRole(@RequestBody Role role) {
+    public Role createRole(@RequestBody Role role, Authentication auth) {
+        role.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.saveRole(role);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/roles")
-    public List<Role> getRoles(@RequestParam String companyId) {
-        return standardInfoService.getAllRoles(companyId);
+    public List<Role> getRoles(Authentication auth) {
+        return standardInfoService.getAllRoles(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/roles/{companyId}/{roleId}")
-    public ResponseEntity<Role> getRole(@PathVariable String companyId, @PathVariable String roleId) {
-        return standardInfoService.getRoleById(companyId, roleId)
+    @GetMapping("/roles/{roleId}")
+    public ResponseEntity<Role> getRole(@PathVariable String roleId, Authentication auth) {
+        return standardInfoService.getRoleById(SecurityUtil.getCompanyId(auth), roleId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/roles/{companyId}/{roleId}")
-    public ResponseEntity<Void> deleteRole(@PathVariable String companyId, @PathVariable String roleId) {
-        standardInfoService.deleteRole(companyId, roleId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/roles/{roleId}")
+    public ResponseEntity<Void> deleteRole(@PathVariable String roleId, Authentication auth) {
+        return standardInfoService.deleteRole(SecurityUtil.getCompanyId(auth), roleId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    // Person
     @PostMapping("/persons")
-    public Person createPerson(@RequestBody Person person) {
+    public Person createPerson(@RequestBody Person person, Authentication auth) {
+        person.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.savePerson(person);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/persons")
-    public List<Person> getPersons(@RequestParam String companyId) {
-        return standardInfoService.getAllPersons(companyId);
+    public List<Person> getPersons(Authentication auth) {
+        return standardInfoService.getAllPersons(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/persons/{companyId}/{personId}")
-    public ResponseEntity<Person> getPerson(@PathVariable String companyId, @PathVariable String personId) {
-        return standardInfoService.getPersonById(companyId, personId)
+    @GetMapping("/persons/{personId}")
+    public ResponseEntity<Person> getPerson(@PathVariable String personId, Authentication auth) {
+        return standardInfoService.getPersonById(SecurityUtil.getCompanyId(auth), personId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @PostMapping("/persons/{companyId}/{personId}/password")
-    public ResponseEntity<?> changePassword(@PathVariable String companyId, @PathVariable String personId,
-            @RequestBody java.util.Map<String, String> payload) {
+    @PostMapping("/persons/{personId}/password")
+    public ResponseEntity<?> changePassword(@PathVariable String personId,
+            @RequestBody java.util.Map<String, String> payload, Authentication auth) {
         try {
-            standardInfoService.changePassword(companyId, personId, payload.get("currentPassword"),
-                    payload.get("newPassword"));
+            standardInfoService.changePassword(SecurityUtil.getCompanyId(auth), personId,
+                    payload.get("currentPassword"), payload.get("newPassword"));
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
         }
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/persons/{companyId}/{personId}")
-    public ResponseEntity<Void> deletePerson(@PathVariable String companyId, @PathVariable String personId) {
-        standardInfoService.deletePerson(companyId, personId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/persons/{personId}")
+    public ResponseEntity<Void> deletePerson(@PathVariable String personId, Authentication auth) {
+        return standardInfoService.deletePerson(SecurityUtil.getCompanyId(auth), personId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    // Storage
     @PostMapping("/storages")
-    public Storage createStorage(@RequestBody Storage storage) {
+    public Storage createStorage(@RequestBody Storage storage, Authentication auth) {
+        storage.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.saveStorage(storage);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/storages")
-    public List<Storage> getStorages(@RequestParam String companyId) {
-        return standardInfoService.getAllStorages(companyId);
+    public List<Storage> getStorages(Authentication auth) {
+        return standardInfoService.getAllStorages(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/storages/{companyId}/{storageId}")
-    public ResponseEntity<Storage> getStorage(@PathVariable String companyId, @PathVariable String storageId) {
-        return standardInfoService.getStorageById(companyId, storageId)
+    @GetMapping("/storages/{storageId}")
+    public ResponseEntity<Storage> getStorage(@PathVariable String storageId, Authentication auth) {
+        return standardInfoService.getStorageById(SecurityUtil.getCompanyId(auth), storageId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/storages/{companyId}/{storageId}")
-    public ResponseEntity<Void> deleteStorage(@PathVariable String companyId, @PathVariable String storageId) {
-        standardInfoService.deleteStorage(companyId, storageId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/storages/{storageId}")
+    public ResponseEntity<Void> deleteStorage(@PathVariable String storageId, Authentication auth) {
+        return standardInfoService.deleteStorage(SecurityUtil.getCompanyId(auth), storageId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    // Bin
     @PostMapping("/bins")
-    public Bin createBin(@RequestBody Bin bin) {
+    public Bin createBin(@RequestBody Bin bin, Authentication auth) {
+        bin.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.saveBin(bin);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/bins")
-    public List<Bin> getBins(@RequestParam String companyId) {
-        return standardInfoService.getAllBins(companyId);
+    public List<Bin> getBins(Authentication auth) {
+        return standardInfoService.getAllBins(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/bins/{companyId}/{binId}")
-    public ResponseEntity<Bin> getBin(@PathVariable String companyId, @PathVariable String binId) {
-        return standardInfoService.getBinById(companyId, binId)
+    @GetMapping("/bins/{binId}")
+    public ResponseEntity<Bin> getBin(@PathVariable String binId, Authentication auth) {
+        return standardInfoService.getBinById(SecurityUtil.getCompanyId(auth), binId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/bins/{companyId}/{binId}")
-    public ResponseEntity<Void> deleteBin(@PathVariable String companyId, @PathVariable String binId) {
-        standardInfoService.deleteBin(companyId, binId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/bins/{binId}")
+    public ResponseEntity<Void> deleteBin(@PathVariable String binId, Authentication auth) {
+        return standardInfoService.deleteBin(SecurityUtil.getCompanyId(auth), binId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
+    // Location
     @PostMapping("/locations")
-    public Location createLocation(@RequestBody Location location) {
+    public Location createLocation(@RequestBody Location location, Authentication auth) {
+        location.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.saveLocation(location);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/locations")
-    public List<Location> getLocations(@RequestParam String companyId) {
-        return standardInfoService.getAllLocations(companyId);
+    public List<Location> getLocations(Authentication auth) {
+        return standardInfoService.getAllLocations(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/locations/{companyId}/{binId}/{locationId}")
-    public ResponseEntity<Location> getLocation(@PathVariable String companyId, @PathVariable String binId,
-            @PathVariable String locationId) {
-        return standardInfoService.getLocationById(companyId, binId, locationId)
+    @GetMapping("/locations/{locationId}")
+    public ResponseEntity<Location> getLocation(@PathVariable String locationId, Authentication auth) {
+        return standardInfoService.getLocationById(SecurityUtil.getCompanyId(auth), locationId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/locations/{companyId}/{binId}/{locationId}")
-    public ResponseEntity<Void> deleteLocation(@PathVariable String companyId, @PathVariable String binId,
-            @PathVariable String locationId) {
-        standardInfoService.deleteLocation(companyId, binId, locationId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/locations/{locationId}")
+    public ResponseEntity<Void> deleteLocation(@PathVariable String locationId, Authentication auth) {
+        return standardInfoService.deleteLocation(SecurityUtil.getCompanyId(auth), locationId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("principal.startsWith(#code.companyId)")
+    // Code
     @PostMapping("/codes")
-    public Code createCode(@RequestBody Code code) {
+    public Code createCode(@RequestBody Code code, Authentication auth) {
+        code.setCompanyId(SecurityUtil.getCompanyId(auth));
         return standardInfoService.saveCode(code);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/codes")
-    public List<Code> getCodes(@RequestParam String companyId) {
-        return standardInfoService.getAllCodes(companyId);
+    public List<Code> getCodes(Authentication auth) {
+        return standardInfoService.getAllCodes(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/codes/{companyId}/{codeId}")
-    public ResponseEntity<Code> getCode(@PathVariable String companyId, @PathVariable String codeId) {
-        return standardInfoService.getCodeById(companyId, codeId)
+    @GetMapping("/codes/{codeId}")
+    public ResponseEntity<Code> getCode(@PathVariable String codeId, Authentication auth) {
+        return standardInfoService.getCodeById(SecurityUtil.getCompanyId(auth), codeId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/codes/{companyId}/{codeId}")
-    public ResponseEntity<Void> deleteCode(@PathVariable String companyId, @PathVariable String codeId) {
-        standardInfoService.deleteCode(companyId, codeId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/codes/{codeId}")
+    public ResponseEntity<Void> deleteCode(@PathVariable String codeId, Authentication auth) {
+        return standardInfoService.deleteCode(SecurityUtil.getCompanyId(auth), codeId)
+                ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @PostMapping("/codes/{companyId}/{codeId}/items")
-    public CodeItem createCodeItem(@PathVariable String companyId, @PathVariable String codeId,
-            @RequestBody CodeItem codeItem) {
-        codeItem.setCompanyId(companyId);
+    @PostMapping("/codes/{codeId}/items")
+    public CodeItem createCodeItem(@PathVariable String codeId,
+            @RequestBody CodeItem codeItem, Authentication auth) {
+        codeItem.setCompanyId(SecurityUtil.getCompanyId(auth));
         codeItem.setCodeId(codeId);
         return standardInfoService.saveCodeItem(codeItem);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/codes/{companyId}/{codeId}/items")
-    public List<CodeItem> getCodeItemsByCodeId(@PathVariable String companyId, @PathVariable String codeId) {
-        return standardInfoService.getCodeItemsByCodeId(companyId, codeId);
+    @GetMapping("/codes/{codeId}/items")
+    public List<CodeItem> getCodeItemsByCodeId(@PathVariable String codeId, Authentication auth) {
+        return standardInfoService.getCodeItemsByCodeId(SecurityUtil.getCompanyId(auth), codeId);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/codes/{companyId}/{codeId}/items/{itemId}")
-    public ResponseEntity<CodeItem> getCodeItem(@PathVariable String companyId, @PathVariable String codeId,
-            @PathVariable String itemId) {
-        return standardInfoService.getCodeItemById(companyId, codeId, itemId)
+    @GetMapping("/codes/{codeId}/items/{itemId}")
+    public ResponseEntity<CodeItem> getCodeItem(@PathVariable String codeId,
+            @PathVariable String itemId, Authentication auth) {
+        return standardInfoService.getCodeItemById(SecurityUtil.getCompanyId(auth), codeId, itemId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/codes/{companyId}/{codeId}/items/{itemId}")
-    public ResponseEntity<Void> deleteCodeItem(@PathVariable String companyId, @PathVariable String codeId,
-            @PathVariable String itemId) {
-        standardInfoService.deleteCodeItem(companyId, codeId, itemId);
+    @DeleteMapping("/codes/{codeId}/items/{itemId}")
+    public ResponseEntity<Void> deleteCodeItem(@PathVariable String codeId,
+            @PathVariable String itemId, Authentication auth) {
+        standardInfoService.deleteCodeItem(SecurityUtil.getCompanyId(auth), codeId, itemId);
         return ResponseEntity.ok().build();
     }
 }

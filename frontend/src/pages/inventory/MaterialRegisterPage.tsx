@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -90,6 +90,23 @@ export default function MaterialRegisterPage() {
         }
     };
 
+    const handleDelete = async () => {
+        if (!id) return;
+        if (!window.confirm("정말로 이 자재를 삭제하시겠습니까?")) return;
+
+        try {
+            setLoading(true);
+            await inventoryService.deleteMaterial(id);
+            toast({ title: "성공", description: "자재가 삭제되었습니다." });
+            navigate('/master/inventory');
+        } catch (error: any) {
+            console.error(error);
+            toast({ title: "오류", description: "삭제 중 오류가 발생했습니다.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const isConfirmed = watch('status') === 'C';
 
     if (loading && isEditMode) {
@@ -110,6 +127,17 @@ export default function MaterialRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" type="button" onClick={() => navigate('/master/inventory')}>목록</Button>
+                    {isEditMode && !isConfirmed && (
+                        <Button
+                            variant="destructive"
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={loading}
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            삭제
+                        </Button>
+                    )}
                     {!isConfirmed && (
                         <>
                             <Button
@@ -162,13 +190,14 @@ export default function MaterialRegisterPage() {
                             <Input
                                 {...register('name', { required: '자재명은 필수입니다.' })}
                                 placeholder="자재명 입력"
+                                disabled={isConfirmed}
                             />
                             {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
                         </div>
                         {/* Row 2: 자재유형(1) / 기본단위(1) / 관리부서(2) */}
                         <div className="space-y-2">
                             <Label>자재 유형</Label>
-                            <Select value={watch('codeItem') || ''} onValueChange={(val: string) => setValue('codeItem', val)}>
+                            <Select value={watch('codeItem') || ''} onValueChange={(val: string) => setValue('codeItem', val)} disabled={isConfirmed}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="유형 선택" />
                                 </SelectTrigger>
@@ -185,7 +214,7 @@ export default function MaterialRegisterPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>기본 단위</Label>
-                            <Select value={watch('unit') || ''} onValueChange={(val: string) => setValue('unit', val)}>
+                            <Select value={watch('unit') || ''} onValueChange={(val: string) => setValue('unit', val)} disabled={isConfirmed}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="단위 선택" />
                                 </SelectTrigger>
@@ -207,6 +236,7 @@ export default function MaterialRegisterPage() {
                                 onChange={(id) => setValue('deptId', id)}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
+                                disabled={isConfirmed}
                             />
                         </div>
                     </CardContent>
@@ -220,19 +250,19 @@ export default function MaterialRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div className="space-y-2">
                             <Label>제조사</Label>
-                            <Input {...register('makerName')} placeholder="제조사 입력" />
+                            <Input {...register('makerName')} placeholder="제조사 입력" disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
                             <Label>모델명</Label>
-                            <Input {...register('model')} placeholder="모델명 입력" />
+                            <Input {...register('model')} placeholder="모델명 입력" disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
                             <Label>규격</Label>
-                            <Input {...register('spec')} placeholder="규격/사양 입력" />
+                            <Input {...register('spec')} placeholder="규격/사양 입력" disabled={isConfirmed} />
                         </div>
                         <div className="space-y-2">
                             <Label>시리얼번호</Label>
-                            <Input {...register('serial')} placeholder="시리얼번호 입력" />
+                            <Input {...register('serial')} placeholder="시리얼번호 입력" disabled={isConfirmed} />
                         </div>
                     </CardContent>
                 </Card>
@@ -249,6 +279,7 @@ export default function MaterialRegisterPage() {
                                 {...register('note')}
                                 placeholder="특이사항을 입력하세요."
                                 className="min-h-[80px]"
+                                disabled={isConfirmed}
                             />
                         </div>
                     </CardContent>

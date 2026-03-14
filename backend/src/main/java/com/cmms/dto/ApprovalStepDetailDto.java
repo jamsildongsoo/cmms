@@ -1,5 +1,7 @@
 package com.cmms.dto;
 
+import com.cmms.common.domain.DecisionType;
+import com.cmms.common.domain.StepResult;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,8 +19,9 @@ public class ApprovalStepDetailDto {
     private String personId;
     private String personName;
     private String position;
-    private String decision;
-    private String result;
+    private String title;
+    private DecisionType decision;
+    private StepResult result;
     private LocalDateTime decidedAt;
     private String comment;
 }

@@ -1,5 +1,6 @@
 package com.cmms.service;
 
+import com.cmms.common.domain.CommonStatus;
 import com.cmms.domain.*;
 import com.cmms.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -27,14 +28,14 @@ public class MasterDataService {
             // Check existing for status 'C'
             equipmentRepository.findById(new EquipmentId(equipment.getCompanyId(), equipment.getEquipmentId()))
                     .ifPresent(existing -> {
-                        if ("C".equals(existing.getStatus()) && !"C".equals(equipment.getStatus())) {
+                        if (existing.getStatus() == CommonStatus.CONFIRMED && equipment.getStatus() != CommonStatus.CONFIRMED) {
                             throw new IllegalStateException("확정된 마스터 데이터는 수정할 수 없습니다.");
                         }
                     });
         }
 
         if (equipment.getStatus() == null) {
-            equipment.setStatus("T");
+            equipment.setStatus(CommonStatus.TEMPORARY);
         }
 
         return equipmentRepository.save(equipment);
@@ -50,11 +51,12 @@ public class MasterDataService {
     }
 
     @Transactional
-    public void deleteEquipment(String companyId, String equipmentId) {
-        equipmentRepository.findById(new EquipmentId(companyId, equipmentId)).ifPresent(equipment -> {
+    public boolean deleteEquipment(String companyId, String equipmentId) {
+        return equipmentRepository.findById(new EquipmentId(companyId, equipmentId)).map(equipment -> {
             equipment.setDeleteMark("Y");
             equipmentRepository.save(equipment);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // Inventory
@@ -65,14 +67,14 @@ public class MasterDataService {
         } else {
             inventoryRepository.findById(new InventoryId(inventory.getCompanyId(), inventory.getInventoryId()))
                     .ifPresent(existing -> {
-                        if ("C".equals(existing.getStatus()) && !"C".equals(inventory.getStatus())) {
+                        if (existing.getStatus() == CommonStatus.CONFIRMED && inventory.getStatus() != CommonStatus.CONFIRMED) {
                             throw new IllegalStateException("확정된 자재 마스터 데이터는 수정할 수 없습니다.");
                         }
                     });
         }
 
         if (inventory.getStatus() == null) {
-            inventory.setStatus("T");
+            inventory.setStatus(CommonStatus.TEMPORARY);
         }
 
         return inventoryRepository.save(inventory);
@@ -88,10 +90,11 @@ public class MasterDataService {
     }
 
     @Transactional
-    public void deleteInventory(String companyId, String inventoryId) {
-        inventoryRepository.findById(new InventoryId(companyId, inventoryId)).ifPresent(inventory -> {
+    public boolean deleteInventory(String companyId, String inventoryId) {
+        return inventoryRepository.findById(new InventoryId(companyId, inventoryId)).map(inventory -> {
             inventory.setDeleteMark("Y");
             inventoryRepository.save(inventory);
-        });
+            return true;
+        }).orElse(false);
     }
 }

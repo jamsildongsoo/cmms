@@ -21,9 +21,9 @@ export interface FileGroup {
 
 export const systemService = {
     // Get File Group with Items
-    getFileGroup: async (companyId: string, fileGroupId: string): Promise<FileGroup | null> => {
+    getFileGroup: async (fileGroupId: string): Promise<FileGroup | null> => {
         try {
-            const response = await api.get(`/api/sys/files/${fileGroupId}?companyId=${companyId}`);
+            const response = await api.get(`/api/sys/files/${fileGroupId}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch file group", error);
@@ -32,9 +32,10 @@ export const systemService = {
     },
 
     // Download file securely with JWT
-    downloadFile: async (companyId: string, fileGroupId: string, lineNo: number, originalName: string) => {
+    downloadFile: async (fileGroupId: string, lineNo: number, originalName: string) => {
         try {
-            const response = await api.get(`/api/sys/files/download/item?companyId=${companyId}&fileGroupId=${fileGroupId}&lineNo=${lineNo}`, {
+            const response = await api.get(`/api/sys/files/download/item`, {
+                params: { fileGroupId, lineNo },
                 responseType: 'blob',
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -54,14 +55,12 @@ export const systemService = {
     // Upload a single file
     uploadFile: async (
         file: File,
-        companyId: string,
         fileGroupId?: string,
         refEntity?: string,
         refId?: string
     ): Promise<FileGroup> => {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('companyId', companyId);
         if (fileGroupId) formData.append('fileGroupId', fileGroupId);
         if (refEntity) formData.append('refEntity', refEntity);
         if (refId) formData.append('refId', refId);

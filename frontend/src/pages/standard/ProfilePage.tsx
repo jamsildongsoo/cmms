@@ -96,12 +96,8 @@ export default function ProfilePage() {
                             <Input {...register('phone')} placeholder="010-0000-0000" />
                         </div>
                         <div className="space-y-2">
-                            <Label>직급</Label>
-                            <Input {...register('position')} placeholder="직급" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>직책</Label>
-                            <Input {...register('title')} placeholder="직책" />
+                            <Label>직급/직책</Label>
+                            <Input {...register('position')} placeholder="직급/직책" />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>비고</Label>

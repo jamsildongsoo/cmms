@@ -8,8 +8,13 @@ interface WPValueCardProps {
     permit: WorkPermit;
 }
 
+/** template.id → camelCase key matching WorkPermit type */
+function toJsonKey(id: string): keyof WorkPermit {
+    return `checksheetJson${id.charAt(0).toUpperCase()}${id.slice(1)}` as keyof WorkPermit;
+}
+
 export function WPValueCard({ template, permit }: WPValueCardProps) {
-    const jsonKey = `checksheet_json_${template.id}` as keyof WorkPermit;
+    const jsonKey = toJsonKey(template.id);
     const data = (permit[jsonKey] as Record<string, any>) || {};
 
     return (

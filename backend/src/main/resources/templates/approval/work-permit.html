@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="content">
+        <h2 class="header-title">안전 작업 허가서</h2>
+
+        <!-- 기본 정보 -->
+        <table>
+            <tr>
+                <th>허가번호</th>
+                <td th:text="${doc.permitId}"></td>
+                <th>신청일자</th>
+                <td th:text="${doc.date}"></td>
+            </tr>
+            <tr>
+                <th>작업명</th>
+                <td colspan="3" th:text="${doc.name}"></td>
+            </tr>
+            <tr>
+                <th>대상설비</th>
+                <td th:text="${doc.equipmentId}"></td>
+                <th>작업장소</th>
+                <td th:text="${doc.location}"></td>
+            </tr>
+            <tr>
+                <th>작업시작</th>
+                <td th:text="${doc.startDt}"></td>
+                <th>작업종료</th>
+                <td th:text="${doc.endDt}"></td>
+            </tr>
+            <tr>
+                <th>허가유형</th>
+                <td colspan="3" th:text="${doc.wpTypes != null ? #strings.listJoin(doc.wpTypes, ', ') : '일반'}"></td>
+            </tr>
+        </table>
+
+        <!-- 작업 내용 및 위험성 평가 -->
+        <h3 class="section-title">작업 내용 및 위험성 평가</h3>
+        <table>
+            <tr>
+                <th style="width:120px;">작업개요</th>
+                <td colspan="3" style="white-space:pre-wrap;" th:text="${doc.workSummary != null ? doc.workSummary : '-'}"></td>
+            </tr>
+            <tr>
+                <th>위험요인</th>
+                <td style="white-space:pre-wrap;" th:text="${doc.hazardFactor != null ? doc.hazardFactor : '-'}"></td>
+                <th>안전대책</th>
+                <td style="white-space:pre-wrap;" th:text="${doc.safetyFactor != null ? doc.safetyFactor : '-'}"></td>
+            </tr>
+        </table>
+
+        <!-- ===== 일반작업 안전보건조치 (GEN → checksheetJsonCom) ===== -->
+        <h3 class="section-title">일반작업 안전보건조치</h3>
+        <div th:with="d=${doc.checksheetJsonCom}">
+            <table class="checklist-table" th:if="${d != null}">
+                <tr>
+                    <td class="chk" th:classappend="${d['work_area_set'] == true} ? ' checked' : ''}" th:text="${d['work_area_set'] == true} ? 'V' : ''"></td>
+                    <td>작업구역 설정 (출입경고 표지)</td>
+                    <td class="chk" th:classappend="${d['gas_check'] == true} ? ' checked' : ''}" th:text="${d['gas_check'] == true} ? 'V' : ''"></td>
+                    <td>가스농도 측정</td>
+                </tr>
+                <tr>
+                    <td class="chk" th:classappend="${d['equip_guard'] == true} ? ' checked' : ''}" th:text="${d['equip_guard'] == true} ? 'V' : ''"></td>
+                    <td>사용장비 방호조치</td>
+                    <td class="chk" th:classappend="${d['fire_ext'] == true} ? ' checked' : ''}" th:text="${d['fire_ext'] == true} ? 'V' : ''"></td>
+                    <td>화기작업시 소화기 비치</td>
+                </tr>
+                <tr>
+                    <td class="chk" th:classappend="${d['fire_remove'] == true} ? ' checked' : ''}" th:text="${d['fire_remove'] == true} ? 'V' : ''"></td>
+                    <td>화기작업시 인화물질 제거</td>
+                    <td class="chk" th:classappend="${d['fire_blanket'] == true} ? ' checked' : ''}" th:text="${d['fire_blanket'] == true} ? 'V' : ''"></td>
+                    <td>화기작업시 불꽃방지막 사용</td>
+                </tr>
+                <tr>
+                    <td class="chk" th:classappend="${d['no_entry'] == true} ? ' checked' : ''}" th:text="${d['no_entry'] == true} ? 'V' : ''"></td>
+                    <td>출입금지 조치</td>
+                    <td class="chk" th:classappend="${d['power_off'] == true} ? ' checked' : ''}" th:text="${d['power_off'] == true} ? 'V' : ''"></td>
+                    <td>정전조치</td>
+                </tr>
+                <tr>
+                    <td class="chk" th:classappend="${d['loto'] == true} ? ' checked' : ''}" th:text="${d['loto'] == true} ? 'V' : ''"></td>
+                    <td>정전시 잠금 및 표지부착</td>
+                    <td class="chk" th:classappend="${d['lighting'] == true} ? ' checked' : ''}" th:text="${d['lighting'] == true} ? 'V' : ''"></td>
+                    <td>조명장비</td>
+                </tr>
+                <tr>
+                    <td class="chk" th:classappend="${d['ppe'] == true} ? ' checked' : ''}" th:text="${d['ppe'] == true} ? 'V' : ''"></td>
+                    <td>필요한 보호구 착용</td>
+                    <td class="chk" th:classappend="${d['safety_edu'] == true} ? ' checked' : ''}" th:text="${d['safety_edu'] == true} ? 'V' : ''"></td>
+                    <td>안전교육</td>
+                </tr>
+                <tr>
+                    <td class="chk" th:classappend="${d['op_presence'] == true} ? ' checked' : ''}" th:text="${d['op_presence'] == true} ? 'V' : ''"></td>
+                    <td>운전요원의 입회</td>
+                    <td class="chk"></td>
+                    <td></td>
+                </tr>
+            </table>
+            <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+        </div>
+
+        <!-- ===== 화기작업 (HOT) ===== -->
+        <div th:if="${doc.wpTypes != null and doc.wpTypes.contains('HOT')}">
+            <h3 class="section-title">화기작업 안전조치</h3>
+            <div th:with="d=${doc.checksheetJsonHot}">
+                <table class="checklist-table" th:if="${d != null}">
+                    <tr>
+                        <td class="chk" th:classappend="${d['work_area_set'] == true} ? ' checked' : ''}" th:text="${d['work_area_set'] == true} ? 'V' : ''"></td>
+                        <td>작업구역 설정 (출입경고 표지)</td>
+                        <td class="chk" th:classappend="${d['gas_check'] == true} ? ' checked' : ''}" th:text="${d['gas_check'] == true} ? 'V' : ''"></td>
+                        <td>가스농도 측정</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['valve_block'] == true} ? ' checked' : ''}" th:text="${d['valve_block'] == true} ? 'V' : ''"></td>
+                        <td>밸브차단 및 차단표지부착</td>
+                        <td class="chk" th:classappend="${d['nameplate'] == true} ? ' checked' : ''}" th:text="${d['nameplate'] == true} ? 'V' : ''"></td>
+                        <td>명판설치 및 표지부착</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['pressure_release'] == true} ? ' checked' : ''}" th:text="${d['pressure_release'] == true} ? 'V' : ''"></td>
+                        <td>용기개방 및 압력방출</td>
+                        <td class="chk" th:classappend="${d['hazmat_release'] == true} ? ' checked' : ''}" th:text="${d['hazmat_release'] == true} ? 'V' : ''"></td>
+                        <td>위험물질방출 및 처리</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['vessel_clean'] == true} ? ' checked' : ''}" th:text="${d['vessel_clean'] == true} ? 'V' : ''"></td>
+                        <td>용기내부 세정 및 처리</td>
+                        <td class="chk" th:classappend="${d['inert_gas'] == true} ? ' checked' : ''}" th:text="${d['inert_gas'] == true} ? 'V' : ''"></td>
+                        <td>불활성가스 치환 및 환기</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['fire_blanket'] == true} ? ' checked' : ''}" th:text="${d['fire_blanket'] == true} ? 'V' : ''"></td>
+                        <td>비산불티차단막 설치</td>
+                        <td class="chk" th:classappend="${d['loto'] == true} ? ' checked' : ''}" th:text="${d['loto'] == true} ? 'V' : ''"></td>
+                        <td>정전/잠금/표지부착</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['ventilation'] == true} ? ' checked' : ''}" th:text="${d['ventilation'] == true} ? 'V' : ''"></td>
+                        <td>환기장비</td>
+                        <td class="chk" th:classappend="${d['lighting'] == true} ? ' checked' : ''}" th:text="${d['lighting'] == true} ? 'V' : ''"></td>
+                        <td>조명장비</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['fire_ext'] == true} ? ' checked' : ''}" th:text="${d['fire_ext'] == true} ? 'V' : ''"></td>
+                        <td>소화기</td>
+                        <td class="chk" th:classappend="${d['safety_gear'] == true} ? ' checked' : ''}" th:text="${d['safety_gear'] == true} ? 'V' : ''"></td>
+                        <td>안전장구</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['safety_edu'] == true} ? ' checked' : ''}" th:text="${d['safety_edu'] == true} ? 'V' : ''"></td>
+                        <td>안전교육</td>
+                        <td class="chk" th:classappend="${d['op_presence'] == true} ? ' checked' : ''}" th:text="${d['op_presence'] == true} ? 'V' : ''"></td>
+                        <td>운전요원의 입회</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['explosion_proof'] == true} ? ' checked' : ''}" th:text="${d['explosion_proof'] == true} ? 'V' : ''"></td>
+                        <td>방폭형 기기 또는 도구</td>
+                        <td class="chk"></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+            </div>
+        </div>
+
+        <!-- ===== 밀폐공간 (CONF) ===== -->
+        <div th:if="${doc.wpTypes != null and doc.wpTypes.contains('CONF')}">
+            <h3 class="section-title">밀폐공간 출입작업 안전조치</h3>
+            <div th:with="d=${doc.checksheetJsonConf}">
+                <table class="checklist-table" th:if="${d != null}">
+                    <tr>
+                        <td class="chk" th:classappend="${d['valve_block'] == true} ? ' checked' : ''}" th:text="${d['valve_block'] == true} ? 'V' : ''"></td>
+                        <td>밸브차단 및 차단표식부착</td>
+                        <td class="chk" th:classappend="${d['gas_check'] == true} ? ' checked' : ''}" th:text="${d['gas_check'] == true} ? 'V' : ''"></td>
+                        <td>가스농도 측정</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['nameplate'] == true} ? ' checked' : ''}" th:text="${d['nameplate'] == true} ? 'V' : ''"></td>
+                        <td>명판설치 및 표지부착</td>
+                        <td class="chk" th:classappend="${d['pressure_release'] == true} ? ' checked' : ''}" th:text="${d['pressure_release'] == true} ? 'V' : ''"></td>
+                        <td>압력방출</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['vessel_clean'] == true} ? ' checked' : ''}" th:text="${d['vessel_clean'] == true} ? 'V' : ''"></td>
+                        <td>용기세정 후 공기/물 치환 및 환기</td>
+                        <td class="chk" th:classappend="${d['o2_check'] == true} ? ' checked' : ''}" th:text="${d['o2_check'] == true} ? 'V' : ''"></td>
+                        <td>산소농도 측정</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['loto'] == true} ? ' checked' : ''}" th:text="${d['loto'] == true} ? 'V' : ''"></td>
+                        <td>정전/잠금/표지부착</td>
+                        <td class="chk" th:classappend="${d['ventilation'] == true} ? ' checked' : ''}" th:text="${d['ventilation'] == true} ? 'V' : ''"></td>
+                        <td>환기장비</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['lighting'] == true} ? ' checked' : ''}" th:text="${d['lighting'] == true} ? 'V' : ''"></td>
+                        <td>조명장비</td>
+                        <td class="chk" th:classappend="${d['fire_ext'] == true} ? ' checked' : ''}" th:text="${d['fire_ext'] == true} ? 'V' : ''"></td>
+                        <td>소화기</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['safety_gear'] == true} ? ' checked' : ''}" th:text="${d['safety_gear'] == true} ? 'V' : ''"></td>
+                        <td>안전장구 (구명선 등)</td>
+                        <td class="chk" th:classappend="${d['safety_edu'] == true} ? ' checked' : ''}" th:text="${d['safety_edu'] == true} ? 'V' : ''"></td>
+                        <td>안전교육</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['op_presence'] == true} ? ' checked' : ''}" th:text="${d['op_presence'] == true} ? 'V' : ''"></td>
+                        <td>운전요원의 입회</td>
+                        <td class="chk"></td>
+                        <td></td>
+                    </tr>
+                    <!-- 가스 측정값 -->
+                    <tr class="gas-row">
+                        <td class="chk val" th:text="${d['gas_hc'] != null ? d['gas_hc'] : ''}"></td>
+                        <td>H·C (기준: 0%)</td>
+                        <td class="chk val" th:text="${d['gas_o2'] != null ? d['gas_o2'] : ''}"></td>
+                        <td>O2 (기준: 18% 이상)</td>
+                    </tr>
+                    <tr class="gas-row">
+                        <td class="chk val" th:text="${d['gas_co'] != null ? d['gas_co'] : ''}"></td>
+                        <td>CO (기준: 25ppm 이하)</td>
+                        <td class="chk val" th:text="${d['gas_co2'] != null ? d['gas_co2'] : ''}"></td>
+                        <td>CO2 (기준: 1.5% 미만)</td>
+                    </tr>
+                    <tr class="gas-row">
+                        <td class="chk val" th:text="${d['gas_h2s'] != null ? d['gas_h2s'] : ''}"></td>
+                        <td>H2S (기준: 10ppm 이하)</td>
+                        <td class="chk"></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+            </div>
+        </div>
+
+        <!-- ===== 정전작업 (ELEC) ===== -->
+        <div th:if="${doc.wpTypes != null and doc.wpTypes.contains('ELEC')}">
+            <h3 class="section-title">정전작업 안전조치</h3>
+            <div th:with="d=${doc.checksheetJsonElec}">
+                <table class="checklist-table" th:if="${d != null}">
+                    <tr>
+                        <td class="chk" th:classappend="${d['main_sw_off'] == true} ? ' checked' : ''}" th:text="${d['main_sw_off'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 주 차단 스위치 내림</td>
+                        <td class="chk" th:classappend="${d['breaker_off'] == true} ? ' checked' : ''}" th:text="${d['breaker_off'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 제어차단기 내림</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['lock_device'] == true} ? ' checked' : ''}" th:text="${d['lock_device'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 잠금장치</td>
+                        <td class="chk" th:classappend="${d['test_power_off'] == true} ? ' checked' : ''}" th:text="${d['test_power_off'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 시험전원 차단</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['tag_out'] == true} ? ' checked' : ''}" th:text="${d['tag_out'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 차단표지판 부착</td>
+                        <td class="chk" th:classappend="${d['discharge'] == true} ? ' checked' : ''}" th:text="${d['discharge'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 잔류전하 방전</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['voltage_check'] == true} ? ' checked' : ''}" th:text="${d['voltage_check'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 검전기로 충전여부 확인</td>
+                        <td class="chk" th:classappend="${d['grounding'] == true} ? ' checked' : ''}" th:text="${d['grounding'] == true} ? 'V' : ''"></td>
+                        <td>[제어반] 단락접지기구 설치</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['local_sw_off'] == true} ? ' checked' : ''}" th:text="${d['local_sw_off'] == true} ? 'V' : ''"></td>
+                        <td>[현장기기] 현장스위치 내림</td>
+                        <td class="chk" th:classappend="${d['local_tag_out'] == true} ? ' checked' : ''}" th:text="${d['local_tag_out'] == true} ? 'V' : ''"></td>
+                        <td>[현장기기] 차단표지판 부착</td>
+                    </tr>
+                </table>
+                <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+            </div>
+        </div>
+
+        <!-- ===== 굴착작업 (DIG) ===== -->
+        <div th:if="${doc.wpTypes != null and doc.wpTypes.contains('DIG')}">
+            <h3 class="section-title">굴착작업 안전조치</h3>
+            <div th:with="d=${doc.checksheetJsonDig}">
+                <table class="checklist-table" th:if="${d != null}">
+                    <tr>
+                        <td class="chk" th:classappend="${d['pipe_check'] == true} ? ' checked' : ''}" th:text="${d['pipe_check'] == true} ? 'V' : ''"></td>
+                        <td>기계배관 관련: 지하배관 유무</td>
+                        <td class="chk" th:classappend="${d['fire_pipe_check'] == true} ? ' checked' : ''}" th:text="${d['fire_pipe_check'] == true} ? 'V' : ''"></td>
+                        <td>소방관련: 소방배관·배출구 유무</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['power_cable_check'] == true} ? ' checked' : ''}" th:text="${d['power_cable_check'] == true} ? 'V' : ''"></td>
+                        <td>전기관련: 전기동력선 유무</td>
+                        <td class="chk" th:classappend="${d['control_cable_check'] == true} ? ' checked' : ''}" th:text="${d['control_cable_check'] == true} ? 'V' : ''"></td>
+                        <td>계장관련: 제어용 케이블 유무</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['etc_line_check'] == true} ? ' checked' : ''}" th:text="${d['etc_line_check'] == true} ? 'V' : ''"></td>
+                        <td>기타관련: 전화선·접지선 유무</td>
+                        <td class="chk"></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+            </div>
+        </div>
+
+        <!-- ===== 고소작업 (HIGH) ===== -->
+        <div th:if="${doc.wpTypes != null and doc.wpTypes.contains('HIGH')}">
+            <h3 class="section-title">고소작업 안전조치</h3>
+            <div th:with="d=${doc.checksheetJsonHigh}">
+                <table class="checklist-table" th:if="${d != null}">
+                    <tr>
+                        <td class="chk" th:classappend="${d['scaffold_safety'] == true} ? ' checked' : ''}" th:text="${d['scaffold_safety'] == true} ? 'V' : ''"></td>
+                        <td>작업발판 및 안전난간설치 여부</td>
+                        <td class="chk" th:classappend="${d['harness_helmet'] == true} ? ' checked' : ''}" th:text="${d['harness_helmet'] == true} ? 'V' : ''"></td>
+                        <td>안전모, 안전대 착용 및 부착 여부</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['safety_net'] == true} ? ' checked' : ''}" th:text="${d['safety_net'] == true} ? 'V' : ''"></td>
+                        <td>추락 방지용 방망 설치 여부</td>
+                        <td class="chk" th:classappend="${d['opening_measure'] == true} ? ' checked' : ''}" th:text="${d['opening_measure'] == true} ? 'V' : ''"></td>
+                        <td>개구부 조치</td>
+                    </tr>
+                </table>
+                <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+            </div>
+        </div>
+
+        <!-- ===== 중량물 (HEAVY) ===== -->
+        <div th:if="${doc.wpTypes != null and doc.wpTypes.contains('HEAVY')}">
+            <h3 class="section-title">중량물 취급/중장비 작업 안전조치</h3>
+            <div th:with="d=${doc.checksheetJsonHeavy}">
+                <table class="checklist-table" th:if="${d != null}">
+                    <tr>
+                        <td class="chk" th:classappend="${d['weather_cond'] == true} ? ' checked' : ''}" th:text="${d['weather_cond'] == true} ? 'V' : ''"></td>
+                        <td>기상상태 확인</td>
+                        <td class="chk" th:classappend="${d['signal_man'] == true} ? ' checked' : ''}" th:text="${d['signal_man'] == true} ? 'V' : ''"></td>
+                        <td>신호수 배치</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['lighting'] == true} ? ' checked' : ''}" th:text="${d['lighting'] == true} ? 'V' : ''"></td>
+                        <td>조명설비</td>
+                        <td class="chk" th:classappend="${d['no_traffic'] == true} ? ' checked' : ''}" th:text="${d['no_traffic'] == true} ? 'V' : ''"></td>
+                        <td>통행금지 표지판 부착</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['power_line'] == true} ? ' checked' : ''}" th:text="${d['power_line'] == true} ? 'V' : ''"></td>
+                        <td>전원설비 간섭여부</td>
+                        <td class="chk" th:classappend="${d['outrigger_mat'] == true} ? ' checked' : ''}" th:text="${d['outrigger_mat'] == true} ? 'V' : ''"></td>
+                        <td>매트 등 부속장구</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['ground_cond'] == true} ? ' checked' : ''}" th:text="${d['ground_cond'] == true} ? 'V' : ''"></td>
+                        <td>노면상태</td>
+                        <td class="chk" th:classappend="${d['work_plan'] == true} ? ' checked' : ''}" th:text="${d['work_plan'] == true} ? 'V' : ''"></td>
+                        <td>작업계획서 작성</td>
+                    </tr>
+                    <tr>
+                        <td class="chk" th:classappend="${d['license_check'] == true} ? ' checked' : ''}" th:text="${d['license_check'] == true} ? 'V' : ''"></td>
+                        <td>자격증 소지 여부</td>
+                        <td class="chk"></td>
+                        <td></td>
+                    </tr>
+                </table>
+                <div th:if="${d == null}" class="note-box text-center" style="min-height:40px;color:#999;">데이터 없음</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

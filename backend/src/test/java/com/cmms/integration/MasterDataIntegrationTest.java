@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@WithMockUser(username = "testuser", roles = { "USER" })
+@WithMockUser(username = "TEST_COMP:testuser", roles = { "USER" })
 public class MasterDataIntegrationTest {
 
     @Autowired
@@ -51,21 +51,20 @@ public class MasterDataIntegrationTest {
         // 1. Create Equipment
         Equipment equipment = new Equipment();
         equipment.setCompanyId("TEST_COMP");
-        equipment.setEquipmentId("EQ_001");
+        // equipment.setEquipmentId("EQ_001");
         equipment.setName("Hydraulic Pump A");
-        equipment.setPlantId("PLANT_01"); // Assumed to exist or not enforced by FK in simplistic H2 test without
-                                          // data.sql
+        equipment.setPlantId("PLANT_01");
 
         mockMvc.perform(post("/api/master/equipment")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(equipment)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.equipmentId").value("EQ_001"));
+                .andExpect(jsonPath("$.equipmentId").exists());
 
         // 2. Create Inventory (Spare Part)
         Inventory inventory = new Inventory();
         inventory.setCompanyId("TEST_COMP");
-        inventory.setInventoryId("PART_001");
+        // inventory.setInventoryId("PART_001");
         inventory.setName("O-Ring Seal");
         inventory.setSpec("10mm");
 
@@ -73,6 +72,6 @@ public class MasterDataIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inventory)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.inventoryId").value("PART_001"));
+                .andExpect(jsonPath("$.inventoryId").exists());
     }
 }

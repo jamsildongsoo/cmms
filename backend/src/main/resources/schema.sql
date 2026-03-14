@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS company (
     email VARCHAR(100),
     phone VARCHAR(20),
     delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_company PRIMARY KEY (company_id)
 );
 
@@ -15,6 +19,10 @@ CREATE TABLE IF NOT EXISTS plant (
     plant_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_plant PRIMARY KEY (company_id, plant_id)
 );
 
@@ -24,6 +32,10 @@ CREATE TABLE IF NOT EXISTS dept (
     name VARCHAR(100) NOT NULL,
     parent_id VARCHAR(20),
     delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_dept PRIMARY KEY (company_id, dept_id)
 );
 
@@ -33,6 +45,10 @@ CREATE TABLE IF NOT EXISTS role (
     name VARCHAR(100) NOT NULL,
     note TEXT,
     delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_role PRIMARY KEY (company_id, role_id)
 );
 
@@ -49,9 +65,13 @@ CREATE TABLE IF NOT EXISTS person (
     title VARCHAR(50),
     note TEXT,
     delete_mark CHAR(1) DEFAULT 'N',
-    last_login_ip VARCHAR(20),
+    last_login_ip VARCHAR(50),
     last_login_at TIMESTAMP,
     last_login_plant_id VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_person PRIMARY KEY (company_id, person_id)
 );
 
@@ -60,6 +80,10 @@ CREATE TABLE IF NOT EXISTS storage (
     storage_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_storage PRIMARY KEY (company_id, storage_id)
 );
 
@@ -68,6 +92,11 @@ CREATE TABLE IF NOT EXISTS bin (
     bin_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
+    delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_bin PRIMARY KEY (company_id, bin_id)
 );
 
@@ -77,6 +106,11 @@ CREATE TABLE IF NOT EXISTS location (
     name VARCHAR(100) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
     bin_id VARCHAR(20) NOT NULL,
+    delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_location PRIMARY KEY (company_id, location_id)
 );
 
@@ -85,6 +119,10 @@ CREATE TABLE IF NOT EXISTS code (
     code_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     delete_mark CHAR(1) DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_code PRIMARY KEY (company_id, code_id)
 );
 
@@ -104,28 +142,32 @@ CREATE TABLE IF NOT EXISTS equipment (
     equipment_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     install_location VARCHAR(100),
-    code_item VARCHAR(20), -- 설비 유형 (기계, 발전기 등)
+    code_item VARCHAR(20), -- 설비 유형
     dept_id VARCHAR(20),
     maker_name VARCHAR(100),
     spec TEXT,
     model VARCHAR(100),
     serial VARCHAR(100),
     install_date DATE,
-    depre_method VARCHAR(20), -- 01:정액법, 02:정률법
+    depre_method VARCHAR(20),
     depre_period INTEGER,
-    purchase_cost NUMERIC(18, 2),
-    residual_value NUMERIC(18, 2),
+    purchase_cost DECIMAL(18, 2),
+    residual_value DECIMAL(18, 2),
     inspection_yn CHAR(1) DEFAULT 'Y',
     psm_yn CHAR(1) DEFAULT 'N',
     workpermit_yn CHAR(1) DEFAULT 'N',
     inspection_interval INTEGER,
-    inspection_unit VARCHAR(10), -- 01:일, 05:월 등
-    last_inspection DATE, -- 실적 확정시 업데이트
-    next_inspection DATE, -- 실적 확정시 업데이트
+    inspection_unit VARCHAR(10),
+    last_inspection DATE,
+    next_inspection DATE,
     note TEXT,
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
-    status CHAR(1), -- T:임시, A:결재중, C:확정
+    status CHAR(1),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_equipment PRIMARY KEY (company_id, plant_id, equipment_id)
 );
 
@@ -133,7 +175,7 @@ CREATE TABLE IF NOT EXISTS inventory (
     company_id VARCHAR(20) NOT NULL,
     inventory_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    code_item VARCHAR(20), -- 자재 유형 (소모품, 교체부품 등)
+    code_item VARCHAR(20),
     dept_id VARCHAR(20),
     unit VARCHAR(20),
     maker_name VARCHAR(100),
@@ -144,6 +186,10 @@ CREATE TABLE IF NOT EXISTS inventory (
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(50),
     CONSTRAINT pk_inventory PRIMARY KEY (company_id, inventory_id)
 );
 
@@ -155,23 +201,23 @@ CREATE TABLE IF NOT EXISTS inspection (
     plant_id VARCHAR(20),
     equipment_id VARCHAR(20),
     name VARCHAR(100) NOT NULL,
-    stage VARCHAR(20), -- PLN:계획, ACT:실적
-    code_item VARCHAR(20), -- 점검 유형 (순찰, 계측값점검 등)
+    stage VARCHAR(20),
+    code_item VARCHAR(20),
     dept_id VARCHAR(20),
     person_id VARCHAR(20),
     date DATE,
-    due_date DATE, -- 예정일 (equipment의 next_inspection날짜 가져옴)
+    due_date DATE,
     note TEXT,
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
-    status CHAR(1), -- T:임시, A:결재, C:확정
+    status CHAR(1),
     ref_entity VARCHAR(20),
-    ref_id VARCHAR(20), -- 계획 참조 시 번호
+    ref_id VARCHAR(20),
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_inspection PRIMARY KEY (company_id, inspection_id)
 );
 
@@ -181,11 +227,11 @@ CREATE TABLE IF NOT EXISTS inspection_item (
     line_no INTEGER NOT NULL,
     name VARCHAR(100),
     method VARCHAR(100),
-    min_val NUMERIC(18, 4),
-    max_val NUMERIC(18, 4),
-    std_val NUMERIC(18, 4),
+    min_val DECIMAL(18, 4),
+    max_val DECIMAL(18, 4),
+    std_val DECIMAL(18, 4),
     unit VARCHAR(20),
-    result_val NUMERIC(18, 4),
+    result_val DECIMAL(18, 4),
     CONSTRAINT pk_inspection_item PRIMARY KEY (company_id, inspection_id, line_no)
 );
 
@@ -196,24 +242,23 @@ CREATE TABLE IF NOT EXISTS work_order (
     equipment_id VARCHAR(20),
     name VARCHAR(100),
     stage VARCHAR(20),
-    code_item VARCHAR(20), -- 작업 유형 (긴급점검, 정기수리 등)
+    code_item VARCHAR(20),
     dept_id VARCHAR(20),
     person_id VARCHAR(20),
     date DATE,
     note TEXT,
-    cost NUMERIC(18, 2),
-    time NUMERIC(10, 2), -- ManDay
+    cost DECIMAL(18, 2),
+    time DECIMAL(10, 2),
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
     status CHAR(1),
     ref_entity VARCHAR(20),
     ref_id VARCHAR(20),
-    isNotice CHAR(1) DEFAULT 'N',
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_work_order PRIMARY KEY (company_id, order_id)
 );
 
@@ -229,45 +274,38 @@ CREATE TABLE IF NOT EXISTS work_order_item (
 
 CREATE TABLE IF NOT EXISTS work_permit (
     company_id VARCHAR(20) NOT NULL,
-    permit_id VARCHAR(20) NOT NULL, -- WP + YYYYMM + SEQ
+    permit_id VARCHAR(20) NOT NULL,
     plant_id VARCHAR(20),
     equipment_id VARCHAR(20),
-    order_id VARCHAR(20), -- 연관된 작업지시(WO)와 직접 연결
+    order_id VARCHAR(20),
     name VARCHAR(100),
     stage VARCHAR(20),
-    wp_types VARCHAR(100), -- HOT(화기), CONF(밀폐), ELEC(정전), DIG(굴착), HIGH(고소), HEVY(중량물), GEN(일반)
-    
-    -- 작업 기간 (PDF 서식의 '시 부터 시 까지' 반영)
+    wp_types VARCHAR(100),
+    date DATE,
     start_dt TIMESTAMP,
     end_dt TIMESTAMP,
     location VARCHAR(100),
-
-    dept_id VARCHAR(20), -- 신청부서
-    person_id VARCHAR(20), -- 신청인
-    
-    work_summary TEXT, -- 작업개요
-    hazard_factor TEXT, -- 위험요인
-    safety_factor TEXT, -- 안전조치
-    
-    -- 특별 작업 유형 (다중 선택 가능 공통 : COM, 화기 : HOT, 밀폐 : CONF, 전기 : ELEC, 고소 : HIGH, 굴착 : DIG 등)
-    checksheet_json_com JSON,
-    checksheet_json_hot JSON,
-    checksheet_json_conf JSON,
-    checksheet_json_elec JSON,
-    checksheet_json_high JSON,
-    checksheet_json_dig JSON,
-    
-    file_group_id VARCHAR(100), -- 굴착 작업 스케치나 현장 사진 [cite: 80]
+    dept_id VARCHAR(20),
+    person_id VARCHAR(20),
+    work_summary TEXT,
+    hazard_factor TEXT,
+    safety_factor TEXT,
+    checksheet_json_com JSONB,
+    checksheet_json_hot JSONB,
+    checksheet_json_conf JSONB,
+    checksheet_json_elec JSONB,
+    checksheet_json_high JSONB,
+    checksheet_json_dig JSONB,
+    checksheet_json_heavy JSONB,
+    file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
-    status CHAR(1), -- T:임시, A:결재중, C:확정 
-    
-    parent_permit_id VARCHAR(20), -- 보충 허가 연결용
+    status CHAR(1),
+    parent_permit_id VARCHAR(20),
     approval_id VARCHAR(20),
-    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_work_permit PRIMARY KEY (company_id, permit_id)
 );
 
@@ -275,52 +313,46 @@ CREATE TABLE IF NOT EXISTS work_permit_item (
     company_id VARCHAR(20) NOT NULL,
     permit_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
-    
-    -- 서명 유형 (PDF 서식의 다양한 서명란 구분)
-    -- APPLICANT(신청인), INSPECTOR(점검자), WITNESS(입회자), 
-    -- MANAGER(책임자), REVIEWER(검토자), APPROVER(승인자), COOP(협조자)
     sign_type VARCHAR(20) NOT NULL, 
-    
-    person_id VARCHAR(20), -- 시스템 사용자일 경우 연결
-    name VARCHAR(100),     -- 서명자 성명 [cite: 15, 66]
-    signature TEXT,        -- Base64 이미지 데이터 또는 서명 경로 [cite: 16, 67]
-    signed_at TIMESTAMP,   -- 서명 일시
-    
+    person_id VARCHAR(20),
+    name VARCHAR(100),
+    signature TEXT,
+    signed_at TIMESTAMP,
     CONSTRAINT pk_work_permit_item PRIMARY KEY (company_id, permit_id, line_no)
 );
 
 -- 4. 재고 관리 (Inventory Management)
--- Modified to include bin/location granularity
 
 CREATE TABLE IF NOT EXISTS inventory_stock (
     company_id VARCHAR(20) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
-    bin_id VARCHAR(20) NOT NULL,       -- Added
-    location_id VARCHAR(20) NOT NULL,  -- Added
+    bin_id VARCHAR(20) NOT NULL,
+    location_id VARCHAR(20) NOT NULL,
     inventory_id VARCHAR(20) NOT NULL,
-    qty NUMERIC(18, 4) DEFAULT 0,
-    amount NUMERIC(18, 2) DEFAULT 0,
+    qty DECIMAL(18, 4) DEFAULT 0,
+    amount DECIMAL(18, 2) DEFAULT 0,
     status CHAR(1),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_inventory_stock PRIMARY KEY (company_id, storage_id, bin_id, location_id, inventory_id)
 );
 
 CREATE TABLE IF NOT EXISTS inventory_history (
     company_id VARCHAR(20) NOT NULL,
     storage_id VARCHAR(20) NOT NULL,
-    bin_id VARCHAR(20) NOT NULL,       -- Added
-    location_id VARCHAR(20) NOT NULL,  -- Added
+    bin_id VARCHAR(20) NOT NULL,
+    location_id VARCHAR(20) NOT NULL,
     inventory_id VARCHAR(20) NOT NULL,
     history_id VARCHAR(20) NOT NULL,
-    tx_type VARCHAR(20), -- IN, OUT, MOVE, ADJUST
-    tx_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    qty NUMERIC(18, 4),
-    amount NUMERIC(18, 2),
+    tx_type VARCHAR(20),
+    qty DECIMAL(18, 4),
+    amount DECIMAL(18, 2),
     ref_entity VARCHAR(20),
     ref_id VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(50),
     CONSTRAINT pk_inventory_history PRIMARY KEY (company_id, storage_id, bin_id, location_id, inventory_id, history_id)
 );
 
@@ -329,21 +361,21 @@ CREATE TABLE IF NOT EXISTS inventory_closing (
     storage_id VARCHAR(20) NOT NULL,
     inventory_id VARCHAR(20) NOT NULL,
     yyyymm VARCHAR(6) NOT NULL,
-    in_qty NUMERIC(18, 4) DEFAULT 0,
-    in_amount NUMERIC(18, 2) DEFAULT 0,
-    out_qty NUMERIC(18, 4) DEFAULT 0,
-    out_amount NUMERIC(18, 2) DEFAULT 0,
-    move_qty NUMERIC(18, 4) DEFAULT 0,
-    move_amount NUMERIC(18, 2) DEFAULT 0,
-    adj_qty NUMERIC(18, 4) DEFAULT 0,
-    adj_amount NUMERIC(18, 2) DEFAULT 0,
-    end_qty NUMERIC(18, 4) DEFAULT 0,
-    end_amount NUMERIC(18, 2) DEFAULT 0,
+    in_qty DECIMAL(18, 4) DEFAULT 0,
+    in_amount DECIMAL(18, 2) DEFAULT 0,
+    out_qty DECIMAL(18, 4) DEFAULT 0,
+    out_amount DECIMAL(18, 2) DEFAULT 0,
+    move_qty DECIMAL(18, 4) DEFAULT 0,
+    move_amount DECIMAL(18, 2) DEFAULT 0,
+    adj_qty DECIMAL(18, 4) DEFAULT 0,
+    adj_amount DECIMAL(18, 2) DEFAULT 0,
+    end_qty DECIMAL(18, 4) DEFAULT 0,
+    end_amount DECIMAL(18, 2) DEFAULT 0,
     status CHAR(1),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_inventory_closing PRIMARY KEY (company_id, storage_id, inventory_id, yyyymm)
 );
 
@@ -361,9 +393,9 @@ CREATE TABLE IF NOT EXISTS memo (
     is_notice CHAR(1) DEFAULT 'N',
     approval_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_memo PRIMARY KEY (company_id, memo_id)
 );
 
@@ -373,7 +405,8 @@ CREATE TABLE IF NOT EXISTS memo_comment (
     comment_id INTEGER NOT NULL,
     author_id VARCHAR(20),
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    content TEXT    
+    content TEXT,
+    CONSTRAINT pk_memo_comment PRIMARY KEY (company_id, memo_id, comment_id)
 );
 
 CREATE TABLE IF NOT EXISTS approval (
@@ -381,17 +414,17 @@ CREATE TABLE IF NOT EXISTS approval (
     approval_id VARCHAR(20) NOT NULL,
     title VARCHAR(100),
     content TEXT,
-    requester_id VARCHAR(20), -- 기안자
-    current_step INTEGER DEFAULT 1, -- 현재 결재 순번
+    requester_id VARCHAR(20),
+    current_step INTEGER DEFAULT 1,
     file_group_id VARCHAR(100),
     delete_mark CHAR(1) DEFAULT 'N',
-    status CHAR(1), -- T:임시, A:결재중, C:확정, R:반려 
-    ref_entity VARCHAR(20), -- IN, WO 등
+    status CHAR(1),
+    ref_entity VARCHAR(20),
     ref_id VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_approval PRIMARY KEY (company_id, approval_id)
 );
 
@@ -400,8 +433,8 @@ CREATE TABLE IF NOT EXISTS approval_step (
     approval_id VARCHAR(20) NOT NULL,
     line_no INTEGER NOT NULL,
     person_id VARCHAR(20),
-    decision VARCHAR(10), -- 00: 기안, 01:결재, 02:합의, 03:통보, 04:반려
-    result VARCHAR(10), -- 00: 미결, 01:결재승인, 02:합의승인, 03:통보승인, 04:반려
+    decision VARCHAR(10),
+    result VARCHAR(10),
     decided_at TIMESTAMP,
     comment TEXT,
     CONSTRAINT pk_approval_step PRIMARY KEY (company_id, approval_id, line_no)
@@ -414,9 +447,9 @@ CREATE TABLE IF NOT EXISTS file_group (
     ref_id VARCHAR(20),
     delete_mark CHAR(1) DEFAULT 'N',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(20),
+    created_by VARCHAR(50),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(20),
+    updated_by VARCHAR(50),
     CONSTRAINT pk_file_group PRIMARY KEY (company_id, file_group_id)
 );
 
@@ -436,8 +469,20 @@ CREATE TABLE IF NOT EXISTS file_item (
 
 CREATE TABLE IF NOT EXISTS sequence (
     company_id VARCHAR(20) NOT NULL,
-    ref_entity VARCHAR(20) NOT NULL, -- equipment, inventory 등
-    date_key VARCHAR(20) NOT NULL, -- 년월일 혹은 prefix
+    ref_entity VARCHAR(20) NOT NULL,
+    date_key VARCHAR(20) NOT NULL,
     next_seq BIGINT DEFAULT 1,
     CONSTRAINT pk_sequence PRIMARY KEY (company_id, ref_entity, date_key)
 );
+
+CREATE TABLE IF NOT EXISTS refresh_token (
+    company_id VARCHAR(20) NOT NULL,
+    person_id VARCHAR(20) NOT NULL,
+    token_value VARCHAR(255) NOT NULL,
+    expiry_date TIMESTAMP NOT NULL,
+    CONSTRAINT pk_refresh_token PRIMARY KEY (company_id, person_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_token_value ON refresh_token (token_value);
+
+-- Migration: Add checksheet_json_heavy column to work_permit
+ALTER TABLE work_permit ADD COLUMN IF NOT EXISTS checksheet_json_heavy JSONB;

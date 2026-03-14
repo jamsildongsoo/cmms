@@ -126,12 +126,11 @@ export default function ApprovalRegisterPage() {
 
             // Upload files first if any
             let fileGroupId: string | undefined = undefined;
-            if (attachedFiles.length > 0 && currentUser?.companyId) {
+            if (attachedFiles.length > 0) {
                 for (const file of attachedFiles) {
                     if (file.file && file.isNew) {
                         const uploadedGroup = await systemService.uploadFile(
                             file.file,
-                            currentUser.companyId,
                             fileGroupId
                         );
                         if (uploadedGroup?.fileGroupId) {
@@ -144,7 +143,6 @@ export default function ApprovalRegisterPage() {
             const approvalData: Partial<Approval> = {
                 title: titleRef.current.value,
                 content: content,
-                requesterId: currentUser?.personId,
                 fileGroupId: fileGroupId,
             };
 
@@ -152,7 +150,7 @@ export default function ApprovalRegisterPage() {
                 personId: item.user.personId,
                 decision: item.type,
                 lineNo: index + 1,
-                result: '00'
+                result: 'P'
             }));
 
             await approvalService.save(approvalData, steps, status);

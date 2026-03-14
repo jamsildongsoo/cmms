@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Trash, Calendar, User, X } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,10 +25,9 @@ export default function MemoDetailPage() {
     useEffect(() => {
         const fetchMemoData = async () => {
             if (!id) return;
-            const companyId = user?.companyId || 'COM-001';
             try {
                 // Fetch Memo
-                const data = await memoService.getMemoById(companyId, id);
+                const data = await memoService.getMemoById(id);
                 setMemo(data);
 
                 // Fetch Comments
@@ -36,7 +36,7 @@ export default function MemoDetailPage() {
 
                 // Fetch files if group id exists
                 if (data.fileGroupId) {
-                    const fileGroup = await systemService.getFileGroup(companyId, data.fileGroupId);
+                    const fileGroup = await systemService.getFileGroup(data.fileGroupId);
                     if (fileGroup && fileGroup.items) {
                         setFiles(fileGroup.items.map(item => ({
                             id: item.lineNo.toString(),
@@ -93,7 +93,7 @@ export default function MemoDetailPage() {
         if (confirm('정말 삭제하시겠습니까?')) {
             try {
                 // Call delete API
-                await memoService.deleteMemo(id, user?.personId || '');
+                await memoService.deleteMemo(id);
                 toast({ title: "삭제 완료", description: "메모가 삭제되었습니다." });
                 navigate('/memo');
             } catch (error: any) {
@@ -105,10 +105,7 @@ export default function MemoDetailPage() {
 
     const handleDownload = (file: AttachedFileInfo & { raw?: any }) => {
         if (memo && file.raw) {
-            const companyId = memo.companyId;
-            const fileGroupId = file.raw.fileGroupId;
-            const lineNo = file.raw.lineNo;
-            systemService.downloadFile(companyId, fileGroupId, lineNo, file.name || file.raw.originalName);
+            systemService.downloadFile(file.raw.fileGroupId, file.raw.lineNo, file.name || file.raw.originalName);
         }
     };
 
@@ -155,7 +152,7 @@ export default function MemoDetailPage() {
                 </CardHeader>
                 <div className="h-px bg-slate-100 mx-6" />
                 <CardContent className="pt-6 min-h-[300px]">
-                    <div className="leading-relaxed text-slate-800 rich-text-content" dangerouslySetInnerHTML={{ __html: memo.content }} />
+                    <div className="leading-relaxed text-slate-800 rich-text-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(memo.content) }} />
 
                     {/* Attachments */}
                     {files.length > 0 && (

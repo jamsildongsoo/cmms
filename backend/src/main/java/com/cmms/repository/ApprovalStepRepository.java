@@ -16,7 +16,7 @@ public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Appr
     List<ApprovalStep> findAllByCompanyIdAndApprovalIdOrderByLineNoAsc(String companyId, String approvalId);
 
     @Query("SELECT new com.cmms.dto.ApprovalStepDetailDto(" +
-            "s.companyId, s.approvalId, s.lineNo, s.personId, p.name, p.position, " +
+            "s.companyId, s.approvalId, s.lineNo, s.personId, p.name, p.position, p.title, " +
             "s.decision, s.result, s.decidedAt, s.comment) " +
             "FROM ApprovalStep s " +
             "LEFT JOIN Person p ON s.companyId = p.companyId AND s.personId = p.personId " +

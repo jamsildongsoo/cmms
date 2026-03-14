@@ -42,18 +42,16 @@ export default function InspectionListPage() {
         const styles: Record<string, string> = {
             'T': 'bg-slate-100 text-slate-800 border-slate-200',
             'A': 'bg-orange-100 text-orange-800 border-orange-200',
-            'S': 'bg-blue-100 text-blue-800 border-blue-200',
-            'P': 'bg-yellow-100 text-yellow-800 border-yellow-200',
             'C': 'bg-green-100 text-green-800 border-green-200',
-            'R': 'bg-red-100 text-red-800 border-red-200'
+            'R': 'bg-red-100 text-red-800 border-red-200',
+            'X': 'bg-gray-100 text-gray-800 border-gray-200'
         };
         const labels: Record<string, string> = {
             'T': '임시',
             'A': '결재중',
-            'S': '계획',
-            'P': '진행',
             'C': '완료',
-            'R': '반려'
+            'R': '반려',
+            'X': '취소'
         };
         return (
             <span className={`px-2 py-0.5 rounded border text-xs font-semibold ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
@@ -103,7 +101,7 @@ export default function InspectionListPage() {
                                         <th className="px-4 py-3 font-medium text-slate-500 w-20">구분</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">ID</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">점검명</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500">대상설비</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500">설비번호</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업일자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">담당자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">상태</th>
@@ -127,7 +125,7 @@ export default function InspectionListPage() {
                                                 <td className="px-4 py-3">{getStageBadge(plan.stage)}</td>
                                                 <td className="px-4 py-3 font-medium">{plan.inspectionId}</td>
                                                 <td className="px-4 py-3">{plan.name}</td>
-                                                <td className="px-4 py-3 text-slate-600">{plan.equipmentName}</td>
+                                                <td className="px-4 py-3 text-slate-600">{plan.equipmentId || '-'}</td>
                                                 <td className="px-4 py-3 text-slate-600">{plan.date}</td>
                                                 <td className="px-4 py-3 text-slate-600">{plan.personName}</td>
                                                 <td className="px-4 py-3 text-center">{getStatusBadge(plan.status)}</td>

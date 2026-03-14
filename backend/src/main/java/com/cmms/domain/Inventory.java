@@ -1,6 +1,7 @@
 package com.cmms.domain;
 
 import com.cmms.common.domain.BaseEntity;
+import com.cmms.common.domain.CommonStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -55,5 +56,5 @@ public class Inventory extends BaseEntity {
     private String fileGroupId;
 
     @Column(name = "status", length = 1)
-    private String status;
+    private CommonStatus status;
 }

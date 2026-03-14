@@ -14,71 +14,11 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class SystemService {
 
-    private final MemoRepository memoRepository;
-    private final ApprovalRepository approvalRepository;
-    private final ApprovalStepRepository approvalStepRepository;
     private final FileGroupRepository fileGroupRepository;
     private final FileItemRepository fileItemRepository;
     private final SequenceRepository sequenceRepository;
 
-    @Transactional
-    public Memo saveMemo(Memo memo) {
-        return memoRepository.save(memo);
-    }
-
-    public List<Memo> getAllMemos(String companyId) {
-        return memoRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
-    }
-
-    public Optional<Memo> getMemoById(String companyId, String memoId) {
-        return memoRepository.findById(new MemoId(companyId, memoId))
-                .filter(memo -> memo.getDeleteMark() == null || "N".equals(memo.getDeleteMark()));
-    }
-
-    @Transactional
-    public void deleteMemo(String companyId, String memoId) {
-        memoRepository.findById(new MemoId(companyId, memoId)).ifPresent(memo -> {
-            memo.setDeleteMark("Y");
-            memoRepository.save(memo);
-        });
-    }
-
-    @Transactional
-    public Approval saveApproval(Approval approval) {
-        return approvalRepository.save(approval);
-    }
-
-    public List<Approval> getAllApprovals(String companyId) {
-        return approvalRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
-    }
-
-    public Optional<Approval> getApprovalById(String companyId, String approvalId) {
-        return approvalRepository.findById(new ApprovalId(companyId, approvalId))
-                .filter(approval -> approval.getDeleteMark() == null || "N".equals(approval.getDeleteMark()));
-    }
-
-    @Transactional
-    public void deleteApproval(String companyId, String approvalId) {
-        approvalRepository.findById(new ApprovalId(companyId, approvalId)).ifPresent(approval -> {
-            approval.setDeleteMark("Y");
-            approvalRepository.save(approval);
-        });
-    }
-
-    @Transactional
-    public ApprovalStep saveApprovalStep(ApprovalStep step) {
-        return approvalStepRepository.save(step);
-    }
-
-    public Optional<ApprovalStep> getApprovalStepById(String companyId, String approvalId, Integer lineNo) {
-        return approvalStepRepository.findById(new ApprovalStepId(companyId, approvalId, lineNo));
-    }
-
-    @Transactional
-    public void deleteApprovalStep(String companyId, String approvalId, Integer lineNo) {
-        approvalStepRepository.deleteById(new ApprovalStepId(companyId, approvalId, lineNo));
-    }
-
+    // FileGroup
     @Transactional
     public FileGroup saveFileGroup(FileGroup group) {
         return fileGroupRepository.save(group);
@@ -101,6 +41,7 @@ public class SystemService {
         });
     }
 
+    // FileItem
     @Transactional
     public FileItem saveFileItem(FileItem item) {
         return fileItemRepository.save(item);
@@ -123,6 +64,7 @@ public class SystemService {
         return fileItemRepository.findMaxLineNoByCompanyIdAndFileGroupId(companyId, fileGroupId) + 1;
     }
 
+    // Sequence
     @Transactional
     public Sequence saveSequence(Sequence sequence) {
         return sequenceRepository.save(sequence);
@@ -141,6 +83,7 @@ public class SystemService {
         sequenceRepository.deleteById(new SequenceId(companyId, refEntity, dateKey));
     }
 
+    // ID Generation
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public String generateId(String companyId, String refEntity, String dateKey) {
         // 1. Prefix Mapping (2 chars)

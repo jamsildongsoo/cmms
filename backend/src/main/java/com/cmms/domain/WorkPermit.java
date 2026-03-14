@@ -1,6 +1,7 @@
 package com.cmms.domain;
 
 import com.cmms.common.domain.BaseEntity;
+import com.cmms.common.domain.CommonStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -76,41 +77,54 @@ public class WorkPermit extends BaseEntity {
     @Column(name = "safety_factor", columnDefinition = "TEXT")
     private String safetyFactor;
 
-    @Column(name = "checksheet_json_com", columnDefinition = "JSON")
+    @Column(name = "checksheet_json_com", columnDefinition = "JSONB")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> checksheetJsonCom;
 
-    @Column(name = "checksheet_json_hot", columnDefinition = "JSON")
+    @Column(name = "checksheet_json_hot", columnDefinition = "JSONB")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> checksheetJsonHot;
 
-    @Column(name = "checksheet_json_conf", columnDefinition = "JSON")
+    @Column(name = "checksheet_json_conf", columnDefinition = "JSONB")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> checksheetJsonConf;
 
-    @Column(name = "checksheet_json_elec", columnDefinition = "JSON")
+    @Column(name = "checksheet_json_elec", columnDefinition = "JSONB")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> checksheetJsonElec;
 
-    @Column(name = "checksheet_json_high", columnDefinition = "JSON")
+    @Column(name = "checksheet_json_high", columnDefinition = "JSONB")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> checksheetJsonHigh;
 
-    @Column(name = "checksheet_json_dig", columnDefinition = "JSON")
+    @Column(name = "checksheet_json_dig", columnDefinition = "JSONB")
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> checksheetJsonDig;
+
+    @Column(name = "checksheet_json_heavy", columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> checksheetJsonHeavy;
 
     @Column(name = "file_group_id", length = 100)
     private String fileGroupId;
 
     @Column(name = "status", length = 1)
-    private String status;
+    private CommonStatus status;
 
     @Column(name = "parent_permit_id", length = 20)
     private String parentPermitId;
 
     @Column(name = "approval_id", length = 20)
     private String approvalId;
+
+    @jakarta.persistence.Transient
+    private String equipmentName;
+
+    @jakarta.persistence.Transient
+    private String personName;
+
+    @jakarta.persistence.Transient
+    private String deptName;
 
     @jakarta.persistence.OneToMany(fetch = jakarta.persistence.FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     @jakarta.persistence.JoinColumns({

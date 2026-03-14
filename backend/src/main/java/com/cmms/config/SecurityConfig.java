@@ -4,7 +4,6 @@ import com.cmms.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -13,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,7 +23,6 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -43,15 +43,28 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Authentication exceptions
-                        .requestMatchers("/api/sys/files/**").permitAll() // Assume files can be accessed or downloaded
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/companies/**").permitAll()
+                        // /api/sys/files/** 는 인증 필요 (authenticated로 이동)
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authEntryPoint()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter()
+                    .write("{\"message\": \"Unauthorized\"}");
+        };
     }
 
     @Bean

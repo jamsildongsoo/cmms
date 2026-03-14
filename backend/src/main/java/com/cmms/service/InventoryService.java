@@ -1,13 +1,18 @@
 package com.cmms.service;
 
 import com.cmms.domain.*;
+import com.cmms.dto.InventoryStockDto;
+import com.cmms.dto.InventoryTransactionRequest;
 import com.cmms.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,148 +21,240 @@ public class InventoryService {
 
     private final InventoryStockRepository stockRepository;
     private final InventoryHistoryRepository historyRepository;
-    private final InventoryClosingRepository closingRepository;
+    private final InventoryRepository inventoryRepository;
+    private final StorageRepository storageRepository;
+    private final BinRepository binRepository;
+    private final LocationRepository locationRepository;
+    private final SystemService systemService;
 
-    @Transactional
-    public InventoryStock saveStock(InventoryStock stock) {
-        return stockRepository.save(stock);
-    }
+    /**
+     * 재고 현황: inventory LEFT JOIN inventory_stock + name enrichment
+     */
+    public List<InventoryStockDto> getStockStatus(String companyId) {
+        List<Inventory> allItems = inventoryRepository.findAllByCompanyIdAndDeleteMark(companyId, "N");
+        List<InventoryStock> allStocks = stockRepository.findByCompanyIdOrderByInventoryIdAscStorageIdAsc(companyId);
 
-    public List<InventoryStock> getAllStocks(String companyId) {
-        return stockRepository.findByCompanyId(companyId);
-    }
+        // Name maps for enrichment
+        Map<String, String> storageNames = storageRepository.findAllByCompanyIdAndDeleteMark(companyId, "N")
+                .stream().collect(Collectors.toMap(Storage::getStorageId, Storage::getName, (a, b) -> a));
+        Map<String, String> binNames = binRepository.findAllByCompanyId(companyId)
+                .stream().collect(Collectors.toMap(Bin::getBinId, Bin::getName, (a, b) -> a));
+        Map<String, String> locationNames = locationRepository.findAllByCompanyId(companyId)
+                .stream().collect(Collectors.toMap(Location::getLocationId, Location::getName, (a, b) -> a));
 
-    public Optional<InventoryStock> getStockById(String companyId, String storageId, String binId, String locationId,
-            String inventoryId) {
-        return stockRepository.findById(new InventoryStockId(companyId, storageId, binId, locationId, inventoryId));
-    }
+        Map<String, Inventory> itemMap = allItems.stream()
+                .collect(Collectors.toMap(Inventory::getInventoryId, Function.identity(), (a, b) -> a));
 
-    @Transactional
-    public void deleteStock(String companyId, String storageId, String binId, String locationId, String inventoryId) {
-        stockRepository.deleteById(new InventoryStockId(companyId, storageId, binId, locationId, inventoryId));
-    }
+        // Stock이 있는 inventoryId 추적
+        Set<String> hasStock = new HashSet<>();
+        List<InventoryStockDto> result = new ArrayList<>();
 
-    @Transactional
-    public InventoryHistory saveHistory(InventoryHistory history) {
-        return historyRepository.save(history);
+        for (InventoryStock stock : allStocks) {
+            hasStock.add(stock.getInventoryId());
+            Inventory inv = itemMap.get(stock.getInventoryId());
+            result.add(InventoryStockDto.builder()
+                    .inventoryId(stock.getInventoryId())
+                    .name(inv != null ? inv.getName() : stock.getInventoryId())
+                    .spec(inv != null ? inv.getSpec() : null)
+                    .unit(inv != null ? inv.getUnit() : null)
+                    .codeItem(inv != null ? inv.getCodeItem() : null)
+                    .storageId(stock.getStorageId())
+                    .storageName(storageNames.getOrDefault(stock.getStorageId(), stock.getStorageId()))
+                    .binId(stock.getBinId())
+                    .binName(binNames.get(stock.getBinId()))
+                    .locationId(stock.getLocationId())
+                    .locationName(locationNames.get(stock.getLocationId()))
+                    .qty(stock.getQty())
+                    .amount(stock.getAmount())
+                    .build());
+        }
+
+        // Stock이 없는 자재 → qty=0, amount=0
+        for (Inventory inv : allItems) {
+            if (!hasStock.contains(inv.getInventoryId())) {
+                result.add(InventoryStockDto.builder()
+                        .inventoryId(inv.getInventoryId())
+                        .name(inv.getName())
+                        .spec(inv.getSpec())
+                        .unit(inv.getUnit())
+                        .codeItem(inv.getCodeItem())
+                        .qty(BigDecimal.ZERO)
+                        .amount(BigDecimal.ZERO)
+                        .build());
+            }
+        }
+
+        return result;
     }
 
     public List<InventoryHistory> getAllHistories(String companyId) {
-        return historyRepository.findByCompanyId(companyId);
-    }
-
-    public Optional<InventoryHistory> getHistoryById(String companyId, String storageId, String binId,
-            String locationId, String inventoryId,
-            String historyId) {
-        return historyRepository
-                .findById(new InventoryHistoryId(companyId, storageId, binId, locationId, inventoryId, historyId));
+        return historyRepository.findByCompanyIdOrderByCreatedAtDesc(companyId);
     }
 
     @Transactional
-    public void deleteHistory(String companyId, String storageId, String binId, String locationId, String inventoryId,
-            String historyId) {
-        historyRepository
-                .deleteById(new InventoryHistoryId(companyId, storageId, binId, locationId, inventoryId, historyId));
-    }
+    public void processTransaction(InventoryTransactionRequest request) {
+        String type = request.getType();
+        // 트랜잭션 단위 historyId 채번 (MOVE는 OUT/IN 별도)
+        String historyId = systemService.generateId(request.getCompanyId(), "INV_HISTORY", "GLOBAL");
+        String moveInHistoryId = "MOVE".equals(type)
+                ? systemService.generateId(request.getCompanyId(), "INV_HISTORY", "GLOBAL") : null;
 
-    @Transactional
-    public InventoryClosing saveClosing(InventoryClosing closing) {
-        closingRepository
-                .findById(new InventoryClosingId(closing.getCompanyId(), closing.getStorageId(),
-                        closing.getInventoryId(), closing.getYyyymm()))
-                .ifPresent(existing -> {
-                    if ("C".equals(existing.getStatus())) {
-                        throw new IllegalStateException("확정된 마감 데이터는 수정할 수 없습니다.");
-                    }
-                });
-        return closingRepository.save(closing);
-    }
+        for (InventoryTransactionRequest.TransactionItem item : request.getItems()) {
+            String binId = item.getBinId();
+            String locId = item.getLocationId();
+            BigDecimal qty = item.getQty() != null ? item.getQty() : BigDecimal.ZERO;
 
-    public List<InventoryClosing> getAllClosings(String companyId) {
-        return closingRepository.findByCompanyId(companyId);
-    }
-
-    public Optional<InventoryClosing> getClosingById(String companyId, String storageId, String inventoryId,
-            String yyyymm) {
-        return closingRepository.findById(new InventoryClosingId(companyId, storageId, inventoryId, yyyymm));
-    }
-
-    @Transactional
-    public void deleteClosing(String companyId, String storageId, String inventoryId, String yyyymm) {
-        closingRepository.findById(new InventoryClosingId(companyId, storageId, inventoryId, yyyymm))
-                .ifPresent(closing -> {
-                    if ("C".equals(closing.getStatus())) {
-                        throw new IllegalStateException("확정된 마감 데이터는 삭제할 수 없습니다.");
-                    }
-                    closingRepository.delete(closing);
-                });
-    }
-
-    @Transactional
-    public void processTransaction(com.cmms.dto.InventoryTransactionRequest request) {
-        for (com.cmms.dto.InventoryTransactionRequest.TransactionItem item : request.getItems()) {
-            // Default bin/location if not provided
-            String binId = item.getBinId() != null ? item.getBinId() : "DEFAULT";
-            String locId = item.getLocationId() != null ? item.getLocationId() : "DEFAULT";
-
-            // 1. Update Stock
-            InventoryStockId stockId = new InventoryStockId(request.getCompanyId(), item.getStorageId(), binId, locId,
-                    item.getInventoryId());
-            InventoryStock stock = stockRepository.findById(stockId)
-                    .orElseGet(() -> {
-                        InventoryStock newStock = new InventoryStock();
-                        newStock.setCompanyId(request.getCompanyId());
-                        newStock.setStorageId(item.getStorageId());
-                        newStock.setBinId(binId);
-                        newStock.setLocationId(locId);
-                        newStock.setInventoryId(item.getInventoryId());
-                        newStock.setQty(java.math.BigDecimal.ZERO);
-                        newStock.setAmount(java.math.BigDecimal.ZERO);
-                        return newStock;
-                    });
-
-            java.math.BigDecimal qty = item.getQty() != null ? item.getQty() : java.math.BigDecimal.ZERO;
-            java.math.BigDecimal price = item.getUnitPrice() != null ? item.getUnitPrice() : java.math.BigDecimal.ZERO;
-            java.math.BigDecimal amount = qty.multiply(price);
-
-            if ("IN".equals(request.getType())) {
-                stock.setQty(stock.getQty().add(qty));
-                stock.setAmount(stock.getAmount().add(amount));
-            } else if ("OUT".equals(request.getType())) {
-                stock.setQty(stock.getQty().subtract(qty));
-                stock.setAmount(stock.getAmount().subtract(amount));
+            if ("IN".equals(type)) {
+                processIn(request, item, binId, locId, qty, historyId);
+            } else if ("OUT".equals(type)) {
+                processOut(request, item, binId, locId, qty, historyId);
+            } else if ("MOVE".equals(type)) {
+                processMove(request, item, binId, locId, qty, historyId, moveInHistoryId);
+            } else if ("ADJUST".equals(type)) {
+                processAdjust(request, item, qty, historyId);
             }
-            // For MOVE, ADJUST - logic can be added here. For now supporting IN/OUT.
+        }
+    }
 
+    /**
+     * IN: 수량 + 입력된 금액 그대로 저장
+     */
+    private void processIn(InventoryTransactionRequest request, InventoryTransactionRequest.TransactionItem item,
+                           String binId, String locId, BigDecimal qty, String historyId) {
+        BigDecimal amount = item.getAmount() != null ? item.getAmount() : BigDecimal.ZERO;
+
+        InventoryStock stock = getOrCreateStock(request.getCompanyId(), item.getStorageId(), binId, locId, item.getInventoryId());
+        stock.setQty(stock.getQty().add(qty));
+        stock.setAmount(stock.getAmount().add(amount));
+        stockRepository.save(stock);
+
+        saveHistory(request.getCompanyId(), item.getStorageId(), binId, locId, item.getInventoryId(),
+                historyId, "IN", qty, amount, request.getRefEntity(), request.getRefId());
+    }
+
+    /**
+     * OUT: 창고 단가 기반 금액 자동 계산
+     */
+    private void processOut(InventoryTransactionRequest request, InventoryTransactionRequest.TransactionItem item,
+                            String binId, String locId, BigDecimal qty, String historyId) {
+        InventoryStock stock = getOrCreateStock(request.getCompanyId(), item.getStorageId(), binId, locId, item.getInventoryId());
+        if (stock.getQty().compareTo(qty) < 0) {
+            throw new IllegalStateException("재고 부족: " + item.getInventoryId()
+                    + " (현재: " + stock.getQty() + ", 요청: " + qty + ")");
+        }
+
+        BigDecimal unitPrice = getStorageUnitPrice(request.getCompanyId(), item.getStorageId(), item.getInventoryId());
+        BigDecimal amount = qty.multiply(unitPrice).setScale(2, RoundingMode.HALF_UP);
+
+        stock.setQty(stock.getQty().subtract(qty));
+        stock.setAmount(stock.getAmount().subtract(amount));
+        stockRepository.save(stock);
+
+        saveHistory(request.getCompanyId(), item.getStorageId(), binId, locId, item.getInventoryId(),
+                historyId, "OUT", qty, amount, request.getRefEntity(), request.getRefId());
+    }
+
+    /**
+     * MOVE: FROM 창고 단가 기반 금액 계산, TO에 동일 금액 적용
+     */
+    private void processMove(InventoryTransactionRequest request, InventoryTransactionRequest.TransactionItem item,
+                             String binId, String locId, BigDecimal qty, String moveOutHistoryId, String moveInHistoryId) {
+        // FROM
+        InventoryStock fromStock = getOrCreateStock(request.getCompanyId(), item.getStorageId(), binId, locId, item.getInventoryId());
+        if (fromStock.getQty().compareTo(qty) < 0) {
+            throw new IllegalStateException("재고 부족 (이동 출고): " + item.getInventoryId()
+                    + " (현재: " + fromStock.getQty() + ", 요청: " + qty + ")");
+        }
+
+        BigDecimal unitPrice = getStorageUnitPrice(request.getCompanyId(), item.getStorageId(), item.getInventoryId());
+        BigDecimal amount = qty.multiply(unitPrice).setScale(2, RoundingMode.HALF_UP);
+
+        fromStock.setQty(fromStock.getQty().subtract(qty));
+        fromStock.setAmount(fromStock.getAmount().subtract(amount));
+        stockRepository.save(fromStock);
+
+        saveHistory(request.getCompanyId(), item.getStorageId(), binId, locId, item.getInventoryId(),
+                moveOutHistoryId, "MOVE_OUT", qty, amount, "MOVE", moveInHistoryId);
+
+        // TO
+        String toBinId = item.getToBinId();
+        String toLocId = item.getToLocationId();
+        String toStorageId = defaultIfBlank(item.getToStorageId(), item.getStorageId());
+
+        InventoryStock toStock = getOrCreateStock(request.getCompanyId(), toStorageId, toBinId, toLocId, item.getInventoryId());
+        toStock.setQty(toStock.getQty().add(qty));
+        toStock.setAmount(toStock.getAmount().add(amount));
+        stockRepository.save(toStock);
+
+        saveHistory(request.getCompanyId(), toStorageId, toBinId, toLocId, item.getInventoryId(),
+                moveInHistoryId, "MOVE_IN", qty, amount, "MOVE", moveOutHistoryId);
+    }
+
+    /**
+     * ADJUST: 실사 수량과 현재 수량의 차이를 창고 단가로 계산
+     */
+    private void processAdjust(InventoryTransactionRequest request, InventoryTransactionRequest.TransactionItem item,
+                               BigDecimal actualQty, String historyId) {
+        InventoryStock stock = getOrCreateStock(request.getCompanyId(), item.getStorageId(), item.getBinId(), item.getLocationId(), item.getInventoryId());
+        BigDecimal diff = actualQty.subtract(stock.getQty());
+
+        if (diff.compareTo(BigDecimal.ZERO) != 0) {
+            BigDecimal unitPrice = getStorageUnitPrice(request.getCompanyId(), item.getStorageId(), item.getInventoryId());
+            BigDecimal diffAmount = diff.multiply(unitPrice).setScale(2, RoundingMode.HALF_UP);
+
+            stock.setQty(actualQty);
+            stock.setAmount(stock.getAmount().add(diffAmount));
             stockRepository.save(stock);
 
-            // 2. Create History
-            InventoryHistory history = new InventoryHistory();
-            history.setCompanyId(request.getCompanyId());
-            history.setStorageId(item.getStorageId());
-            history.setBinId(binId);
-            history.setLocationId(locId);
-            history.setInventoryId(item.getInventoryId());
-            // Generate History ID - utilizing timestamp for uniqueness in this scope or
-            // SystemService if available.
-            // Using timestamp + simplistic random for now to avoid circular dependency
-            // injection if SystemService is not yet injected or compatible.
-            // Actually SystemService is generally better. Let's see if I have it.
-            // I don't see SystemService injected in this class. I should inject it?
-            // InventoryService only has Repositories injected currently.
-            // I'll leave ID generation to a simple logic for now or inject SystemService.
-            // Let's inject SystemService.
-
-            history.setHistoryId(java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20));
-
-            history.setTxType(request.getType());
-            history.setTxDate(request.getDate() != null ? request.getDate() : java.time.LocalDateTime.now());
-            history.setQty(qty);
-            history.setAmount(amount);
-            history.setRefEntity(request.getRefEntity());
-            history.setRefId(request.getRefId());
-
-            historyRepository.save(history);
+            String adjType = diff.compareTo(BigDecimal.ZERO) > 0 ? "ADJUST_IN" : "ADJUST_OUT";
+            saveHistory(request.getCompanyId(), item.getStorageId(), item.getBinId(), item.getLocationId(), item.getInventoryId(),
+                    historyId, adjType, diff.abs(), diffAmount.abs(), request.getRefEntity(), request.getRefId());
         }
+    }
+
+    /**
+     * 창고 단가 조회: SUM(amount) / SUM(qty)
+     * qty가 0이면 단가 0 반환
+     */
+    private BigDecimal getStorageUnitPrice(String companyId, String storageId, String inventoryId) {
+        BigDecimal unitPrice = stockRepository.getStorageUnitPrice(companyId, storageId, inventoryId);
+        return unitPrice != null ? unitPrice.setScale(4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+    }
+
+    private InventoryStock getOrCreateStock(String companyId, String storageId, String binId, String locId, String inventoryId) {
+        InventoryStockId stockId = new InventoryStockId(companyId, storageId, binId, locId, inventoryId);
+        return stockRepository.findById(stockId).orElseGet(() -> {
+            InventoryStock s = new InventoryStock();
+            s.setCompanyId(companyId);
+            s.setStorageId(storageId);
+            s.setBinId(binId);
+            s.setLocationId(locId);
+            s.setInventoryId(inventoryId);
+            s.setQty(BigDecimal.ZERO);
+            s.setAmount(BigDecimal.ZERO);
+            return s;
+        });
+    }
+
+    private void saveHistory(String companyId, String storageId, String binId, String locId, String inventoryId,
+                             String historyId, String txType, BigDecimal qty,
+                             BigDecimal amount, String refEntity, String refId) {
+        InventoryHistory history = new InventoryHistory();
+        history.setCompanyId(companyId);
+        history.setStorageId(storageId);
+        history.setBinId(binId);
+        history.setLocationId(locId);
+        history.setInventoryId(inventoryId);
+        history.setHistoryId(historyId);
+        history.setTxType(txType);
+        history.setQty(qty);
+        history.setAmount(amount);
+        history.setRefEntity(refEntity);
+        history.setRefId(refId);
+        historyRepository.save(history);
+    }
+
+    private String defaultIfBlank(String value, String defaultValue) {
+        return value != null && !value.isBlank() ? value : defaultValue;
     }
 }

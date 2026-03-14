@@ -4,37 +4,21 @@ import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export const inspectionService = {
     getAll: async (filter?: 'ALL' | 'PLN' | 'ACT'): Promise<Inspection[]> => {
-        try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<Inspection[]>(`/api/tx/inspections?companyId=${companyId}`);
-            let data = response.data;
-            if (filter && filter !== 'ALL') {
-                data = data.filter(i => i.stage === filter);
-            }
-            return data;
-        } catch (error) {
-            console.error("Failed to fetch inspections", error);
-            return [];
+        const response = await api.get<Inspection[]>('/api/tx/inspections');
+        let data = response.data;
+        if (filter && filter !== 'ALL') {
+            data = data.filter(i => i.stage === filter);
         }
+        return data;
     },
 
     getById: async (id: string): Promise<Inspection | undefined> => {
-        try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<Inspection>(`/api/tx/inspections/${companyId}/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error("Failed to fetch inspection", error);
-            return undefined;
-        }
+        const response = await api.get<Inspection>(`/api/tx/inspections/${id}`);
+        return response.data;
     },
 
     create: async (data: Inspection): Promise<Inspection> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        const currentPlantId = useAuthStore.getState().currentPlantId;
-        if (!companyId) throw new Error("User not authenticated");
+        const plantId = useAuthStore.getState().getPlantId();
 
         const sanitizedData = {
             ...data,
@@ -42,7 +26,10 @@ export const inspectionService = {
         };
 
         const payload = {
-            inspection: { ...sanitizedData, companyId: companyId, plantId: (data as any).plantId || currentPlantId || 'P0001' },
+            inspection: {
+                ...sanitizedData,
+                plantId: (data as any).plantId || plantId || 'P0001'
+            },
             items: data.items
         };
         const response = await api.post<Inspection>('/api/tx/inspections', payload);
@@ -50,31 +37,19 @@ export const inspectionService = {
     },
 
     update: async (id: string, updates: Partial<Inspection>): Promise<Inspection> => {
-        try {
-            const existing = await inspectionService.getById(id);
-            if (!existing) throw new Error("Inspection not found");
+        const existing = await inspectionService.getById(id);
+        if (!existing) throw new Error("Inspection not found");
 
-            const merged = { ...existing, ...updates };
-            // Ensure items are included
-            if (!updates.items && existing.items) {
-                merged.items = existing.items;
-            }
-
-            const payload = {
-                inspection: merged,
-                items: merged.items
-            };
-            const response = await api.post<Inspection>('/api/tx/inspections', payload);
-            return response.data;
-        } catch (error) {
-            console.error("Failed to update inspection", error);
-            throw error;
-        }
+        const merged = { ...existing, ...updates };
+        const payload = {
+            inspection: merged,
+            items: merged.items
+        };
+        const response = await api.post<Inspection>('/api/tx/inspections', payload);
+        return response.data;
     },
 
     delete: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        await api.delete(`/api/tx/inspections/${companyId}/${id}`);
+        await api.delete(`/api/tx/inspections/${id}`);
     }
 };

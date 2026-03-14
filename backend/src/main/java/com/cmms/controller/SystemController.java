@@ -1,5 +1,6 @@
 package com.cmms.controller;
 
+import com.cmms.common.security.SecurityUtil;
 import com.cmms.domain.FileGroup;
 import com.cmms.service.FileStorageService;
 import com.cmms.service.SystemService;
@@ -8,14 +9,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/sys")
@@ -25,42 +21,31 @@ public class SystemController {
     private final FileStorageService fileStorageService;
     private final SystemService systemService;
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @PostMapping("/files/upload")
     public ResponseEntity<FileGroup> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("companyId") String companyId,
             @RequestParam(value = "fileGroupId", required = false) String fileGroupId,
             @RequestParam(value = "refEntity", required = false) String refEntity,
-            @RequestParam(value = "refId", required = false) String refId) {
-
-        FileGroup fileGroup = fileStorageService.storeFile(file, companyId, fileGroupId, refEntity, refId);
+            @RequestParam(value = "refId", required = false) String refId,
+            Authentication auth) {
+        FileGroup fileGroup = fileStorageService.storeFile(file, SecurityUtil.getCompanyId(auth), fileGroupId, refEntity, refId);
         return ResponseEntity.ok(fileGroup);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/files/{fileGroupId}")
-    public ResponseEntity<FileGroup> getFileGroup(
-            @PathVariable String fileGroupId,
-            @RequestParam String companyId) {
-        return systemService.getFileGroupById(companyId, fileGroupId)
+    public ResponseEntity<FileGroup> getFileGroup(@PathVariable String fileGroupId, Authentication auth) {
+        return systemService.getFileGroupById(SecurityUtil.getCompanyId(auth), fileGroupId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/files/download/{fileItemId}")
     public ResponseEntity<Resource> downloadFile(
-            @PathVariable String fileItemId, // we might need composite key or just query by ID if unique?
-            // FileItemId is (companyId, fileGroupId, lineNo). This generic download might
-            // be tricky without all keys.
-            // Let's change to use query params for composite key or a specialized path.
-            // /download/{companyId}/{fileGroupId}/{lineNo}
-            @RequestParam String companyId,
+            @PathVariable String fileItemId,
             @RequestParam String fileGroupId,
-            @RequestParam Integer lineNo) {
-
-        return systemService.getFileItemById(companyId, fileGroupId, lineNo)
+            @RequestParam Integer lineNo,
+            Authentication auth) {
+        return systemService.getFileItemById(SecurityUtil.getCompanyId(auth), fileGroupId, lineNo)
                 .map(item -> {
                     Resource resource = fileStorageService.loadFileAsResource(item.getStoragePath());
                     String contentType = "application/octet-stream";

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="content">
+        <h2 class="header-title">작업 지시/결과서</h2>
+        
+        <table>
+            <tr>
+                <th>지시번호</th>
+                <td th:text="${doc.orderId}"></td>
+                <th>작업유형</th>
+                <td th:text="${doc.codeItem}"></td>
+            </tr>
+            <tr>
+                <th>작업명</th>
+                <td th:text="${doc.name}"></td>
+                <th>단계</th>
+                <td th:text="${doc.stage}"></td>
+            </tr>
+            <tr>
+                <th>대상설비</th>
+                <td th:text="${doc.equipmentId}"></td>
+                <th>작업일자</th>
+                <td th:text="${doc.date}"></td>
+            </tr>
+            <tr>
+                <th>예상/실적비용</th>
+                <td th:text="${doc.cost != null ? doc.cost : 0}"></td>
+                <th>예상/실적시간</th>
+                <td th:text="${doc.time != null ? doc.time : 0}"></td>
+            </tr>
+        </table>
+
+        <div th:if="${doc.items != null and !doc.items.isEmpty()}">
+            <h3 class="section-title">작업 내역/항목</h3>
+            <table class="item-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th>작업항목</th>
+                        <th>작업방법</th>
+                        <th>작업결과</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${doc.items}">
+                        <td class="text-center" th:text="${item.lineNo}"></td>
+                        <td th:text="${item.name}"></td>
+                        <td th:text="${item.method}"></td>
+                        <td th:text="${item.result}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${doc.note != null and !doc.note.isEmpty()}">
+            <h3 class="section-title">비고/특이사항</h3>
+            <div class="note-box" th:text="${doc.note}"></div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.cmms.service;
 
+import com.cmms.common.domain.CommonStatus;
 import com.cmms.domain.Memo;
 import com.cmms.domain.MemoId;
 import com.cmms.domain.MemoComment;
@@ -29,16 +30,16 @@ public class MemoService {
                     java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMM"))));
             // status should be decided by the client (T or C), but default to T if null
             if (memo.getStatus() == null) {
-                memo.setStatus("T");
+                memo.setStatus(CommonStatus.TEMPORARY);
             }
         } else {
             memoRepository.findById(new MemoId(memo.getCompanyId(), memo.getMemoId())).ifPresent(existing -> {
-                if ("C".equals(existing.getStatus())) {
+                if (existing.getStatus() == CommonStatus.CONFIRMED) {
                     throw new IllegalStateException("확정된 메모(C)는 수정할 수 없습니다.");
                 }
             });
             if (memo.getStatus() == null) {
-                memo.setStatus("T");
+                memo.setStatus(CommonStatus.TEMPORARY);
             }
         }
         return memoRepository.save(memo);
@@ -47,7 +48,7 @@ public class MemoService {
     @Transactional
     public void deleteMemo(String companyId, String memoId, String personId) {
         memoRepository.findById(new MemoId(companyId, memoId)).ifPresent(existing -> {
-            if ("C".equals(existing.getStatus())) {
+            if (existing.getStatus() == CommonStatus.CONFIRMED) {
                 throw new IllegalStateException("확정된 메모(C)는 삭제할 수 없습니다.");
             }
             if (!personId.equals(existing.getCreatedBy())) {

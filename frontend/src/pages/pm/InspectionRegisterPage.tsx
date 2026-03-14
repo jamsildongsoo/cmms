@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { inspectionService } from '@/services/inspectionService';
 import type { Inspection, InspectionItem } from '@/types/inspection';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
@@ -18,7 +17,6 @@ import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
 import { ApprovalLineModal } from '@/components/approval/ApprovalLineModal';
 import { approvalService, type ApprovalStep } from '@/services/approvalService';
-import { useAuthStore } from '@/features/auth/useAuthStore';
 
 export default function InspectionRegisterPage() {
     const navigate = useNavigate();
@@ -52,11 +50,10 @@ export default function InspectionRegisterPage() {
     const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
     const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
     const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
-    const { user } = useAuthStore();
 
     // Local state for items
     const [items, setItems] = useState<InspectionItem[]>([
-        { seq: 1, name: '', method: '', stdVal: undefined, unit: '' },
+        { lineNo: 1, name: '', method: '', stdVal: undefined, unit: '' },
     ]);
 
     const { register, setValue, getValues, watch } = useForm<Inspection>({
@@ -108,15 +105,15 @@ export default function InspectionRegisterPage() {
     }, [id, isEditMode, isResultMode, refIdParam, setValue]);
 
     const addItem = () => {
-        setItems(prev => [...prev, { seq: prev.length + 1, name: '', method: '', stdVal: undefined, unit: '' }]);
+        setItems(prev => [...prev, { lineNo: prev.length + 1, name: '', method: '', stdVal: undefined, unit: '' }]);
     };
 
-    const removeItem = (seq: number) => {
-        setItems(prev => prev.filter(i => i.seq !== seq).map((item, idx) => ({ ...item, seq: idx + 1 })));
+    const removeItem = (lineNo: number) => {
+        setItems(prev => prev.filter(i => i.lineNo !== lineNo).map((item, idx) => ({ ...item, lineNo: idx + 1 })));
     };
 
-    const updateItem = (seq: number, field: keyof InspectionItem, value: any) => {
-        setItems(prev => prev.map(i => i.seq === seq ? { ...i, [field]: value } : i));
+    const updateItem = (lineNo: number, field: keyof InspectionItem, value: any) => {
+        setItems(prev => prev.map(i => i.lineNo === lineNo ? { ...i, [field]: value } : i));
     };
 
     // Save/Submit Logic
@@ -203,77 +200,18 @@ export default function InspectionRegisterPage() {
 
         setIsSubmittingApproval(true);
 
-        // Generate HTML content for approval based on current form state
         const formData = getValues();
         const isAct = formData.stage === 'ACT';
         const titleLabel = isAct ? '점검 실적' : '점검 계획';
 
-        const content = `
-            <div style="font-family: sans-serif; padding: 10px;">
-                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">${titleLabel} 상세</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">점검명</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.name}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">${isAct ? '실적일' : '예정일'}</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">부서</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.deptName || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">담당자</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.personName || '-'}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">비고</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.note || '-'}</td>
-                    </tr>
-                </table>
-
-                <h3 style="margin-top: 20px;">점검 항목 및 내역</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                    <thead>
-                        <tr style="background-color: #f0f0f0;">
-                            <th style="border: 1px solid #333; padding: 6px; text-align: center; width: 40px;">No.</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">점검 항목</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">점검 방법</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: right; width: 80px;">기준값</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: center; width: 60px;">단위</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: right; width: 80px;">결과값</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${items.map((item, idx) => `
-                            <tr>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${idx + 1}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${item.name || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${item.method || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: right;">${item.stdVal !== undefined ? item.stdVal : '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${item.unit || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: right; font-weight: bold;">${item.resultVal !== undefined ? item.resultVal : '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-
         try {
+            // HTML 본문은 백엔드 Thymeleaf 템플릿에서 생성
             await approvalService.save({
                 title: `[${titleLabel}] ${formData.name}`,
-                content: content,
                 status: 'A',
                 refEntity: 'INSPECTION',
                 refId: pendingApprovalData.refId,
-                requesterId: user?.personId || ''
             }, steps, 'A');
-
-            // UPDATE: Change inspection status to 'A' (Approving)
-            await inspectionService.update(pendingApprovalData.refId, { status: 'A' });
 
             toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
             setIsApprovalModalOpen(false);
@@ -294,6 +232,8 @@ export default function InspectionRegisterPage() {
 
     const isPlanEditable = !isResultMode && !isReadOnly;
     const isResultEditable = isResultMode && !isReadOnly;
+    const hasRef = !!(refIdParam && refEntityParam);
+    const isRefLocked = isResultEditable && hasRef;
 
     return (
         <div className="max-w-6xl mx-auto space-y-6 pb-20">
@@ -366,11 +306,11 @@ export default function InspectionRegisterPage() {
                         </div>
                         <div className="space-y-2 lg:col-span-2">
                             <Label>점검명 <span className="text-red-500">*</span></Label>
-                            <Input {...register('name', { required: true })} placeholder="예: 1호기 월간 정기점검" disabled={!isPlanEditable && !isResultEditable} />
+                            <Input {...register('name', { required: true })} placeholder="예: 1호기 월간 정기점검" disabled={isReadOnly || isRefLocked} />
                         </div>
                         <div className="space-y-2">
                             <Label>{isResultMode ? '실적 일자' : '예정 일자'} <span className="text-red-500">*</span></Label>
-                            <Input type="date" {...register('date', { required: true })} disabled={!isPlanEditable && !isResultEditable} />
+                            <Input type="date" {...register('date', { required: true })} disabled={isReadOnly || isRefLocked} />
                         </div>
 
                         {/* Row 1-1: Ref Info (Visible in Result Mode) */}
@@ -391,8 +331,8 @@ export default function InspectionRegisterPage() {
                                     <Input
                                         {...register('refId')}
                                         placeholder={id ? '' : '참조할 계획 ID 입력'}
-                                        disabled={!!id}
-                                        className={!!id ? "bg-slate-50" : ""}
+                                        disabled={!!id || isRefLocked}
+                                        className={!!id || isRefLocked ? "bg-slate-50" : ""}
                                     />
                                 </div>
                             </>
@@ -416,26 +356,20 @@ export default function InspectionRegisterPage() {
                                 }}
                                 placeholder="설비 검색..."
                                 displayFormat={(item) => `${item.name} (${item.equipmentId})`}
-                                disabled={!isPlanEditable && !isResultEditable}
+                                disabled={isReadOnly || isRefLocked}
                             />
                             <input type="hidden" {...register('equipmentName', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>점검 유형 <span className="text-red-500">*</span></Label>
-                            <Select
+                            <SearchableSelect
+                                items={inspTypes.map(t => ({ ...t, id: t.itemId }))}
                                 value={watch('codeItem') || ''}
-                                onValueChange={(val: string) => setValue('codeItem', val)}
-                                disabled={!isPlanEditable && !isResultEditable}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="점검 유형 선택" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {inspTypes.map(type => (
-                                        <SelectItem key={type.itemId} value={type.itemId}>{type.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                onChange={(val) => setValue('codeItem', val)}
+                                placeholder="점검 유형 검색..."
+                                displayFormat={(item) => item.name}
+                                disabled={isReadOnly || isRefLocked}
+                            />
                             <input type="hidden" {...register('codeItem', { required: true })} />
                         </div>
                         <div className="space-y-2">
@@ -450,7 +384,7 @@ export default function InspectionRegisterPage() {
                                 }}
                                 placeholder="부서 검색..."
                                 displayFormat={(item) => item.name}
-                                disabled={!isPlanEditable && !isResultEditable}
+                                disabled={isReadOnly || isRefLocked}
                             />
                             <input type="hidden" {...register('deptName')} />
                         </div>
@@ -466,7 +400,7 @@ export default function InspectionRegisterPage() {
                                 }}
                                 placeholder="담당자 검색..."
                                 displayFormat={(item) => `${item.name} (${item.position || ''})`}
-                                disabled={!isPlanEditable && !isResultEditable}
+                                disabled={isReadOnly || isRefLocked}
                             />
                             <input type="hidden" {...register('personName')} />
                         </div>
@@ -474,7 +408,7 @@ export default function InspectionRegisterPage() {
                         {/* Row 3 - Full Width Description */}
                         <div className="space-y-2 lg:col-span-4">
                             <Label>비고 / 특이사항</Label>
-                            <Textarea {...register('note')} placeholder="특이사항 입력" disabled={!isPlanEditable && !isResultEditable} className="min-h-[80px]" />
+                            <Textarea {...register('note')} placeholder="특이사항 입력" disabled={isReadOnly} className="min-h-[80px]" />
                         </div>
                     </CardContent>
                 </Card>
@@ -512,12 +446,12 @@ export default function InspectionRegisterPage() {
                                         </tr>
                                     ) : (
                                         items.map((item, index) => (
-                                            <tr key={item.seq} className="hover:bg-slate-50/50">
+                                            <tr key={item.lineNo} className="hover:bg-slate-50/50">
                                                 <td className="p-3 text-center text-slate-500 font-mono">{index + 1}</td>
                                                 <td className="p-3">
                                                     <Input
                                                         value={item.name}
-                                                        onChange={(e) => updateItem(item.seq, 'name', e.target.value)}
+                                                        onChange={(e) => updateItem(item.lineNo, 'name', e.target.value)}
                                                         disabled={!isPlanEditable}
                                                         placeholder="항목 입력"
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none" : ""}
@@ -526,7 +460,7 @@ export default function InspectionRegisterPage() {
                                                 <td className="p-3">
                                                     <Input
                                                         value={item.method}
-                                                        onChange={(e) => updateItem(item.seq, 'method', e.target.value)}
+                                                        onChange={(e) => updateItem(item.lineNo, 'method', e.target.value)}
                                                         disabled={!isPlanEditable}
                                                         placeholder="방법 입력"
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none" : ""}
@@ -536,7 +470,7 @@ export default function InspectionRegisterPage() {
                                                     <Input
                                                         type="number"
                                                         value={item.stdVal || ''}
-                                                        onChange={(e) => updateItem(item.seq, 'stdVal', parseFloat(e.target.value))}
+                                                        onChange={(e) => updateItem(item.lineNo, 'stdVal', parseFloat(e.target.value))}
                                                         disabled={!isPlanEditable}
                                                         placeholder="0.0"
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none text-right" : "text-right"}
@@ -545,7 +479,7 @@ export default function InspectionRegisterPage() {
                                                 <td className="p-3">
                                                     <Input
                                                         value={item.unit || ''}
-                                                        onChange={(e) => updateItem(item.seq, 'unit', e.target.value)}
+                                                        onChange={(e) => updateItem(item.lineNo, 'unit', e.target.value)}
                                                         disabled={!isPlanEditable}
                                                         placeholder="단위"
                                                         className={!isPlanEditable ? "bg-transparent border-none px-0 shadow-none text-center" : "text-center"}
@@ -556,7 +490,7 @@ export default function InspectionRegisterPage() {
                                                         <Input
                                                             type="number"
                                                             value={item.resultVal || ''}
-                                                            onChange={(e) => updateItem(item.seq, 'resultVal', parseFloat(e.target.value))}
+                                                            onChange={(e) => updateItem(item.lineNo, 'resultVal', parseFloat(e.target.value))}
                                                             placeholder="0"
                                                             className="h-8 text-right"
                                                         />
@@ -574,7 +508,7 @@ export default function InspectionRegisterPage() {
                                                             variant="ghost"
                                                             size="icon"
                                                             className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                                            onClick={() => removeItem(item.seq)}
+                                                            onClick={() => removeItem(item.lineNo)}
                                                         >
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>

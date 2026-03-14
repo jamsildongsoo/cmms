@@ -72,7 +72,7 @@ export default function MemoRegisterPage() {
 
             toast({
                 title: "저장 완료",
-                description: status === 'T' ? "메모가 임시 저장되었습니다." : "메모가 확정되어 공유되었습니다.",
+                description: "메모가 저장되었습니다.",
             });
             navigate('/memo');
         } catch (error) {
@@ -97,11 +97,8 @@ export default function MemoRegisterPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => navigate(-1)}>취소</Button>
-                    <Button variant="secondary" onClick={() => handleSave('T')}>
-                        <Save className="mr-2 h-4 w-4" /> 임시 저장
-                    </Button>
                     <Button onClick={() => handleSave('C')} className="bg-blue-600 hover:bg-blue-700">
-                        <Save className="mr-2 h-4 w-4" /> 확정 (공유)
+                        <Save className="mr-2 h-4 w-4" /> 저장
                     </Button>
                 </div>
             </div>

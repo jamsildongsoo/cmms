@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { workOrderService } from '@/services/workOrderService';
@@ -18,11 +17,10 @@ import { equipmentService } from '@/services/equipmentService';
 import type { Equipment } from '@/types/equipment';
 import { ApprovalLineModal } from '@/components/approval/ApprovalLineModal';
 import { approvalService, type ApprovalStep } from '@/services/approvalService';
-import { useAuthStore } from '@/features/auth/useAuthStore';
 
 interface WorkItem {
-    seq: number;
-    task_name: string; // 작업명
+    lineNo: number;
+    name: string; // Renamed from task_name to match global type
     method: string; // 방법
     result: string; // 조치결과 (Result Mode only)
     remark: string;
@@ -33,14 +31,12 @@ export default function WorkOrderRegisterPage() {
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [actionType, setActionType] = useState<'T' | 'C' | 'A'>('T');
     const location = useLocation();
 
     // Approval Modal State
     const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
     const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
     const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
-    const { user } = useAuthStore();
 
     // Mode Detection
     const isEditMode = !!id;
@@ -51,7 +47,7 @@ export default function WorkOrderRegisterPage() {
     const refEntityParam = searchParams.get('refEntity');
     const refIdParam = searchParams.get('refId');
 
-    const { register, handleSubmit, setValue, watch } = useForm<WorkOrder>({
+    const { register, setValue, getValues, watch } = useForm<WorkOrder>({
         defaultValues: {
             status: 'T',
             stage: isResultMode ? 'ACT' : 'PLN', // Force stage based on mode
@@ -79,7 +75,7 @@ export default function WorkOrderRegisterPage() {
     }, [selectedDeptId, persons]);
 
     const [workItems, setWorkItems] = useState<WorkItem[]>([
-        { seq: 1, task_name: '', method: '', result: '', remark: '' },
+        { lineNo: 1, name: '', method: '', result: '', remark: '' },
     ]);
 
     useEffect(() => {
@@ -112,8 +108,8 @@ export default function WorkOrderRegisterPage() {
 
                     if (planData.items && Array.isArray(planData.items)) {
                         setWorkItems(planData.items.map((item: any) => ({
-                            seq: item.seq || item.lineNo,
-                            task_name: item.task_name || item.name,
+                            lineNo: item.lineNo || item.seq,
+                            name: item.name || item.task_name,
                             method: item.method,
                             result: '', // Clear result for performance entry
                             remark: ''
@@ -126,18 +122,20 @@ export default function WorkOrderRegisterPage() {
 
     // Work Items helpers
     const addWorkItem = () => {
-        setWorkItems(prev => [...prev, { seq: prev.length + 1, task_name: '', method: '', result: '', remark: '' }]);
+        setWorkItems(prev => [...prev, { lineNo: prev.length + 1, name: '', method: '', result: '', remark: '' }]);
     };
-    const removeWorkItem = (seq: number) => {
-        setWorkItems(prev => prev.filter(i => i.seq !== seq).map((item, idx) => ({ ...item, seq: idx + 1 })));
+    const removeWorkItem = (lineNo: number) => {
+        setWorkItems(prev => prev.filter(i => i.lineNo !== lineNo).map((item, idx) => ({ ...item, lineNo: idx + 1 })));
     };
-    const updateWorkItem = (seq: number, field: keyof WorkItem, value: string) => {
-        setWorkItems(prev => prev.map(i => i.seq === seq ? { ...i, [field]: value } : i));
+    const updateWorkItem = (lineNo: number, field: keyof WorkItem, value: string) => {
+        setWorkItems(prev => prev.map(i => i.lineNo === lineNo ? { ...i, [field]: value } : i));
     };
 
-    const onSubmit = async (data: WorkOrder) => {
-        if (actionType === 'C' && !window.confirm("확정된 데이터는 수정할 수 없습니다. 확정하시겠습니까?")) return;
-        if (actionType === 'A' && !window.confirm("상신하시겠습니까? 이후 수정이 불가능합니다.")) return;
+    const onSave = async (targetStatus: 'T' | 'A' | 'C') => {
+        if (targetStatus === 'C' && !window.confirm("확정된 데이터는 수정할 수 없습니다. 확정하시겠습니까?")) return;
+        if (targetStatus === 'A' && !window.confirm("상신하시겠습니까? 이후 수정이 불가능합니다.")) return;
+
+        const data = getValues();
 
         if (!data.equipmentId) {
             toast({ title: "필수 항목 누락", description: "대상 설비를 선택해주세요.", variant: "destructive" });
@@ -158,7 +156,7 @@ export default function WorkOrderRegisterPage() {
 
         try {
             setLoading(true);
-            const saveStatus = actionType === 'A' ? 'T' : actionType;
+            const saveStatus = targetStatus === 'A' ? 'T' : targetStatus;
             const payload = {
                 ...data,
                 status: saveStatus,
@@ -172,17 +170,17 @@ export default function WorkOrderRegisterPage() {
                 savedWorkOrder = await workOrderService.create(payload);
             }
 
-            if (actionType === 'A') {
+            if (targetStatus === 'A') {
                 setPendingApprovalData({
                     refId: savedWorkOrder.orderId || id,
-                    title: `[작업] ${data.name}`
+                    title: `[작업지시 ${data.stage === 'ACT' ? '실적' : '계획'}] ${data.name}`
                 });
                 setIsApprovalModalOpen(true);
                 return;
             }
 
             let message = "정보가 저장되었습니다.";
-            if (actionType === 'C') message = "작업 정보가 확정되었습니다.";
+            if (targetStatus === 'C') message = "작업 정보가 확정되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/wo/work-order');
@@ -211,77 +209,14 @@ export default function WorkOrderRegisterPage() {
 
         setIsSubmittingApproval(true);
 
-        // Generate HTML content for approval
-        const formData = watch();
-        const stageLabel = formData.stage === 'ACT' ? '실적' : '요청';
-        const content = `
-            <div style="font-family: sans-serif; padding: 10px;">
-                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">작업 ${stageLabel} 상세</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">작업명</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.name}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">설비</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.equipmentName || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9; width: 100px;">${formData.stage === 'ACT' ? '실적일' : '요청일'}</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.date}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">부서</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.deptName || '-'} (${formData.deptId || ''})</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">담당자</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.personName || '-'}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">유형</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.codeItem || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">비용/시간</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;">${formData.cost?.toLocaleString() || 0}원 / ${formData.time || 0}M/D</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 8px; background-color: #f9f9f9;">내용</th>
-                        <td style="border: 1px solid #ddd; padding: 8px;" colspan="3">${formData.note || '-'}</td>
-                    </tr>
-                </table>
-
-                <h3 style="margin-top: 20px;">작업 상세 내역</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                    <thead>
-                        <tr style="background-color: #f0f0f0;">
-                            <th style="border: 1px solid #333; padding: 6px; text-align: center; width: 40px;">No.</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">작업내용</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">작업방법</th>
-                            <th style="border: 1px solid #333; padding: 6px; text-align: left;">조치결과</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${workItems.map((item, idx) => `
-                            <tr>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${idx + 1}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${item.task_name || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${item.method || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${item.result || '-'}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-
         try {
+            // HTML 본문은 백엔드 Thymeleaf 템플릿에서 생성
             await approvalService.save({
                 title: pendingApprovalData.title,
-                content: content,
                 status: 'A',
                 refEntity: 'WO',
                 refId: pendingApprovalData.refId,
-                requesterId: user?.personId || ''
             }, steps, 'A');
-
-            // UPDATE: Change work order status to 'A' (Approving)
-            await workOrderService.update(pendingApprovalData.refId, { status: 'A' });
 
             toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
             setIsApprovalModalOpen(false);
@@ -298,6 +233,8 @@ export default function WorkOrderRegisterPage() {
     const isConfirmed = currentStatus === 'C';
     const isApproval = currentStatus === 'A';
     const isReadOnly = isConfirmed || isApproval;
+    const hasRef = !!(refIdParam && refEntityParam);
+    const isRefLocked = isResultMode && hasRef && !isReadOnly;
 
     return (
         <div className="max-w-5xl mx-auto space-y-6 pb-10">
@@ -325,29 +262,26 @@ export default function WorkOrderRegisterPage() {
                     {!isReadOnly && (
                         <>
                             <Button
-                                type="submit"
-                                form="wo-form"
+                                type="button"
                                 disabled={loading}
                                 variant="secondary"
-                                onClick={() => setActionType('T')}
+                                onClick={() => onSave('T')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 임시 저장
                             </Button>
                             <Button
-                                type="submit"
-                                form="wo-form"
+                                type="button"
                                 disabled={loading}
                                 className="bg-orange-600 hover:bg-orange-700"
-                                onClick={() => setActionType('A')}
+                                onClick={() => onSave('A')}
                             >
                                 <Send className="mr-2 h-4 w-4" /> 상신
                             </Button>
                             <Button
-                                type="submit"
-                                form="wo-form"
+                                type="button"
                                 disabled={loading}
                                 className="bg-blue-600 hover:bg-blue-700"
-                                onClick={() => setActionType('C')}
+                                onClick={() => onSave('C')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 확정
                             </Button>
@@ -356,7 +290,7 @@ export default function WorkOrderRegisterPage() {
                 </div>
             </div>
 
-            <form id="wo-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form className="space-y-6">
                 {/* 작업 기본 정보 */}
                 <Card>
                     <CardHeader>
@@ -371,11 +305,11 @@ export default function WorkOrderRegisterPage() {
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>작업명 <span className="text-red-500">*</span></Label>
-                            <Input {...register('name', { required: true })} placeholder="예: 2호기 모터 소음 조치" disabled={isConfirmed} />
+                            <Input {...register('name', { required: true })} placeholder="예: 2호기 모터 소음 조치" disabled={isReadOnly || isRefLocked} />
                         </div>
                         <div className="space-y-2">
                             <Label>{isResultMode ? '실적일자' : '요청일자'}</Label>
-                            <Input type="date" {...register('date')} disabled={isConfirmed} />
+                            <Input type="date" {...register('date')} disabled={isReadOnly || isRefLocked} />
                         </div>
 
                         {isResultMode && (
@@ -385,18 +319,19 @@ export default function WorkOrderRegisterPage() {
                                     <Input value="ACT (실적)" disabled className="bg-slate-50 text-slate-500" />
                                     <input type="hidden" {...register('stage')} value="ACT" />
                                 </div>
-                                <div className="space-y-2 md:col-span-2">
-                                    <Label className="text-muted-foreground">참조 구분 / ID</Label>
-                                    <div className="flex gap-2">
-                                        <Input value="WO (지시)" disabled className="bg-slate-50 text-slate-500 w-24" />
-                                        <Input
-                                            {...register('refId')}
-                                            placeholder="참조 ID"
-                                            className={refIdParam ? "bg-slate-50 flex-1" : "flex-1"}
-                                            disabled={!!refIdParam}
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label className="text-muted-foreground">참조 구분</Label>
+                                    <Input value="WO (지시)" disabled className="bg-slate-50 text-slate-500" />
                                     <input type="hidden" {...register('refEntity')} value="WO" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-muted-foreground">참조 ID</Label>
+                                    <Input
+                                        {...register('refId')}
+                                        placeholder={id ? '' : '참조할 계획 ID 입력'}
+                                        disabled={!!refIdParam || isRefLocked}
+                                        className={(!!refIdParam || isRefLocked) ? "bg-slate-50" : ""}
+                                    />
                                 </div>
                             </>
                         )}
@@ -416,27 +351,25 @@ export default function WorkOrderRegisterPage() {
                                 }}
                                 placeholder="설비 검색..."
                                 displayFormat={(item) => `${item.name} (${item.equipmentId})`}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly || isRefLocked}
                             />
                             <input type="hidden" {...register('equipmentName', { required: true })} />
                         </div>
                         <div className="space-y-2">
                             <Label>작업 유형 <span className="text-red-500">*</span></Label>
-                            <Select
-                                onValueChange={(val: string) => setValue('codeItem', val)}
+                            <SearchableSelect
+                                items={[
+                                    { id: '고장수리', name: '고장수리' },
+                                    { id: '예방점검', name: '예방점검' },
+                                    { id: '설치공사', name: '설치공사' },
+                                    { id: '일반작업', name: '일반작업' },
+                                ]}
                                 value={watch('codeItem') || ''}
-                                disabled={isConfirmed}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="작업 유형 선택" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="고장수리">고장수리</SelectItem>
-                                    <SelectItem value="예방점검">예방점검</SelectItem>
-                                    <SelectItem value="설치공사">설치공사</SelectItem>
-                                    <SelectItem value="일반작업">일반작업</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                onChange={(val) => setValue('codeItem', val)}
+                                placeholder="작업 유형 검색..."
+                                displayFormat={(item) => item.name}
+                                disabled={isReadOnly || isRefLocked}
+                            />
                             <input type="hidden" {...register('codeItem', { required: true })} />
                         </div>
                         <div className="space-y-2">
@@ -451,7 +384,7 @@ export default function WorkOrderRegisterPage() {
                                 }}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly || isRefLocked}
                             />
                             <input type="hidden" {...register('deptName')} />
                         </div>
@@ -467,23 +400,23 @@ export default function WorkOrderRegisterPage() {
                                 }}
                                 placeholder="담당자 검색..."
                                 displayFormat={(person) => `${person.name} ${person.position || ''} (${person.personId})`}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly || isRefLocked}
                             />
                             <input type="hidden" {...register('personName')} />
                         </div>
 
                         <div className="space-y-2">
                             <Label>{isResultMode ? '실적 비용 (원)' : '예상 비용 (원)'}</Label>
-                            <Input type="number" {...register('cost', { valueAsNumber: true })} placeholder="0" disabled={isConfirmed} />
+                            <Input type="number" {...register('cost', { valueAsNumber: true })} placeholder="0" disabled={isReadOnly} />
                         </div>
                         <div className="space-y-2">
                             <Label>{isResultMode ? '실적 시간 (M/D)' : '예상 시간 (M/D)'}</Label>
-                            <Input type="number" step="0.1" {...register('time', { valueAsNumber: true })} placeholder="0.0" disabled={isConfirmed} />
+                            <Input type="number" step="0.1" {...register('time', { valueAsNumber: true })} placeholder="0.0" disabled={isReadOnly} />
                         </div>
 
                         <div className="space-y-2 md:col-span-4">
-                            <Label>요청 내용</Label>
-                            <Textarea {...register('note')} placeholder="고장 증상 및 요청 내용을 상세히 입력하세요." disabled={isConfirmed} className={isConfirmed ? "bg-slate-50 min-h-[100px]" : "min-h-[100px]"} />
+                            <Label>비고 / 특이사항</Label>
+                            <Textarea {...register('note')} placeholder="특이사항 입력" disabled={isReadOnly} className={isConfirmed ? "bg-slate-50 min-h-[100px]" : "min-h-[100px]"} />
                         </div>
                     </CardContent>
                 </Card>
@@ -491,7 +424,7 @@ export default function WorkOrderRegisterPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="text-lg">작업 항목 (계획/실적)</CardTitle>
-                        {!isConfirmed && (
+                        {!isConfirmed && !isRefLocked && (
                             <Button type="button" variant="outline" size="sm" onClick={addWorkItem}>
                                 <Plus className="mr-1 h-4 w-4" /> 항목 추가
                             </Button>
@@ -506,44 +439,44 @@ export default function WorkOrderRegisterPage() {
                                         <th className="h-10 px-4 font-medium text-slate-500">작업명</th>
                                         <th className="h-10 px-4 font-medium text-slate-500">작업 방법</th>
                                         <th className="h-10 px-4 font-medium text-slate-500 w-48">조치 결과 (실적)</th>
-                                        {!isConfirmed && <th className="h-10 px-4 font-medium text-slate-500 w-16"></th>}
+                                        {!isConfirmed && !isRefLocked && <th className="h-10 px-4 font-medium text-slate-500 w-16"></th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {workItems.map((item, index) => (
-                                        <tr key={item.seq} className="hover:bg-slate-50/50">
+                                        <tr key={item.lineNo} className="hover:bg-slate-50/50">
                                             <td className="p-3 text-center text-slate-500 font-mono">{index + 1}</td>
                                             <td className="p-3">
                                                 <Input
-                                                    value={item.task_name}
-                                                    onChange={(e) => updateWorkItem(item.seq, 'task_name', e.target.value)}
+                                                    value={item.name}
+                                                    onChange={(e) => updateWorkItem(item.lineNo, 'name', e.target.value)}
                                                     placeholder="작업명"
-                                                    disabled={isConfirmed}
-                                                    className={isConfirmed ? "bg-transparent border-none px-0 shadow-none text-slate-500" : "bg-transparent border-none px-0 shadow-none"}
+                                                    disabled={isReadOnly || isRefLocked}
+                                                    className={(isConfirmed || isRefLocked) ? "bg-transparent border-none px-0 shadow-none text-slate-500" : "bg-transparent border-none px-0 shadow-none"}
                                                 />
                                             </td>
                                             <td className="p-3">
                                                 <Input
                                                     value={item.method}
-                                                    onChange={(e) => updateWorkItem(item.seq, 'method', e.target.value)}
+                                                    onChange={(e) => updateWorkItem(item.lineNo, 'method', e.target.value)}
                                                     placeholder="작업 방법"
-                                                    disabled={isConfirmed}
-                                                    className={isConfirmed ? "bg-transparent border-none px-0 shadow-none text-slate-500" : "bg-transparent border-none px-0 shadow-none"}
+                                                    disabled={isReadOnly || isRefLocked}
+                                                    className={(isConfirmed || isRefLocked) ? "bg-transparent border-none px-0 shadow-none text-slate-500" : "bg-transparent border-none px-0 shadow-none"}
                                                 />
                                             </td>
                                             <td className="p-3">
                                                 <Input
                                                     value={item.result}
-                                                    onChange={(e) => updateWorkItem(item.seq, 'result', e.target.value)}
+                                                    onChange={(e) => updateWorkItem(item.lineNo, 'result', e.target.value)}
                                                     placeholder={isResultMode && !isConfirmed ? "조치 결과 입력" : ""}
                                                     disabled={!isResultMode || isConfirmed}
                                                     className={`h-8 text-sm ${(!isResultMode || isConfirmed) ? 'bg-transparent border-none px-0 shadow-none' : ''}`}
                                                 />
                                             </td>
-                                            {!isConfirmed && (
+                                            {!isConfirmed && !isRefLocked && (
                                                 <td className="p-3 text-center">
                                                     {workItems.length > 1 && (
-                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50" onClick={() => removeWorkItem(item.seq)}>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50" onClick={() => removeWorkItem(item.lineNo)}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     )}

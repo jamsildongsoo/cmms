@@ -106,7 +106,7 @@ export default function WorkOrderListPage() {
                                         <th className="px-4 py-3 font-medium text-slate-500 w-20">구분</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">지시번호</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업명</th>
-                                        <th className="px-4 py-3 font-medium text-slate-500">대상설비</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500">설비번호</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업일자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">담당자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">상태</th>
@@ -130,7 +130,7 @@ export default function WorkOrderListPage() {
                                                 <td className="px-4 py-3">{getStageBadge(wo.stage)}</td>
                                                 <td className="px-4 py-3 font-medium">{wo.orderId}</td>
                                                 <td className="px-4 py-3">{wo.name}</td>
-                                                <td className="px-4 py-3 text-slate-600">{wo.equipmentName}</td>
+                                                <td className="px-4 py-3 text-slate-600">{wo.equipmentId || '-'}</td>
                                                 <td className="px-4 py-3 text-slate-600">{wo.date}</td>
                                                 <td className="px-4 py-3 text-slate-600">{wo.personName || wo.personId || '-'}</td>
                                                 <td className="px-4 py-3 text-center">{getStatusBadge(wo.status || "")}</td>

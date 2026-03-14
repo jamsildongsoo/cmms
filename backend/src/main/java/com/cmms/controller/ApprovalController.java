@@ -1,14 +1,13 @@
 package com.cmms.controller;
 
+import com.cmms.common.security.SecurityUtil;
 import com.cmms.domain.Approval;
-import com.cmms.domain.ApprovalStep;
 import com.cmms.dto.ApprovalRequest;
 import com.cmms.dto.DecisionRequest;
 import com.cmms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,57 +19,48 @@ public class ApprovalController {
 
     private final ApprovalService approvalService;
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/inbox")
     public List<Approval> getInbox(
-            @RequestParam String companyId,
-            @RequestParam String personId,
-            @RequestParam(required = false, defaultValue = "pending") String type) {
-        return approvalService.getInbox(companyId, personId, type);
+            @RequestParam(required = false, defaultValue = "pending") String type,
+            Authentication auth) {
+        return approvalService.getInbox(SecurityUtil.getCompanyId(auth), SecurityUtil.getPersonId(auth), type);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/outbox")
-    public List<Approval> getOutbox(@RequestParam String companyId, @RequestParam String personId) {
-        return approvalService.getOutbox(companyId, personId);
+    public List<Approval> getOutbox(Authentication auth) {
+        return approvalService.getOutbox(SecurityUtil.getCompanyId(auth), SecurityUtil.getPersonId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/{id}")
-    public ResponseEntity<Approval> getApproval(@PathVariable String id, @RequestParam String companyId) {
-        return approvalService.getApprovalById(companyId, id)
+    public ResponseEntity<Approval> getApproval(@PathVariable String id, Authentication auth) {
+        return approvalService.getApprovalById(SecurityUtil.getCompanyId(auth), id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/{id}/steps")
-    public List<com.cmms.dto.ApprovalStepDetailDto> getSteps(@PathVariable String id, @RequestParam String companyId) {
-        return approvalService.getApprovalSteps(companyId, id);
+    public List<com.cmms.dto.ApprovalStepDetailDto> getSteps(@PathVariable String id, Authentication auth) {
+        return approvalService.getApprovalSteps(SecurityUtil.getCompanyId(auth), id);
     }
 
     @PostMapping
-    public Approval saveApproval(@RequestBody ApprovalRequest request, Authentication authentication) {
-        if (authentication != null && authentication.getPrincipal() instanceof String principal) {
-            String[] parts = principal.split(":");
-            if (parts.length == 2) {
-                String personId = parts[1];
-                request.getApproval().setRequesterId(personId);
-                if (request.getApproval().getCreatedBy() == null) {
-                    request.getApproval().setCreatedBy(personId);
-                }
-            }
+    public Approval saveApproval(@RequestBody ApprovalRequest request, Authentication auth) {
+        String companyId = SecurityUtil.getCompanyId(auth);
+        String personId = SecurityUtil.getPersonId(auth);
+        request.getApproval().setCompanyId(companyId);
+        request.getApproval().setRequesterId(personId);
+        if (request.getApproval().getCreatedBy() == null) {
+            request.getApproval().setCreatedBy(personId);
         }
         return approvalService.saveApproval(request.getApproval(), request.getSteps(), request.getStatus());
     }
 
-    @PreAuthorize("principal.startsWith(#request.companyId)")
     @PostMapping("/decision")
-    public ResponseEntity<Void> processDecision(@RequestBody DecisionRequest request) {
+    public ResponseEntity<Void> processDecision(@RequestBody DecisionRequest request, Authentication auth) {
         approvalService.processDecision(
-                request.getCompanyId(),
+                SecurityUtil.getCompanyId(auth),
                 request.getApprovalId(),
-                request.getPersonId(),
+                SecurityUtil.getPersonId(auth),
                 request.getDecision(),
                 request.getComment());
         return ResponseEntity.ok().build();

@@ -53,7 +53,7 @@ public class FileStorageService {
             }
 
             // 4. Generate Unique Filename & Save
-            String originalFilename = file.getOriginalFilename();
+            String originalFilename = sanitizeFilename(file.getOriginalFilename());
             String ext = "";
             if (originalFilename != null && originalFilename.contains(".")) {
                 ext = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
@@ -62,39 +62,19 @@ public class FileStorageService {
             Path targetPath = storagePath.resolve(storedName);
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
-            // 5. Calculate Line No (Max + 1) -> Simplification: SystemService doesn't have
-            // maxLineNo yet.
-            // For now, we fetch all items or just rely on a separate query.
-            // Ideally SystemService should have `getNextFileItemLineNo(companyId,
-            // fileGroupId)`.
-            // I'll add a simple logic here or assume checking count.
-            // Since I cannot modify SystemService repository easily in this step, I'll use
-            // a pragmatic approach:
-            // Just use current millis or random for now, OR better, let's assume we
-            // implement count later.
-            // Actually, `SystemService` `saveFileItem` is generic.
-            // Let's implement a quick check in SystemService later. For now I'll default to
-            // 1 and assume user handles it or I fix it.
-            // Better: use count of items + 1. `fileItemRepository` is in SystemService.
-            // I will add `getNextFileItemLineNo` to SystemService.
-
-            // 6. Save File Item
+            // 5. Save File Item
             int lineNo = systemService.getNextFileItemLineNo(companyId, fileGroupId);
 
             FileItem item = new FileItem();
             item.setCompanyId(companyId);
             item.setFileGroupId(fileGroupId);
-            item.setLineNo(lineNo); // TODO: Fix this
+            item.setLineNo(lineNo);
             item.setOriginalName(originalFilename);
             item.setStoredName(storedName);
             item.setExt(ext);
             item.setMime(file.getContentType());
             item.setSize(file.getSize());
             item.setStoragePath(targetPath.toAbsolutePath().toString());
-
-            // Re-use logic to get max line no if possible, or catch constraint violation
-            // and retry? No.
-            // I will updated SystemService to support line no generation.
 
             systemService.saveFileItem(item);
 
@@ -103,6 +83,13 @@ public class FileStorageService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }
+    }
+
+    private String sanitizeFilename(String filename) {
+        if (filename == null) return "unnamed";
+        // 경로 구분자 및 위험 문자 제거
+        return filename.replaceAll("[/\\\\:*?\"<>|]", "_")
+                       .replaceAll("\\.\\.", "_");
     }
 
     public Resource loadFileAsResource(String fullPath) {

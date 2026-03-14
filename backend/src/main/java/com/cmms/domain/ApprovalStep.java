@@ -1,5 +1,7 @@
 package com.cmms.domain;
 
+import com.cmms.common.domain.DecisionType;
+import com.cmms.common.domain.StepResult;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -32,10 +34,10 @@ public class ApprovalStep {
     private String personId;
 
     @Column(name = "decision", length = 10)
-    private String decision;
+    private DecisionType decision;
 
     @Column(name = "result", length = 10)
-    private String result;
+    private StepResult result;
 
     @Column(name = "decided_at")
     private LocalDateTime decidedAt;

@@ -62,7 +62,7 @@ export default function LoginPage() {
     const onSubmit = async (data: LoginFormValues) => {
         setIsLoading(true)
         try {
-            await login(data.companyCode, data.employeeId, data.password);
+            const result = await login(data.companyCode, data.employeeId, data.password);
 
             // Handle save info
             if (saveInfo) {
@@ -73,9 +73,13 @@ export default function LoginPage() {
                 localStorage.removeItem('savedEmployeeId');
             }
 
+            const lastInfo = result.previousLoginAt 
+                ? ` (마지막 접속: ${result.previousLoginAt.replace('T', ' ')} / IP: ${result.previousLoginIp})`
+                : "";
+
             toast({
                 title: "로그인 성공",
-                description: "환영합니다!",
+                description: `환영합니다!${lastInfo}`,
             });
             navigate("/")
         } catch (error) {

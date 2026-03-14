@@ -46,7 +46,7 @@ export interface CodeItem {
 
 export interface Person extends BaseStandard {
   companyId: string;
-  personId: string; // Changed from id to match backend
+  personId: string;
   roleId?: string;
   deptId?: string;
   email?: string;
@@ -54,9 +54,9 @@ export interface Person extends BaseStandard {
   position?: string;
   title?: string;
   note?: string;
-  passwordHash?: string; // Added
+  passwordHash?: string;
   lastLoginAt?: string;
-  lastLoginIp?: string; // Added
+  lastLoginIp?: string;
 }
 
 export interface Role extends BaseStandard {
@@ -66,15 +66,24 @@ export interface Role extends BaseStandard {
 }
 
 // Standard entity type
-export type StandardType = 'company' | 'plant' | 'dept' | 'person' | 'code' | 'storage' | 'role';
+export interface Bin extends BaseStandard {
+  companyId: string;
+  binId: string;
+  storageId: string;
+}
 
-import { useAuthStore } from "@/features/auth/useAuthStore";
+export interface Location extends BaseStandard {
+  companyId: string;
+  locationId: string;
+  storageId: string;
+  binId?: string;
+}
+
+export type StandardType = 'company' | 'plant' | 'dept' | 'person' | 'code' | 'storage' | 'role' | 'bin' | 'location';
 
 export const standardService = {
   // List
   getAll: async (type: StandardType): Promise<any[]> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (type !== 'company' && !companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -82,23 +91,16 @@ export const standardService = {
       person: 'std/persons',
       code: 'std/codes',
       storage: 'std/storages',
-      role: 'std/roles'
+      role: 'std/roles',
+      bin: 'std/bins',
+      location: 'std/locations'
     };
-
-    let url = `/api/${pathMap[type]}`;
-
-    if (type !== 'company') {
-      url += `?companyId=${companyId}`;
-    }
-
-    const response = await api.get(url);
+    const response = await api.get(`/api/${pathMap[type]}`);
     return response.data;
   },
 
   // Get by ID
   getById: async (type: StandardType, id: string): Promise<any | undefined> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (type !== 'company' && !companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -106,15 +108,12 @@ export const standardService = {
       person: 'std/persons',
       code: 'std/codes',
       storage: 'std/storages',
-      role: 'std/roles'
+      role: 'std/roles',
+      bin: 'std/bins',
+      location: 'std/locations'
     };
 
-    let url = `/api/${pathMap[type]}`;
-    if (type === 'company') {
-      url += `/${id}`;
-    } else {
-      url += `/${companyId}/${id}`;
-    }
+    let url = `/api/${pathMap[type]}/${id}`;
 
     try {
       const response = await api.get(url);
@@ -126,8 +125,6 @@ export const standardService = {
 
   // Create
   create: async (type: StandardType, data: any): Promise<any> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (type !== 'company' && !companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -135,16 +132,11 @@ export const standardService = {
       person: 'std/persons',
       code: 'std/codes',
       storage: 'std/storages',
-      role: 'std/roles'
+      role: 'std/roles',
+      bin: 'std/bins',
+      location: 'std/locations'
     };
-
-    // Inject companyId if not present
-    if (type !== 'company' && !data.companyId) {
-      data.companyId = companyId;
-    }
-
-    const url = `/api/${pathMap[type]}`;
-    const response = await api.post(url, data);
+    const response = await api.post(`/api/${pathMap[type]}`, data);
     return response.data;
   },
 
@@ -155,8 +147,6 @@ export const standardService = {
 
   // Delete
   delete: async (type: StandardType, id: string): Promise<void> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (type !== 'company' && !companyId) throw new Error("User not authenticated");
     const pathMap: Record<StandardType, string> = {
       company: 'v1/companies',
       plant: 'std/plants',
@@ -164,17 +154,11 @@ export const standardService = {
       person: 'std/persons',
       code: 'std/codes',
       storage: 'std/storages',
-      role: 'std/roles'
+      role: 'std/roles',
+      bin: 'std/bins',
+      location: 'std/locations'
     };
-
-    let url = `/api/${pathMap[type]}`;
-    if (type === 'company') {
-      url += `/${id}`;
-    } else {
-      url += `/${companyId}/${id}`;
-    }
-
-    await api.delete(url);
+    await api.delete(`/api/${pathMap[type]}/${id}`);
   },
 
   // Legacy alias
@@ -184,30 +168,21 @@ export const standardService = {
 
   // Code Item specific methods
   getCodeItems: async (groupId: string): Promise<CodeItem[]> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (!companyId) throw new Error("User not authenticated");
-    const response = await api.get(`/api/std/codes/${companyId}/${groupId}/items`);
+    const response = await api.get(`/api/std/codes/${groupId}/items`);
     return response.data;
   },
 
   getCodeItem: async (groupId: string, id: string): Promise<CodeItem | undefined> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (!companyId) throw new Error("User not authenticated");
-    const response = await api.get(`/api/std/codes/${companyId}/${groupId}/items/${id}`);
+    const response = await api.get(`/api/std/codes/${groupId}/items/${id}`);
     return response.data;
   },
 
   saveCodeItem: async (item: CodeItem): Promise<CodeItem> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (!companyId) throw new Error("User not authenticated");
-
-    const response = await api.post(`/api/std/codes/${companyId}/${item.codeId}/items`, item);
+    const response = await api.post(`/api/std/codes/${item.codeId}/items`, item);
     return response.data;
   },
 
   deleteCodeItem: async (groupId: string, id: string): Promise<void> => {
-    const companyId = useAuthStore.getState().user?.companyId;
-    if (!companyId) throw new Error("User not authenticated");
-    await api.delete(`/api/std/codes/${companyId}/${groupId}/items/${id}`);
+    await api.delete(`/api/std/codes/${groupId}/items/${id}`);
   },
 };

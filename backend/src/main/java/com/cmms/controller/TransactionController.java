@@ -1,10 +1,11 @@
 package com.cmms.controller;
 
+import com.cmms.common.security.SecurityUtil;
 import com.cmms.domain.*;
 import com.cmms.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,86 +18,77 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     // Inspection
-    @PreAuthorize("principal.startsWith(#request.inspection.companyId)")
     @PostMapping("/inspections")
-    public Inspection createInspection(@RequestBody com.cmms.dto.InspectionRequest request) {
+    public Inspection createInspection(@RequestBody com.cmms.dto.InspectionRequest request, Authentication auth) {
+        request.getInspection().setCompanyId(SecurityUtil.getCompanyId(auth));
         return transactionService.saveInspection(request);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/inspections")
-    public List<Inspection> getInspections(@RequestParam String companyId) {
-        return transactionService.getAllInspections(companyId);
+    public List<Inspection> getInspections(Authentication auth) {
+        return transactionService.getAllInspections(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/inspections/{companyId}/{inspectionId}")
-    public ResponseEntity<Inspection> getInspection(@PathVariable String companyId, @PathVariable String inspectionId) {
-        return transactionService.getInspectionById(companyId, inspectionId)
+    @GetMapping("/inspections/{inspectionId}")
+    public ResponseEntity<Inspection> getInspection(@PathVariable String inspectionId, Authentication auth) {
+        return transactionService.getInspectionById(SecurityUtil.getCompanyId(auth), inspectionId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/inspections/{companyId}/{inspectionId}")
-    public ResponseEntity<Void> deleteInspection(@PathVariable String companyId, @PathVariable String inspectionId) {
-        transactionService.deleteInspection(companyId, inspectionId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/inspections/{inspectionId}")
+    public ResponseEntity<Void> deleteInspection(@PathVariable String inspectionId, Authentication auth) {
+        boolean deleted = transactionService.deleteInspection(SecurityUtil.getCompanyId(auth), inspectionId);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     // WorkOrder
-    @PreAuthorize("principal.startsWith(#request.workOrder.companyId)")
     @PostMapping("/work-orders")
-    public WorkOrder createWorkOrder(@RequestBody com.cmms.dto.WorkOrderRequest request) {
+    public WorkOrder createWorkOrder(@RequestBody com.cmms.dto.WorkOrderRequest request, Authentication auth) {
+        request.getWorkOrder().setCompanyId(SecurityUtil.getCompanyId(auth));
         return transactionService.saveWorkOrder(request);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/work-orders")
-    public List<WorkOrder> getWorkOrders(@RequestParam String companyId) {
-        return transactionService.getAllWorkOrders(companyId);
+    public List<WorkOrder> getWorkOrders(Authentication auth) {
+        return transactionService.getAllWorkOrders(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/work-orders/{companyId}/{orderId}")
-    public ResponseEntity<WorkOrder> getWorkOrder(@PathVariable String companyId, @PathVariable String orderId) {
-        return transactionService.getWorkOrderById(companyId, orderId)
+    @GetMapping("/work-orders/{orderId}")
+    public ResponseEntity<WorkOrder> getWorkOrder(@PathVariable String orderId, Authentication auth) {
+        return transactionService.getWorkOrderById(SecurityUtil.getCompanyId(auth), orderId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/work-orders/{companyId}/{orderId}")
-    public ResponseEntity<Void> deleteWorkOrder(@PathVariable String companyId, @PathVariable String orderId) {
-        transactionService.deleteWorkOrder(companyId, orderId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/work-orders/{orderId}")
+    public ResponseEntity<Void> deleteWorkOrder(@PathVariable String orderId, Authentication auth) {
+        boolean deleted = transactionService.deleteWorkOrder(SecurityUtil.getCompanyId(auth), orderId);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 
     // WorkPermit
-    @PreAuthorize("principal.startsWith(#request.workPermit.companyId)")
     @PostMapping("/work-permits")
-    public WorkPermit createWorkPermit(@RequestBody com.cmms.dto.WorkPermitRequest request) {
+    public WorkPermit createWorkPermit(@RequestBody com.cmms.dto.WorkPermitRequest request, Authentication auth) {
+        request.getWorkPermit().setCompanyId(SecurityUtil.getCompanyId(auth));
         return transactionService.saveWorkPermit(request);
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
     @GetMapping("/work-permits")
-    public List<WorkPermit> getWorkPermits(@RequestParam String companyId) {
-        return transactionService.getAllWorkPermits(companyId);
+    public List<WorkPermit> getWorkPermits(Authentication auth) {
+        return transactionService.getAllWorkPermits(SecurityUtil.getCompanyId(auth));
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @GetMapping("/work-permits/{companyId}/{permitId}")
-    public ResponseEntity<WorkPermit> getWorkPermit(@PathVariable String companyId, @PathVariable String permitId) {
-        return transactionService.getWorkPermitById(companyId, permitId)
+    @GetMapping("/work-permits/{permitId}")
+    public ResponseEntity<WorkPermit> getWorkPermit(@PathVariable String permitId, Authentication auth) {
+        return transactionService.getWorkPermitById(SecurityUtil.getCompanyId(auth), permitId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PreAuthorize("principal.startsWith(#companyId)")
-    @DeleteMapping("/work-permits/{companyId}/{permitId}")
-    public ResponseEntity<Void> deleteWorkPermit(@PathVariable String companyId, @PathVariable String permitId) {
-        transactionService.deleteWorkPermit(companyId, permitId);
-        return ResponseEntity.ok().build();
+    @DeleteMapping("/work-permits/{permitId}")
+    public ResponseEntity<Void> deleteWorkPermit(@PathVariable String permitId, Authentication auth) {
+        boolean deleted = transactionService.deleteWorkPermit(SecurityUtil.getCompanyId(auth), permitId);
+        return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
     }
 }

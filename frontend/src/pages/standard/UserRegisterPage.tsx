@@ -101,7 +101,7 @@ export default function UserRegisterPage() {
                         {!isEditMode && (
                             <div className="space-y-2">
                                 <Label htmlFor="passwordHash">초기 비밀번호 <span className="text-red-500">*</span></Label>
-                                <Input id="passwordHash" type="password" {...register('passwordHash', { required: '초기 비밀번호는 필수입니다.' })} placeholder="비밀번호 입력" />
+                                <Input id="passwordHash" type="password" {...register('passwordHash', { required: '초기 비밀번호는 필수입니다.', minLength: { value: 8, message: '최소 8자 이상 입력해주세요.' } })} placeholder="비밀번호 입력 (8자 이상)" />
                                 {errors.passwordHash && <span className="text-xs text-red-500">{errors.passwordHash.message}</span>}
                             </div>
                         )}
@@ -143,12 +143,8 @@ export default function UserRegisterPage() {
                             <Input {...register('phone')} placeholder="010-0000-0000" />
                         </div>
                         <div className="space-y-2">
-                            <Label>직급</Label>
-                            <Input {...register('position')} placeholder="직급" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>직책</Label>
-                            <Input {...register('title')} placeholder="직책" />
+                            <Label>직급/직책</Label>
+                            <Input {...register('position')} placeholder="직급/직책" />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>비고</Label>

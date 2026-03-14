@@ -5,12 +5,9 @@ import { useAuthStore } from "@/features/auth/useAuthStore";
 export const workPermitService = {
     getAll: async (filter?: 'ALL' | 'REQ' | 'APR'): Promise<WorkPermit[]> => {
         try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<WorkPermit[]>(`/api/tx/work-permits?companyId=${companyId}`);
+            const response = await api.get<WorkPermit[]>('/api/tx/work-permits');
             let data = response.data;
             if (filter && filter !== 'ALL') {
-                // REQ = Request (T), APR = Approved (A, C)
                 if (filter === 'REQ') {
                     data = data.filter(w => w.status === 'T');
                 } else {
@@ -26,9 +23,7 @@ export const workPermitService = {
 
     getById: async (id: string): Promise<WorkPermit | undefined> => {
         try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<WorkPermit>(`/api/tx/work-permits/${companyId}/${id}`);
+            const response = await api.get<WorkPermit>(`/api/tx/work-permits/${id}`);
             return response.data;
         } catch (error) {
             console.error("Failed to fetch work permit", error);
@@ -37,11 +32,9 @@ export const workPermitService = {
     },
 
     create: async (data: Omit<WorkPermit, "permitId">): Promise<WorkPermit> => {
-        const companyId = useAuthStore.getState().user?.companyId;
         const currentPlantId = useAuthStore.getState().currentPlantId;
-        if (!companyId) throw new Error("User not authenticated");
         const payload = {
-            work_permit: { ...data, companyId: companyId, plantId: (data as any).plantId || currentPlantId || 'P0001' },
+            workPermit: { ...data, plantId: (data as any).plantId || currentPlantId || 'P0001' },
             items: (data as any).items
         };
         const response = await api.post<WorkPermit>('/api/tx/work-permits', payload);
@@ -55,7 +48,7 @@ export const workPermitService = {
 
             const merged = { ...existing, ...updates };
             const payload = {
-                work_permit: merged,
+                workPermit: merged,
                 items: (merged as any).items
             };
             const response = await api.post<WorkPermit>('/api/tx/work-permits', payload);
@@ -66,8 +59,6 @@ export const workPermitService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        await api.delete(`/api/tx/work-permits/${companyId}/${id}`);
+        await api.delete(`/api/tx/work-permits/${id}`);
     }
 };

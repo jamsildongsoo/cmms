@@ -1,6 +1,7 @@
 package com.cmms.domain;
 
 import com.cmms.common.domain.BaseEntity;
+import com.cmms.common.domain.CommonStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -63,7 +64,7 @@ public class WorkOrder extends BaseEntity {
     private String fileGroupId;
 
     @Column(name = "status", length = 1)
-    private String status;
+    private CommonStatus status;
 
     @Column(name = "ref_entity", length = 20)
     private String refEntity;
@@ -73,6 +74,15 @@ public class WorkOrder extends BaseEntity {
 
     @Column(name = "approval_id", length = 20)
     private String approvalId;
+
+    @jakarta.persistence.Transient
+    private String equipmentName;
+
+    @jakarta.persistence.Transient
+    private String personName;
+
+    @jakarta.persistence.Transient
+    private String deptName;
 
     @jakarta.persistence.OneToMany(fetch = jakarta.persistence.FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     @jakarta.persistence.JoinColumns({

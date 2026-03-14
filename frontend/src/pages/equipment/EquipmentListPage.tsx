@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, FileUp, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +8,15 @@ import { equipmentService } from "@/services/equipmentService";
 import type { Equipment } from "@/types/equipment";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { ExcelUploadModal } from "@/components/common/ExcelUploadModal";
+import { STATUS_INFO } from "@/constants/status";
 
 export default function EquipmentListPage() {
     const { toast } = useToast();
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -53,24 +55,27 @@ export default function EquipmentListPage() {
     );
 
     const getStatusBadge = (status?: string) => {
-        switch (status) {
-            case 'T': return <Badge variant="secondary">임시저장</Badge>;
-            case 'A': return <Badge variant="outline" className="text-blue-600 border-blue-600">결재중</Badge>;
-            case 'C': return <Badge className="bg-green-600 hover:bg-green-700">확정</Badge>;
-            case 'R': return <Badge variant="destructive">반려</Badge>;
-            default: return <Badge variant="secondary">임시저장</Badge>;
-        }
+        const info = STATUS_INFO[status as keyof typeof STATUS_INFO] || { label: status || '임시', variant: 'secondary' };
+        return <Badge variant={info.variant}>{info.label}</Badge>;
     };
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold tracking-tight">설비 목록</h1>
-                <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                    <Link to="/master/equipment/new">
-                        <Plus className="mr-2 h-4 w-4" /> 설비 등록
-                    </Link>
-                </Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setIsUploadModalOpen(true)}>
+                        <FileUp className="mr-2 h-4 w-4" /> 가져오기
+                    </Button>
+                    <Button variant="outline" onClick={() => equipmentService.downloadExcel(filteredList)}>
+                        <Download className="mr-2 h-4 w-4" /> 다운로드
+                    </Button>
+                    <Button asChild className="bg-blue-600 hover:bg-blue-700">
+                        <Link to="/master/equipment/new">
+                            <Plus className="mr-2 h-4 w-4" /> 설비 등록
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <Card>
@@ -107,13 +112,13 @@ export default function EquipmentListPage() {
                             <tbody>
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan={8} className="h-24 text-center">
+                                        <td colSpan={9} className="h-24 text-center">
                                             로딩 중...
                                         </td>
                                     </tr>
                                 ) : filteredList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="h-24 text-center text-slate-500">
+                                        <td colSpan={9} className="h-24 text-center text-slate-500">
                                             등록된 설비가 없습니다.
                                         </td>
                                     </tr>
@@ -146,8 +151,27 @@ export default function EquipmentListPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <ExcelUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                title="설비"
+                validateUrl="/api/master/equipment/validate"
+                uploadUrl="/api/master/equipment/upload"
+                templateUrl="/api/master/equipment/template"
+                columns={[
+                    { name: '설비명', required: true },
+                    { name: '플랜트', required: true },
+                    { name: '설치위치', required: false },
+                    { name: '설비유형', required: false },
+                    { name: '부서', required: false },
+                    { name: '제조사', required: false },
+                    { name: '모델', required: false },
+                    { name: '시리얼', required: false },
+                    { name: '설치일자', required: false },
+                ]}
+                onSuccess={loadEquipment}
+            />
         </div>
     );
 }
-
-

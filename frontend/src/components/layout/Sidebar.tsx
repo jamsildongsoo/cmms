@@ -9,7 +9,8 @@ import {
     Package,
     FileSignature,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    X
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/utils/cn";
@@ -105,7 +106,12 @@ const menuItems: MenuItem[] = [
     },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    open: boolean;
+    onClose: () => void;
+}
+
+export function Sidebar({ open, onClose }: SidebarProps) {
     const location = useLocation();
     const [openMenus, setOpenMenus] = useState<string[]>([]);
 
@@ -121,6 +127,11 @@ export function Sidebar() {
         });
     }, [location.pathname]);
 
+    // Close sidebar on route change (mobile)
+    useEffect(() => {
+        onClose();
+    }, [location.pathname]);
+
     const toggleMenu = (title: string) => {
         setOpenMenus((prev) =>
             prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
@@ -128,81 +139,98 @@ export function Sidebar() {
     };
 
     return (
-        <div className="flex h-full w-64 flex-col border-r border-slate-200 bg-white shadow-sm print:hidden">
-            <div className="flex h-16 items-center border-b border-slate-200 px-6">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CMMS</h1>
-            </div>
-            <div className="flex-1 overflow-y-auto py-4">
-                <nav className="space-y-1 px-3">
-                    {menuItems.map((item) => {
-                        const hasSubmenu = !!item.submenu;
-                        const isOpen = openMenus.includes(item.title);
-                        const isActive = item.href ? location.pathname === item.href : false;
+        <>
+            {/* Overlay for mobile */}
+            {open && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+                    onClick={onClose}
+                />
+            )}
 
-                        return (
-                            <div key={item.title}>
-                                {hasSubmenu ? (
-                                    <button
-                                        onClick={() => toggleMenu(item.title)}
-                                        className={cn(
-                                            "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                                            isOpen
-                                                ? "bg-slate-50 text-slate-900"
-                                                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <item.icon className={cn("h-4 w-4", isOpen ? "text-blue-600" : "text-slate-500")} />
+            {/* Sidebar */}
+            <div className={cn(
+                "fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-slate-200 bg-white shadow-sm print:hidden transition-transform duration-200 ease-in-out",
+                "lg:static lg:translate-x-0",
+                open ? "translate-x-0" : "-translate-x-full"
+            )}>
+                <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CMMS</h1>
+                    <button onClick={onClose} className="lg:hidden p-1 rounded-md hover:bg-slate-100">
+                        <X className="h-5 w-5 text-slate-500" />
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto py-4">
+                    <nav className="space-y-1 px-3">
+                        {menuItems.map((item) => {
+                            const hasSubmenu = !!item.submenu;
+                            const isOpen = openMenus.includes(item.title);
+                            const isActive = item.href ? location.pathname === item.href : false;
+
+                            return (
+                                <div key={item.title}>
+                                    {hasSubmenu ? (
+                                        <button
+                                            onClick={() => toggleMenu(item.title)}
+                                            className={cn(
+                                                "flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                                isOpen
+                                                    ? "bg-slate-50 text-slate-900"
+                                                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <item.icon className={cn("h-4 w-4", isOpen ? "text-blue-600" : "text-slate-500")} />
+                                                {item.title}
+                                            </div>
+                                            {isOpen ? (
+                                                <ChevronDown className="h-4 w-4 text-slate-400" />
+                                            ) : (
+                                                <ChevronRight className="h-4 w-4 text-slate-400" />
+                                            )}
+                                        </button>
+                                    ) : (
+                                        <Link
+                                            to={item.href!}
+                                            className={cn(
+                                                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                                                isActive
+                                                    ? "bg-blue-50 text-blue-600"
+                                                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                            )}
+                                        >
+                                            <item.icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-slate-500")} />
                                             {item.title}
+                                        </Link>
+                                    )}
+
+                                    {hasSubmenu && isOpen && (
+                                        <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 pl-2">
+                                            {item.submenu!.map((sub) => {
+                                                const isSubActive = location.pathname.startsWith(sub.href);
+                                                return (
+                                                    <Link
+                                                        key={sub.href}
+                                                        to={sub.href}
+                                                        className={cn(
+                                                            "flex items-center rounded-md px-3 py-2 text-sm transition-colors",
+                                                            isSubActive
+                                                                ? "bg-blue-50 font-medium text-blue-600"
+                                                                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                                        )}
+                                                    >
+                                                        {sub.title}
+                                                    </Link>
+                                                );
+                                            })}
                                         </div>
-                                        {isOpen ? (
-                                            <ChevronDown className="h-4 w-4 text-slate-400" />
-                                        ) : (
-                                            <ChevronRight className="h-4 w-4 text-slate-400" />
-                                        )}
-                                    </button>
-                                ) : (
-                                    <Link
-                                        to={item.href!}
-                                        className={cn(
-                                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                                            isActive
-                                                ? "bg-blue-50 text-blue-600"
-                                                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                                        )}
-                                    >
-                                        <item.icon className={cn("h-4 w-4", isActive ? "text-blue-600" : "text-slate-500")} />
-                                        {item.title}
-                                    </Link>
-                                )}
-
-                                {hasSubmenu && isOpen && (
-                                    <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 pl-2">
-                                        {item.submenu!.map((sub) => {
-                                            const isSubActive = location.pathname.startsWith(sub.href);
-                                            return (
-                                                <Link
-                                                    key={sub.href}
-                                                    to={sub.href}
-                                                    className={cn(
-                                                        "flex items-center rounded-md px-3 py-2 text-sm transition-colors",
-                                                        isSubActive
-                                                            ? "bg-blue-50 font-medium text-blue-600"
-                                                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                                                    )}
-                                                >
-                                                    {sub.title}
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                </nav>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </nav>
+                </div>
             </div>
-
-        </div>
+        </>
     );
 }

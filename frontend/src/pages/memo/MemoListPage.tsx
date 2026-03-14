@@ -27,11 +27,8 @@ export default function MemoListPage() {
 
     useEffect(() => {
         const fetchMemos = async () => {
-            // Defaulting companyId to COM-001 if user not logged in or missing companyId
-            // Ideally should depend on user.
-            const companyId = user?.companyId || 'COM-001';
             try {
-                const data = await memoService.getAllMemos(companyId);
+                const data = await memoService.getAllMemos();
                 setMemos(data);
             } catch (error) {
                 console.error("Failed to fetch memos", error);

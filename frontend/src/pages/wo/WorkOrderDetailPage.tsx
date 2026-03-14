@@ -134,7 +134,7 @@ export default function WorkOrderDetailPage() {
                         </div>
                         <div className="space-y-1">
                             <Label className="text-muted-foreground text-xs">대상 설비</Label>
-                            <div className="font-medium text-sm">{workOrder.equipmentName || workOrder.equipmentId || '-'}</div>
+                            <div className="font-medium text-sm">{workOrder.equipmentId || '-'}</div>
                         </div>
                         <div className="space-y-1">
                             <Label className="text-muted-foreground text-xs">관리 부서</Label>
@@ -163,7 +163,7 @@ export default function WorkOrderDetailPage() {
                         </div>
 
                         <div className="lg:col-span-4 space-y-1">
-                            <Label className="text-muted-foreground text-xs">비고 / 요청 내용</Label>
+                            <Label className="text-muted-foreground text-xs">비고 / 특이사항</Label>
                             <div className="text-sm bg-slate-50 p-2 rounded whitespace-pre-wrap min-h-[60px]">
                                 {workOrder.note || '-'}
                             </div>
@@ -190,9 +190,9 @@ export default function WorkOrderDetailPage() {
                                 <tbody className="divide-y divide-slate-100">
                                     {workOrder.items && workOrder.items.length > 0 ? (
                                         workOrder.items.map((item: any, index: number) => (
-                                            <tr key={item.seq || index} className="hover:bg-slate-50/50">
+                                            <tr key={item.lineNo || index} className="hover:bg-slate-50/50">
                                                 <td className="p-3 text-center text-slate-500 font-mono">{index + 1}</td>
-                                                <td className="p-3 font-medium">{item.task_name || item.name}</td>
+                                                <td className="p-3 font-medium">{item.name || item.task_name}</td>
                                                 <td className="p-3 text-slate-600">{item.method}</td>
                                                 <td className="p-3 text-slate-700 font-semibold">{item.result || '-'}</td>
                                             </tr>
@@ -214,9 +214,10 @@ export default function WorkOrderDetailPage() {
             {/* Work Order Specific Print Form */}
             <WorkOrderPrint
                 stage={workOrder.stage as 'PLN' | 'ACT'}
+                status={workOrder.status}
                 id={workOrder.orderId}
                 name={workOrder.name}
-                equipment={workOrder.equipmentName || workOrder.equipmentId || ''}
+                equipment={workOrder.equipmentId ? `${workOrder.equipmentId} / ${workOrder.equipmentName || ''}` : '-'}
                 dept={workOrder.deptName || workOrder.deptId || ''}
                 person={workOrder.personName || workOrder.personId || ''}
                 date={workOrder.date}

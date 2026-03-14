@@ -19,25 +19,30 @@ import { WPTemplateCard } from '@/components/wp/WPTemplateCard';
 import { WP_TEMPLATES } from '@/constants/wpTemplates';
 import { ApprovalLineModal } from '@/components/approval/ApprovalLineModal';
 import { approvalService, type ApprovalStep } from '@/services/approvalService';
-import { useAuthStore } from '@/features/auth/useAuthStore';
+
+const ADDITIONAL_TYPES = [
+    { key: 'HOT', label: '화기작업' },
+    { key: 'CONF', label: '밀폐공간' },
+    { key: 'ELEC', label: '정전작업' },
+    { key: 'DIG', label: '굴착작업' },
+    { key: 'HIGH', label: '고소작업' },
+    { key: 'HEAVY', label: '중량물' },
+] as const;
 
 export default function WorkPermitRegisterPage() {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [actionType, setActionType] = useState<'T' | 'C' | 'A'>('T');
     const isEditMode = !!id;
 
-    // Approval Modal State
     const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
     const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
     const [pendingApprovalData, setPendingApprovalData] = useState<any>(null);
-    const { user } = useAuthStore();
 
-    const { register, handleSubmit, setValue, watch } = useForm<WorkPermit>({
+    const { register, setValue, getValues, watch } = useForm<WorkPermit>({
         defaultValues: {
-            wpTypes: [], // Default empty (General is implied/mandatory)
+            wpTypes: [],
             status: 'T',
             stage: 'PLN',
             date: new Date().toISOString().split('T')[0],
@@ -46,7 +51,6 @@ export default function WorkPermitRegisterPage() {
 
     const selectedTypes = watch('wpTypes') || [];
 
-    // Department & User data for SearchableSelect
     const [departments, setDepartments] = useState<Dept[]>([]);
     const [persons, setPersons] = useState<Person[]>([]);
     const [equipments, setEquipments] = useState<Equipment[]>([]);
@@ -84,9 +88,11 @@ export default function WorkPermitRegisterPage() {
         }
     };
 
-    const onSubmit = async (data: WorkPermit) => {
-        if (actionType === 'C' && !window.confirm("확정하시겠습니까? (안전 담당자 승인 단계로 넘어갑니다)")) return;
-        if (actionType === 'A' && !window.confirm("허가 신청을 상신하시겠습니까?")) return;
+    const onSave = async (targetStatus: 'T' | 'A' | 'C') => {
+        if (targetStatus === 'C' && !window.confirm("확정하시겠습니까? (안전 담당자 승인 단계로 넘어갑니다)")) return;
+        if (targetStatus === 'A' && !window.confirm("허가 신청을 상신하시겠습니까?")) return;
+
+        const data = getValues();
 
         if (!data.equipmentId) {
             toast({ title: "필수 항목 누락", description: "대상 설비를 선택해주세요.", variant: "destructive" });
@@ -100,14 +106,10 @@ export default function WorkPermitRegisterPage() {
             toast({ title: "필수 항목 누락", description: "신청자를 선택해주세요.", variant: "destructive" });
             return;
         }
-        if (!data.wpTypes || data.wpTypes.length === 0) {
-            toast({ title: "필수 항목 누락", description: "특별 작업 유형을 1개 이상 선택해주세요.", variant: "destructive" });
-            return;
-        }
 
         try {
             setLoading(true);
-            const saveStatus = actionType === 'A' ? 'T' : actionType;
+            const saveStatus = targetStatus === 'A' ? 'T' : targetStatus;
             const payload = {
                 ...data,
                 status: saveStatus
@@ -120,17 +122,17 @@ export default function WorkPermitRegisterPage() {
                 savedPermit = await workPermitService.create(payload);
             }
 
-            if (actionType === 'A') {
+            if (targetStatus === 'A') {
                 setPendingApprovalData({
                     refId: savedPermit.permitId || id,
-                    title: `[허가] ${data.name}`
+                    title: `[안전작업 허가] ${data.name}`
                 });
                 setIsApprovalModalOpen(true);
                 return;
             }
 
             let message = "정보가 저장되었습니다.";
-            if (actionType === 'C') message = "허가 신청이 확정되었습니다.";
+            if (targetStatus === 'C') message = "허가 신청이 확정되었습니다.";
 
             toast({ title: "성공", description: message });
             navigate('/wp/work-permit');
@@ -159,121 +161,13 @@ export default function WorkPermitRegisterPage() {
 
         setIsSubmittingApproval(true);
 
-        // Generate HTML content for approval
-        const formData = watch();
-        const typeLabels: Record<string, string> = {
-            'HOT': '화기',
-            'CONF': '밀폐',
-            'ELEC': '전기',
-            'HIGH': '고소',
-            'HEAVY': '중량물',
-            'HEVY': '중량물',
-            'DIG': '굴착'
-        };
-        const selectedTypeNames = (formData.wpTypes || []).map(t => typeLabels[t] || t).join(', ');
-
-        // Render a safety check table for the approval body
-        const renderCheckTable = (title: string, templateKey: string, data: Record<string, any> | undefined) => {
-            const template = WP_TEMPLATES[templateKey];
-            if (!template) return `<h3>${title}</h3><p>템플릿 없음</p>`;
-
-            return `
-                <h3 style="margin-top: 15px; border-left: 4px solid #f97316; padding-left: 10px; font-size: 14px;">${title}</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px;">
-                    <tr style="background-color: #f3f4f6;">
-                        <th style="border: 1px solid #333; padding: 5px; width: 40px; text-align: center;">확인</th>
-                        <th style="border: 1px solid #333; padding: 5px; text-align: left;">안전 점검 항목</th>
-                    </tr>
-                    ${template.questions.length > 0 ? template.questions.map(q => `
-                        <tr>
-                            <td style="border: 1px solid #333; padding: 5px; text-align: center; font-weight: bold;">
-                                ${q.type === 'checkbox' ? (data?.[q.id] ? 'V' : '') : (data?.[q.id] || '')}
-                            </td>
-                            <td style="border: 1px solid #333; padding: 5px;">${q.label}</td>
-                        </tr>
-                    `).join('') : `<tr><td colspan="2" style="border: 1px solid #333; padding: 5px; text-align: center;">내역 없음</td></tr>`}
-                </table>
-            `;
-        };
-
-        let safetyContent = renderCheckTable('공통 안전 조치 사항', 'COM', formData.checksheetJsonCom);
-
-        // Always show these categories as per user request
-        ['HOT', 'CONF', 'ELEC', 'HIGH', 'HEAVY', 'DIG'].forEach(type => {
-            let data: any = undefined;
-            if (type === 'HOT') data = formData.checksheetJsonHot;
-            else if (type === 'CONF') data = formData.checksheetJsonConf;
-            else if (type === 'ELEC') data = formData.checksheetJsonElec;
-            else if (type === 'HIGH') data = formData.checksheetJsonHigh;
-            else if (type === 'DIG') data = formData.checksheetJsonDig;
-            else if (type === 'HEAVY' || type === 'HEVY') data = (formData as any).checksheetJsonHeavy || (formData as any).checksheetJsonHevy;
-
-            safetyContent += renderCheckTable(`${typeLabels[type]} 작업 안전 조치`, type, data);
-        });
-
-        const content = `
-            <div style="font-family: sans-serif; padding: 10px;">
-                <h2 style="border-bottom: 2px solid #333; padding-bottom: 5px;">작업허가 신청 상세</h2>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9; width: 100px;">작업명</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${formData.name}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">설비</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.equipmentName || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9; width: 100px;">신청일</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.date}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">부서</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.deptId || '-'}</td>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">신청자</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;">${formData.personName || '-'}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">작업종류</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${selectedTypeNames || '-'}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">작업기간</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${formData.startDt?.replace('T', ' ')} ~ ${formData.endDt?.replace('T', ' ')}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #ddd; padding: 6px; background-color: #f9f9f9;">장소</th>
-                        <td style="border: 1px solid #ddd; padding: 6px;" colspan="3">${formData.location || '-'}</td>
-                    </tr>
-                </table>
-
-                <h3 style="margin-top: 20px; border-bottom: 1px solid #eee; padding-bottom: 5px;">위험성 평가 및 안전대책</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
-                    <tr>
-                        <th style="border: 1px solid #333; padding: 6px; background-color: #f0f0f0; width: 100px;">위험요인</th>
-                        <td style="border: 1px solid #333; padding: 6px;">${formData.hazardFactor || '-'}</td>
-                    </tr>
-                    <tr>
-                        <th style="border: 1px solid #333; padding: 6px; background-color: #f0f0f0;">안전대책</th>
-                        <td style="border: 1px solid #333; padding: 6px;">${formData.safetyFactor || '-'}</td>
-                    </tr>
-                </table>
-
-                <h3 style="margin-top: 20px; border-bottom: 2px solid #333; padding-bottom: 5px;">안전 조치 이행 여부</h3>
-                ${safetyContent}
-            </div>
-        `;
-
         try {
             await approvalService.save({
                 title: pendingApprovalData.title,
-                content: content,
                 status: 'A',
                 refEntity: 'WP',
                 refId: pendingApprovalData.refId,
-                requesterId: user?.personId || ''
             }, steps, 'A');
-
-            // UPDATE: Change work permit status to 'A' (Approving)
-            await workPermitService.update(pendingApprovalData.refId, { status: 'A' });
 
             toast({ title: "성공", description: "결재 상신이 완료되었습니다." });
             setIsApprovalModalOpen(false);
@@ -313,29 +207,26 @@ export default function WorkPermitRegisterPage() {
                     {!isReadOnly && (
                         <>
                             <Button
-                                type="submit"
-                                form="wp-form"
+                                type="button"
                                 disabled={loading}
                                 variant="secondary"
-                                onClick={() => setActionType('T')}
+                                onClick={() => onSave('T')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 임시 저장
                             </Button>
                             <Button
-                                type="submit"
-                                form="wp-form"
+                                type="button"
                                 disabled={loading}
                                 className="bg-orange-600 hover:bg-orange-700 text-white"
-                                onClick={() => setActionType('A')}
+                                onClick={() => onSave('A')}
                             >
                                 <Send className="mr-2 h-4 w-4" /> 상신
                             </Button>
                             <Button
-                                type="submit"
-                                form="wp-form"
+                                type="button"
                                 disabled={loading}
                                 className="bg-red-600 hover:bg-red-700 text-white"
-                                onClick={() => setActionType('C')}
+                                onClick={() => onSave('C')}
                             >
                                 <Save className="mr-2 h-4 w-4" /> 확정 (신청)
                             </Button>
@@ -344,8 +235,8 @@ export default function WorkPermitRegisterPage() {
                 </div>
             </div>
 
-            <form id="wp-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* 1. 작업 정보 (Work Info) */}
+            <form className="space-y-6">
+                {/* 1. 작업 정보 */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">작업 정보</CardTitle>
@@ -357,11 +248,11 @@ export default function WorkPermitRegisterPage() {
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>작업명 <span className="text-red-500">*</span></Label>
-                            <Input {...register('name', { required: true })} placeholder="예: 배관 용접 작업" disabled={isConfirmed} />
+                            <Input {...register('name', { required: true })} placeholder="예: 배관 용접 작업" disabled={isReadOnly} />
                         </div>
                         <div className="space-y-2">
                             <Label>신청일자</Label>
-                            <Input type="date" {...register('date')} disabled={isConfirmed} />
+                            <Input type="date" {...register('date')} disabled={isReadOnly} />
                         </div>
 
                         <div className="space-y-2">
@@ -379,7 +270,7 @@ export default function WorkPermitRegisterPage() {
                                 }}
                                 placeholder="설비 검색..."
                                 displayFormat={(item) => `${item.name} (${item.equipmentId})`}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly}
                             />
                             <input type="hidden" {...register('equipmentName')} />
                         </div>
@@ -391,7 +282,7 @@ export default function WorkPermitRegisterPage() {
                                 onChange={(val) => setValue('deptId', val)}
                                 placeholder="부서 검색..."
                                 displayFormat={(dept) => `${dept.name} (${dept.id})`}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly}
                             />
                         </div>
                         <div className="space-y-2">
@@ -406,31 +297,28 @@ export default function WorkPermitRegisterPage() {
                                 }}
                                 placeholder="신청자 검색..."
                                 displayFormat={(person) => `${person.name} ${person.position || ''} (${person.personId})`}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly}
                             />
                             <input type="hidden" {...register('personName')} />
                         </div>
                         <div className="space-y-2">
                         </div>
 
-                        {/* Special Work Types Selection */}
+                        {/* 보충 허가 유형 선택 */}
                         <div className="col-span-1 md:col-span-4 space-y-3 border rounded-md p-4 bg-slate-50">
-                            <Label className="font-semibold">특별 작업 유형 (중복 선택 가능) <span className="text-red-500">*</span></Label>
+                            <Label className="font-semibold">보충 허가 유형 (중복 선택 가능)</Label>
+                            <p className="text-xs text-muted-foreground">일반작업은 기본 포함됩니다. 추가 허가가 필요한 유형을 선택하세요.</p>
                             <div className="flex flex-wrap gap-4">
-                                {['HOT', 'CONF', 'ELEC', 'HIGH', 'HEVY'].map((type) => (
-                                    <div key={type} className="flex items-center space-x-2">
+                                {ADDITIONAL_TYPES.map(({ key, label }) => (
+                                    <div key={key} className="flex items-center space-x-2">
                                         <Checkbox
-                                            id={`type-${type}`}
-                                            checked={selectedTypes.includes(type)}
-                                            onCheckedChange={(checked) => handleTypeChange(type, !!checked)}
-                                            disabled={isConfirmed}
+                                            id={`type-${key}`}
+                                            checked={selectedTypes.includes(key)}
+                                            onCheckedChange={(checked) => handleTypeChange(key, !!checked)}
+                                            disabled={isReadOnly}
                                         />
-                                        <Label htmlFor={`type-${type}`} className="cursor-pointer">
-                                            {type === 'HOT' && '화기'}
-                                            {type === 'CONF' && '밀폐'}
-                                            {type === 'ELEC' && '전기'}
-                                            {type === 'HIGH' && '고소'}
-                                            {type === 'HEVY' && '중량물'}
+                                        <Label htmlFor={`type-${key}`} className="cursor-pointer">
+                                            {label}
                                         </Label>
                                     </div>
                                 ))}
@@ -439,25 +327,25 @@ export default function WorkPermitRegisterPage() {
 
                         <div className="space-y-2">
                             <Label>시작 일시</Label>
-                            <Input type="datetime-local" {...register('startDt')} disabled={isConfirmed} />
+                            <Input type="datetime-local" {...register('startDt')} disabled={isReadOnly} />
                         </div>
                         <div className="space-y-2">
                             <Label>종료 일시</Label>
-                            <Input type="datetime-local" {...register('endDt')} disabled={isConfirmed} />
+                            <Input type="datetime-local" {...register('endDt')} disabled={isReadOnly} />
                         </div>
                         <div className="space-y-2 md:col-span-2">
                             <Label>작업 장소</Label>
-                            <Input {...register('location')} placeholder="작업 위치 상세" disabled={isConfirmed} />
+                            <Input {...register('location')} placeholder="작업 위치 상세" disabled={isReadOnly} />
                         </div>
 
                         <div className="space-y-2 md:col-span-4">
                             <Label>작업 내용</Label>
-                            <Textarea {...register('workSummary')} placeholder="작업 내용을 상세히 기술하세요." disabled={isConfirmed} className={isConfirmed ? "bg-slate-50 min-h-[80px]" : "min-h-[80px]"} />
+                            <Textarea {...register('workSummary')} placeholder="작업 내용을 상세히 기술하세요." disabled={isReadOnly} className={isConfirmed ? "bg-slate-50 min-h-[80px]" : "min-h-[80px]"} />
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Risk Assessment */}
+                {/* 위험성 평가 */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-lg">위험성 평가</CardTitle>
@@ -465,27 +353,26 @@ export default function WorkPermitRegisterPage() {
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>위험 요인</Label>
-                            <Input {...register('hazardFactor')} placeholder="예: 화재, 추락, 질식" disabled={isConfirmed} />
+                            <Textarea {...register('hazardFactor')} placeholder="예: 화재, 추락, 질식" disabled={isReadOnly} className="min-h-[80px]" />
                         </div>
                         <div className="space-y-2">
                             <Label>안전 대책</Label>
-                            <Input {...register('safetyFactor')} placeholder="예: 소화기 비치, 안전벨트 착용" disabled={isConfirmed} />
+                            <Textarea {...register('safetyFactor')} placeholder="예: 소화기 비치, 안전벨트 착용" disabled={isReadOnly} className="min-h-[80px]" />
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Dynamic Safety Templates */}
+                {/* 안전조치 체크시트 */}
                 <div className="space-y-6">
-                    {/* 1. Common (Always Mandatory) */}
+                    {/* 일반작업 (항상 표시) */}
                     <WPTemplateCard
-                        template={WP_TEMPLATES.COM}
-                        register={register}
+                        template={WP_TEMPLATES.GEN}
                         watch={watch}
                         setValue={setValue}
-                        disabled={isConfirmed}
+                        disabled={isReadOnly}
                     />
 
-                    {/* 2. Special Work Types (Dynamic) */}
+                    {/* 선택된 보충 허가 유형 */}
                     {selectedTypes.map((type) => {
                         const template = WP_TEMPLATES[type];
                         if (!template) return null;
@@ -493,10 +380,9 @@ export default function WorkPermitRegisterPage() {
                             <WPTemplateCard
                                 key={type}
                                 template={template}
-                                register={register}
                                 watch={watch}
                                 setValue={setValue}
-                                disabled={isConfirmed}
+                                disabled={isReadOnly}
                             />
                         );
                     })}

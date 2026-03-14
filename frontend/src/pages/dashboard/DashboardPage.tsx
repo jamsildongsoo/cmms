@@ -3,17 +3,17 @@ import { format, formatISO, subMonths, addMonths } from "date-fns";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+
 import { useNavigate } from "react-router-dom";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { dashboardService } from "@/services/dashboardService";
-import type { DashboardSummary, CalendarEvent, Top5Equipment } from "@/types/dashboard";
+import type { DashboardSummary, CalendarEvent } from "@/types/dashboard";
 
 export default function DashboardPage() {
     const navigate = useNavigate();
@@ -22,28 +22,15 @@ export default function DashboardPage() {
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-    // Top 5 States
-    const [woTop5, setWoTop5] = useState<Top5Equipment[]>([]);
-    const [wpTop5, setWpTop5] = useState<Top5Equipment[]>([]);
-    const [woCriteria, setWoCriteria] = useState("count"); // count, cost, time
-    const [wpCriteria, setWpCriteria] = useState("count");
-
     const monthStr = format(currentDate, "yyyy-MM");
-    const yearStr = format(currentDate, "yyyy");
 
     useEffect(() => {
         loadSummary();
-        loadTop5();
     }, [currentDate]);
 
     useEffect(() => {
         loadEvents();
     }, [currentDate, currentTab]);
-
-    useEffect(() => {
-        loadTop5();
-    }, [woCriteria, wpCriteria]);
-
 
     const loadSummary = async () => {
         const data = await dashboardService.getSummary(monthStr);
@@ -60,13 +47,6 @@ export default function DashboardPage() {
             data = await dashboardService.getWorkPermitCalendar(monthStr);
         }
         setEvents(data);
-    };
-
-    const loadTop5 = async () => {
-        const woData = await dashboardService.getWorkOrderTop5(yearStr, woCriteria);
-        setWoTop5(woData);
-        const wpData = await dashboardService.getWorkPermitTop5(yearStr, wpCriteria);
-        setWpTop5(wpData);
     };
 
     const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -109,18 +89,8 @@ export default function DashboardPage() {
                         <CardTitle className="text-sm font-semibold text-slate-600">당월 예방점검 실적</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <div className="text-3xl font-bold text-slate-800">
-                                    {summary?.inspection?.completedCount || 0} <span className="text-lg text-slate-500 font-normal">/ {summary?.inspection?.planCount || 0} 건</span>
-                                </div>
-                            </div>
-                            <div className="flex flex-col items-end">
-                                <span className="text-sm text-slate-500 mb-1">달성률</span>
-                                <span className={`text-xl font-bold ${summary?.inspection?.completionRate && summary.inspection.completionRate >= 100 ? 'text-green-600' : 'text-blue-600'}`}>
-                                    {summary?.inspection?.completionRate || 0}%
-                                </span>
-                            </div>
+                        <div className="text-3xl font-bold text-slate-800">
+                            {summary?.inspection?.completedCount || 0} <span className="text-lg text-slate-500 font-normal">건</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -170,9 +140,9 @@ export default function DashboardPage() {
                 </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Calendar Section (Left 2 columns) */}
-                <Card className="lg:col-span-2 shadow-sm">
+            <div>
+                {/* Calendar Section */}
+                <Card className="shadow-sm">
                     <CardHeader className="border-b pb-4 mb-4 flex flex-row items-center justify-between">
                         <CardTitle className="text-lg text-slate-800">일정 캘린더</CardTitle>
                         {/* @ts-ignore - radix-ui types might not expose value correctly */}
@@ -226,91 +196,6 @@ export default function DashboardPage() {
                         </div>
                     </CardContent>
                 </Card>
-
-                {/* Top 5 Metrics Section (Right column) */}
-                <div className="space-y-6">
-                    {/* WO Top 5 */}
-                    <Card className="shadow-sm border-t-4 border-t-indigo-500">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-md font-semibold text-slate-800">설비별 작업지시 TOP 5</CardTitle>
-                            <div className="ml-auto">
-                                <Select value={woCriteria} onValueChange={setWoCriteria}>
-                                    <SelectTrigger className="w-[100px] h-8 text-xs">
-                                        <SelectValue placeholder="기준" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="count">건수 기준</SelectItem>
-                                        <SelectItem value="cost">비용 기준</SelectItem>
-                                        <SelectItem value="time">시간 기준</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[230px] w-full">
-                                {woTop5.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={woTop5} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                                            <XAxis type="number" hide />
-                                            <YAxis dataKey="equipmentName" type="category" axisLine={false} tickLine={false} className="text-xs font-semibold fill-slate-600" width={100} />
-                                            <Tooltip
-                                                cursor={{ fill: 'transparent' }}
-                                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            />
-                                            <Bar dataKey={woCriteria === 'count' ? 'totalCount' : woCriteria === 'cost' ? 'totalCost' : 'totalTime'} radius={[0, 4, 4, 0]}>
-                                                {woTop5.map((_, index) => (
-                                                    <Cell key={`cell-${index}`} fill={['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff'][index % 5]} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="h-full flex items-center justify-center text-sm text-slate-400">데이터가 없습니다.</div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* WP Top 5 */}
-                    <Card className="shadow-sm border-t-4 border-t-orange-500">
-                        <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-md font-semibold text-slate-800">설비별 작업허가 TOP 5</CardTitle>
-                            <div className="ml-auto">
-                                <Select value={wpCriteria} onValueChange={setWpCriteria}>
-                                    <SelectTrigger className="w-[100px] h-8 text-xs">
-                                        <SelectValue placeholder="기준" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="count">허가건수 기준</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[230px] w-full">
-                                {wpTop5.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={wpTop5} layout="vertical" margin={{ top: 5, right: 20, left: 40, bottom: 5 }}>
-                                            <XAxis type="number" hide />
-                                            <YAxis dataKey="equipmentName" type="category" axisLine={false} tickLine={false} className="text-xs font-semibold fill-slate-600" width={100} />
-                                            <Tooltip
-                                                cursor={{ fill: 'transparent' }}
-                                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            />
-                                            <Bar dataKey="totalCount" radius={[0, 4, 4, 0]}>
-                                                {wpTop5.map((_, index) => (
-                                                    <Cell key={`cell-${index}`} fill={['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'][index % 5]} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="h-full flex items-center justify-center text-sm text-slate-400">데이터가 없습니다.</div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
 
             <style>{`.fc-h-event { border: none !important; margin: 1px 0 !important; border-radius: 4px; } .fc-daygrid-event { font-size: 0.75rem; padding: 2px 4px; } .fc-toolbar-title { font-size: 1.125rem !important; color: #1e293b; }`}</style>

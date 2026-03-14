@@ -31,7 +31,7 @@ export interface WorkOrder {
     laborCost?: number;
     materialCost?: number;
 
-    items?: any[]; // Allow any for now to avoid strict type issues with flexible item structure, or define interface
+    items?: WorkOrderItem[];
 }
 
 export interface WorkOrderItem {

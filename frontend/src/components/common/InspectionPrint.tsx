@@ -10,6 +10,7 @@ interface PrintItem {
 
 interface InspectionPrintProps {
     stage: 'PLN' | 'ACT';
+    status?: string;
     id: string;
     name: string;
     equipment: string;
@@ -23,7 +24,7 @@ interface InspectionPrintProps {
 }
 
 export const InspectionPrint: React.FC<InspectionPrintProps> = ({
-    stage, id, name, equipment, dept, person, date, items, note, companyName, approvalSteps = []
+    stage, status, id, name, equipment, dept, person, date, items, note, companyName, approvalSteps = []
 }) => {
     const title = `예방점검 ${stage === 'PLN' ? '계획' : '실적'} 보고서`;
     const printDate = new Date().toLocaleDateString();
@@ -54,11 +55,17 @@ export const InspectionPrint: React.FC<InspectionPrintProps> = ({
         if (step.decision === '00') return "[기안]";
         if (step.result === 'N') return "[반려]";
         if (step.result === 'Y') {
-            const lastApproverIdx = approvers.length - 1;
-            if (index === lastApproverIdx) return "[완결]";
+            const lastIdx = boxes.filter((b: any) => b.personId).length - 1;
+            if (index === lastIdx) return "[완결]";
             return "[결재]";
         }
         return "";
+    };
+
+    const formatDateTime = (dt?: string) => {
+        if (!dt) return '';
+        const normalized = dt.replace('T', ' ');
+        return normalized.length >= 16 ? normalized.substring(0, 16) : normalized;
     };
 
     return (
@@ -85,10 +92,10 @@ export const InspectionPrint: React.FC<InspectionPrintProps> = ({
                 {/* Header Information & Approval Boxes */}
                 <div className="flex justify-between items-start mb-6 w-full">
                     {/* Left: Basic Info */}
-                    <div className="space-y-1 text-sm pt-2 flex-1">
-                        <div className="flex"><span className="font-bold w-20">점검번호:</span><span>{id}</span></div>
-                        <div className="flex"><span className="font-bold w-20">점검명:</span><span>{name}</span></div>
-                        <div className="flex"><span className="font-bold w-20">대상설비:</span><span>{equipment}</span></div>
+                    <div className="space-y-1 text-sm pt-2 flex-1 min-w-0 mr-4">
+                        <div className="flex"><span className="font-bold w-20 shrink-0">점검번호:</span><span className="truncate">{id}</span></div>
+                        <div className="flex"><span className="font-bold w-20 shrink-0">점검명:</span><span className="truncate">{name}</span></div>
+                        <div className="flex"><span className="font-bold w-20 shrink-0">대상설비:</span><span className="truncate">{equipment}</span></div>
                     </div>
 
                     {/* Right: Approval Boxes & References */}
@@ -105,10 +112,10 @@ export const InspectionPrint: React.FC<InspectionPrintProps> = ({
                                         {step.personId && (isFinalized(step) || step.decision === '00') ? (
                                             <>
                                                 <div className="text-[10px] font-bold">
-                                                    {(step.personName || step.approver_name)} {getStatusText(step, idx)}
+                                                    {(step.personName || step.approver_name || step.personId)} {getStatusText(step, idx)}
                                                 </div>
                                                 <div className="text-[8px] mt-1 text-slate-500">
-                                                    {step.decidedAt ? new Date(step.decidedAt).toLocaleDateString() : ""}
+                                                    {formatDateTime(step.decidedAt)}
                                                 </div>
                                             </>
                                         ) : (
@@ -129,8 +136,8 @@ export const InspectionPrint: React.FC<InspectionPrintProps> = ({
                 <div className="grid grid-cols-4 gap-4 border-t border-b border-black py-2 mb-6 text-xs text-center border-collapse">
                     <div className="flex justify-center gap-2"><span className="font-bold">관리부서:</span><span>{dept}</span></div>
                     <div className="flex justify-center gap-2"><span className="font-bold">담당자:</span><span>{person}</span></div>
-                    <div className="flex justify-center gap-2"><span className="font-bold">점검일자:</span><span>{date}</span></div>
-                    <div className="flex justify-center gap-2"><span className="font-bold">상태:</span><span className="font-bold text-blue-700">완료</span></div>
+                    <div className="flex justify-center gap-2"><span className="font-bold">점검일자:</span><span>{formatDateTime(date)}</span></div>
+                    <div className="flex justify-center gap-2"><span className="font-bold">상태:</span><span className={`font-bold ${status === 'C' ? 'text-blue-700' : status === 'A' ? 'text-orange-600' : 'text-slate-500'}`}>{status === 'C' ? '완료' : status === 'A' ? '상신' : status === 'T' ? '임시저장' : status || '-'}</span></div>
                 </div>
 
                 {note && (

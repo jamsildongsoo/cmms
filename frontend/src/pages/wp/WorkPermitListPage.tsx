@@ -45,10 +45,11 @@ export default function WorkPermitListPage() {
             'ELEC': 'bg-yellow-100 text-yellow-700 border-yellow-200',
             'HIGH': 'bg-blue-100 text-blue-700 border-blue-200',
             'DIG': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+            'HEAVY': 'bg-purple-100 text-purple-700 border-purple-200',
         };
         const labels: Record<string, string> = {
             'HOT': '화기', 'CONF': '밀폐', 'ELEC': '전기',
-            'HIGH': '고소', 'DIG': '굴착', 'HEVY': '중량', 'GEN': '일반'
+            'HIGH': '고소', 'DIG': '굴착', 'HEAVY': '중량', 'GEN': '일반'
         };
         return (
             <span className={`px-2 py-0.5 rounded border text-xs font-bold ${styles[type] || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
@@ -98,6 +99,7 @@ export default function WorkPermitListPage() {
                                         <th className="px-4 py-3 font-medium text-slate-500">허가번호</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">유형</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업명</th>
+                                        <th className="px-4 py-3 font-medium text-slate-500">설비번호</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">작업기간</th>
                                         <th className="px-4 py-3 font-medium text-slate-500">신청자</th>
                                         <th className="px-4 py-3 font-medium text-slate-500 text-center">상태</th>
@@ -106,7 +108,7 @@ export default function WorkPermitListPage() {
                                 <tbody>
                                     {permits.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                                            <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                                                 등록된 작업 허가 신청이 없습니다.
                                             </td>
                                         </tr>
@@ -126,6 +128,7 @@ export default function WorkPermitListPage() {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">{wp.name}</td>
+                                                <td className="px-4 py-3 text-slate-600">{wp.equipmentId || '-'}</td>
                                                 <td className="px-4 py-3 text-xs text-slate-600">
                                                     <div>{wp.startDt ? wp.startDt.split(' ')[0] : '-'}</div>
                                                     <div className="text-slate-400">~ {wp.endDt ? wp.endDt.split(' ')[0] : '-'}</div>

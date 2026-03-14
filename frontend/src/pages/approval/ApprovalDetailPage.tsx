@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, FileText, CheckCircle2, XCircle, Clock, Check, X } from 'lucide-react';
+import { ArrowLeft, User, Calendar, FileText, CheckCircle2, XCircle, Clock, Check, X, Printer } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,24 +9,11 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileAttachmentList, type AttachedFileInfo } from '@/components/common/FileAttachmentList';
+import { ApprovalPrint } from '@/components/common/ApprovalPrint';
 import { systemService } from '@/services/systemService';
-import { approvalService, type Approval, type DecisionType } from '@/services/approvalService';
+import { approvalService, type Approval } from '@/services/approvalService';
 import { useAuthStore } from '@/features/auth/useAuthStore';
-
-const DECISION_TYPE_MAP: Record<DecisionType, string> = {
-    '00': '기안',
-    '01': '결재',
-    '02': '합의',
-    '03': '참조',
-    '04': '반려'
-};
-
-const STATUS_MAP: Record<string, { label: string, variant: "default" | "secondary" | "destructive" | "outline" }> = {
-    'T': { label: '임시', variant: 'secondary' },
-    'A': { label: '결재중', variant: 'outline' },
-    'C': { label: '완료', variant: 'default' },
-    'R': { label: '반려', variant: 'destructive' },
-};
+import { STATUS, STATUS_INFO, DECISION_TYPE_MAP, STEP_RESULT, DECISION_TYPE } from '@/constants/status';
 
 export default function ApprovalDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -46,8 +33,7 @@ export default function ApprovalDetailPage() {
             if (data) {
                 setApproval(data);
                 if (data.fileGroupId) {
-                    const companyId = user?.companyId || 'COM-001';
-                    const fileGroup = await systemService.getFileGroup(companyId, data.fileGroupId);
+                    const fileGroup = await systemService.getFileGroup(data.fileGroupId);
                     if (fileGroup && fileGroup.items) {
                         setFiles(fileGroup.items.map(item => ({
                             id: item.lineNo.toString(),
@@ -94,7 +80,7 @@ export default function ApprovalDetailPage() {
 
     const handleDownload = (file: AttachedFileInfo & { raw?: any }) => {
         if (approval && file.raw) {
-            systemService.downloadFile(approval.companyId, file.raw.fileGroupId, file.raw.lineNo, file.name || file.raw.originalName);
+            systemService.downloadFile(file.raw.fileGroupId, file.raw.lineNo, file.name || file.raw.originalName);
         }
     };
 
@@ -110,18 +96,18 @@ export default function ApprovalDetailPage() {
 
     if (!approval) return null;
 
-    const statusInfo = STATUS_MAP[approval.status] || { label: approval.status, variant: 'secondary' };
+    const statusInfo = STATUS_INFO[approval.status as keyof typeof STATUS_INFO] || { label: approval.status, variant: 'secondary' };
 
     // My Turn Check: status must be 'A' (Submitted/In progress)
     const currentStep = approval.approval_steps?.find((s: any) => s.lineNo === approval.currentStep);
-    const isMyTurn = approval.status === 'A'
+    const isMyTurn = approval.status === STATUS.APPROVAL
         && currentStep?.personId === user?.personId
-        && currentStep?.result === '00'
-        && currentStep?.decision !== '03'; // 참조/통보형은 승인 버튼 노출 제외
+        && currentStep?.result === STEP_RESULT.PENDING
+        && currentStep?.decision !== DECISION_TYPE.NOTICE;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-10">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between print:hidden">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
                         <ArrowLeft className="h-5 w-5" />
@@ -134,6 +120,9 @@ export default function ApprovalDetailPage() {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => window.print()}>
+                        <Printer className="mr-2 h-4 w-4" /> 출력
+                    </Button>
                     {isMyTurn && (
                         <>
                             <Button onClick={() => handleDecision('APPROVE')} disabled={processing} className="bg-green-600 hover:bg-green-700">
@@ -147,25 +136,17 @@ export default function ApprovalDetailPage() {
                 </div>
             </div>
 
-            <Card>
+            <Card className="print:hidden">
                 <CardHeader>
                     <CardTitle className="text-lg">결재선</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="relative flex items-start justify-between p-4 bg-slate-50 rounded-lg overflow-x-auto">
-                        <div className="flex flex-col items-center min-w-[100px] z-10">
-                            <div className="bg-white p-3 rounded-full border shadow-sm mb-2">
-                                <User className="h-5 w-5 text-slate-500" />
-                            </div>
-                            <div className="text-sm font-bold text-center">{approval.requester_name || approval.requesterId}</div>
-                            <div className="text-xs text-muted-foreground">기안</div>
-                            <div className="mt-1 text-xs text-slate-500">{approval.createdAt?.split(' ')[0]}</div>
-                        </div>
                         <div className="absolute top-11 left-12 right-12 h-0.5 bg-slate-200 -z-0" />
                         {(approval.approval_steps || []).map((step: any, index: number) => {
-                            const isStepCurrent = approval.status === 'A' && approval.currentStep === step.lineNo;
-                            const isApproved = step.result === 'Y';
-                            const isRejected = step.result === 'N' || (approval.status === 'R' && approval.currentStep === step.lineNo);
+                            const isStepCurrent = approval.status === STATUS.APPROVAL && approval.currentStep === step.lineNo;
+                            const isApproved = step.result === STEP_RESULT.APPROVED;
+                            const isRejected = step.result === STEP_RESULT.REJECTED || (approval.status === STATUS.REJECTED && approval.currentStep === step.lineNo);
 
                             return (
                                 <div key={index} className="flex flex-col items-center min-w-[100px] z-10">
@@ -179,9 +160,9 @@ export default function ApprovalDetailPage() {
                                                 isStepCurrent ? <Clock className="h-5 w-5 text-blue-600 animate-pulse" /> :
                                                     <User className="h-5 w-5 text-slate-300" />}
                                     </div>
-                                    <div className="text-sm font-bold text-center">{step.approver_name || step.personId}</div>
+                                    <div className="text-sm font-bold text-center">{step.personName || step.approver_name || step.personId}</div>
                                     <div className="text-xs text-muted-foreground">
-                                        {step.result === 'N' ? '반려' : (DECISION_TYPE_MAP[step.decision as DecisionType] || step.decision)}
+                                        {step.result === STEP_RESULT.REJECTED ? '반려' : (DECISION_TYPE_MAP[step.decision as keyof typeof DECISION_TYPE_MAP] || step.decision)}
                                     </div>
                                     <div className="mt-1 text-xs text-slate-500">
                                         {step.decidedAt ? step.decidedAt.split(' ')[0] : (isStepCurrent ? '검토중' : '-')}
@@ -198,7 +179,7 @@ export default function ApprovalDetailPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="print:hidden">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileText className="h-5 w-5 text-blue-600" />
@@ -225,7 +206,7 @@ export default function ApprovalDetailPage() {
                         <h4 className="text-sm font-medium text-muted-foreground">상세 내용</h4>
                         <div
                             className="min-h-[300px] p-4 bg-slate-50 rounded-md border text-sm rich-text-content"
-                            dangerouslySetInnerHTML={{ __html: approval.content }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(approval.content) }}
                         />
                     </div>
                     <Separator />
@@ -242,6 +223,8 @@ export default function ApprovalDetailPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <ApprovalPrint approval={approval} companyName={user?.companyId} files={files} />
         </div>
     );
 }

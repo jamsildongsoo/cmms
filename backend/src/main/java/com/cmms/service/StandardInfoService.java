@@ -25,10 +25,14 @@ public class StandardInfoService {
     private final CodeRepository codeRepository;
     private final CodeItemRepository codeItemRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SystemService systemService;
 
     // Plant
     @Transactional
     public Plant savePlant(Plant plant) {
+        if (plant.getPlantId() == null || plant.getPlantId().isBlank()) {
+            plant.setPlantId(systemService.generateId(plant.getCompanyId(), "PLANT", "GLOBAL"));
+        }
         return plantRepository.save(plant);
     }
 
@@ -42,16 +46,20 @@ public class StandardInfoService {
     }
 
     @Transactional
-    public void deletePlant(String companyId, String plantId) {
-        plantRepository.findById(new PlantId(companyId, plantId)).ifPresent(plant -> {
+    public boolean deletePlant(String companyId, String plantId) {
+        return plantRepository.findById(new PlantId(companyId, plantId)).map(plant -> {
             plant.setDeleteMark("Y");
             plantRepository.save(plant);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // Dept
     @Transactional
     public Dept saveDept(Dept dept) {
+        if (dept.getDeptId() == null || dept.getDeptId().isBlank()) {
+            dept.setDeptId(systemService.generateId(dept.getCompanyId(), "DEPT", "GLOBAL"));
+        }
         return deptRepository.save(dept);
     }
 
@@ -65,16 +73,20 @@ public class StandardInfoService {
     }
 
     @Transactional
-    public void deleteDept(String companyId, String deptId) {
-        deptRepository.findById(new DeptId(companyId, deptId)).ifPresent(dept -> {
+    public boolean deleteDept(String companyId, String deptId) {
+        return deptRepository.findById(new DeptId(companyId, deptId)).map(dept -> {
             dept.setDeleteMark("Y");
             deptRepository.save(dept);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // Role
     @Transactional
     public Role saveRole(Role role) {
+        if (role.getRoleId() == null || role.getRoleId().isBlank()) {
+            role.setRoleId(systemService.generateId(role.getCompanyId(), "ROLE", "GLOBAL"));
+        }
         return roleRepository.save(role);
     }
 
@@ -88,23 +100,47 @@ public class StandardInfoService {
     }
 
     @Transactional
-    public void deleteRole(String companyId, String roleId) {
-        roleRepository.findById(new RoleId(companyId, roleId)).ifPresent(role -> {
+    public boolean deleteRole(String companyId, String roleId) {
+        return roleRepository.findById(new RoleId(companyId, roleId)).map(role -> {
             role.setDeleteMark("Y");
             roleRepository.save(role);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // Person
     @Transactional
     public Person savePerson(Person person) {
-        if (person.getPasswordHash() != null && !person.getPasswordHash().isEmpty()) {
-            // BCrypt 해시 패턴($2a$, $2b$ 등)으로 시작하지 않으면 평문으로 간주하고 암호화
-            if (!person.getPasswordHash().startsWith("$2a$") && !person.getPasswordHash().startsWith("$2b$")) {
-                person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
-            }
+        boolean isNew = person.getPersonId() == null || person.getPersonId().isBlank();
+
+        if (isNew) {
+            person.setPersonId(systemService.generateId(person.getCompanyId(), "PERSON", "GLOBAL"));
+        }
+
+        if (person.getPasswordHash() != null && !person.getPasswordHash().isBlank()
+                && !isBCryptHash(person.getPasswordHash())) {
+            // 평문 비밀번호가 전달된 경우 → 검증 후 인코딩
+            validatePassword(person.getPasswordHash());
+            person.setPasswordHash(passwordEncoder.encode(person.getPasswordHash()));
+        } else if (isNew && (person.getPasswordHash() == null || person.getPasswordHash().isBlank())) {
+            // 신규 등록인데 비밀번호 미입력 → 오류
+            throw new IllegalArgumentException("신규 사용자 등록 시 비밀번호는 필수입니다.");
+        } else if (!isNew && (person.getPasswordHash() == null || person.getPasswordHash().isBlank())) {
+            // 수정인데 비밀번호 미입력 → 기존 비밀번호 유지
+            personRepository.findById(new PersonId(person.getCompanyId(), person.getPersonId()))
+                    .ifPresent(existing -> person.setPasswordHash(existing.getPasswordHash()));
         }
         return personRepository.save(person);
+    }
+
+    private boolean isBCryptHash(String value) {
+        return value != null && (value.startsWith("$2a$") || value.startsWith("$2b$") || value.startsWith("$2y$"));
+    }
+
+    private void validatePassword(String password) {
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("비밀번호는 8자리 이상이어야 합니다.");
+        }
     }
 
     public List<Person> getAllPersons(String companyId) {
@@ -117,30 +153,34 @@ public class StandardInfoService {
     }
 
     @Transactional
-    public void deletePerson(String companyId, String personId) {
-        personRepository.findById(new PersonId(companyId, personId)).ifPresent(person -> {
-            person.setDeleteMark("Y");
-            personRepository.save(person);
-        });
-    }
-
-    @Transactional
     public void changePassword(String companyId, String personId, String currentPassword, String newPassword) {
         Person person = personRepository.findById(new PersonId(companyId, personId))
-                .filter(p -> p.getDeleteMark() == null || "N".equals(p.getDeleteMark()))
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         if (!passwordEncoder.matches(currentPassword, person.getPasswordHash())) {
             throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
         }
 
+        validatePassword(newPassword);
         person.setPasswordHash(passwordEncoder.encode(newPassword));
         personRepository.save(person);
+    }
+
+    @Transactional
+    public boolean deletePerson(String companyId, String personId) {
+        return personRepository.findById(new PersonId(companyId, personId)).map(person -> {
+            person.setDeleteMark("Y");
+            personRepository.save(person);
+            return true;
+        }).orElse(false);
     }
 
     // Storage
     @Transactional
     public Storage saveStorage(Storage storage) {
+        if (storage.getStorageId() == null || storage.getStorageId().isBlank()) {
+            storage.setStorageId(systemService.generateId(storage.getCompanyId(), "STORAGE", "GLOBAL"));
+        }
         return storageRepository.save(storage);
     }
 
@@ -154,11 +194,12 @@ public class StandardInfoService {
     }
 
     @Transactional
-    public void deleteStorage(String companyId, String storageId) {
-        storageRepository.findById(new StorageId(companyId, storageId)).ifPresent(storage -> {
+    public boolean deleteStorage(String companyId, String storageId) {
+        return storageRepository.findById(new StorageId(companyId, storageId)).map(storage -> {
             storage.setDeleteMark("Y");
             storageRepository.save(storage);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // Bin
@@ -168,16 +209,23 @@ public class StandardInfoService {
     }
 
     public List<Bin> getAllBins(String companyId) {
-        return binRepository.findAllByCompanyId(companyId);
+        return binRepository.findAllByCompanyId(companyId).stream()
+                .filter(b -> b.getDeleteMark() == null || "N".equals(b.getDeleteMark()))
+                .toList();
     }
 
     public Optional<Bin> getBinById(String companyId, String binId) {
-        return binRepository.findById(new BinId(companyId, binId));
+        return binRepository.findById(new BinId(companyId, binId))
+                .filter(bin -> bin.getDeleteMark() == null || "N".equals(bin.getDeleteMark()));
     }
 
     @Transactional
-    public void deleteBin(String companyId, String binId) {
-        binRepository.deleteById(new BinId(companyId, binId));
+    public boolean deleteBin(String companyId, String binId) {
+        return binRepository.findById(new BinId(companyId, binId)).map(bin -> {
+            bin.setDeleteMark("Y");
+            binRepository.save(bin);
+            return true;
+        }).orElse(false);
     }
 
     // Location
@@ -187,23 +235,31 @@ public class StandardInfoService {
     }
 
     public List<Location> getAllLocations(String companyId) {
-        return locationRepository.findAllByCompanyId(companyId);
+        return locationRepository.findAllByCompanyId(companyId).stream()
+                .filter(l -> l.getDeleteMark() == null || "N".equals(l.getDeleteMark()))
+                .toList();
     }
 
-    public Optional<Location> getLocationById(String companyId, String binId, String locationId) {
-        // LocationId matches @Id fields in Location entity: companyId, locationId
-        // (binId is not part of PK)
-        return locationRepository.findById(new LocationId(companyId, locationId));
+    public Optional<Location> getLocationById(String companyId, String locationId) {
+        return locationRepository.findById(new LocationId(companyId, locationId))
+                .filter(location -> location.getDeleteMark() == null || "N".equals(location.getDeleteMark()));
     }
 
     @Transactional
-    public void deleteLocation(String companyId, String binId, String locationId) {
-        locationRepository.deleteById(new LocationId(companyId, locationId));
+    public boolean deleteLocation(String companyId, String locationId) {
+        return locationRepository.findById(new LocationId(companyId, locationId)).map(location -> {
+            location.setDeleteMark("Y");
+            locationRepository.save(location);
+            return true;
+        }).orElse(false);
     }
 
     // Code
     @Transactional
     public Code saveCode(Code code) {
+        if (code.getCodeId() == null || code.getCodeId().isBlank()) {
+            code.setCodeId(systemService.generateId(code.getCompanyId(), "CODE", "GLOBAL"));
+        }
         return codeRepository.save(code);
     }
 
@@ -217,21 +273,21 @@ public class StandardInfoService {
     }
 
     @Transactional
-    public void deleteCode(String companyId, String codeId) {
-        codeRepository.findById(new CodeId(companyId, codeId)).ifPresent(code -> {
+    public boolean deleteCode(String companyId, String codeId) {
+        return codeRepository.findById(new CodeId(companyId, codeId)).map(code -> {
             code.setDeleteMark("Y");
             codeRepository.save(code);
-        });
+            return true;
+        }).orElse(false);
     }
 
     // CodeItem
     @Transactional
     public CodeItem saveCodeItem(CodeItem codeItem) {
+        if (codeItem.getItemId() == null || codeItem.getItemId().isBlank()) {
+            codeItem.setItemId(systemService.generateId(codeItem.getCompanyId(), "CODE_ITEM", codeItem.getCodeId()));
+        }
         return codeItemRepository.save(codeItem);
-    }
-
-    public List<CodeItem> getAllCodeItems() {
-        return codeItemRepository.findAll();
     }
 
     public List<CodeItem> getCodeItemsByCodeId(String companyId, String codeId) {

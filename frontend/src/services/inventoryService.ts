@@ -1,5 +1,4 @@
 import api from '@/utils/api';
-import { useAuthStore } from "@/features/auth/useAuthStore";
 
 export interface Material {
     companyId: string;
@@ -18,158 +17,151 @@ export interface Material {
     deleteMark?: 'Y' | 'N';
 }
 
-export type TransactionType = 'IN' | 'OUT' | 'MOVE' | 'ADJUST';
+export type TransactionType = 'IN' | 'OUT' | 'MOVE' | 'ADJUST' | 'MOVE_IN' | 'MOVE_OUT' | 'ADJUST_IN' | 'ADJUST_OUT';
 
 export interface InventoryTransaction {
-    history_id: string; // Backend: history_id
-    type: TransactionType; // Renamed from tx_type to match usage
-    date: string; // Renamed from tx_date
+    history_id: string;
+    type: TransactionType;
+    date: string;
     inventoryId: string;
     qty: number;
     amount?: number;
     refEntity?: string;
     refId?: string;
-
-    // UI convenience fields
-    name: string; // Made required to fix usage
+    name: string;
     spec?: string;
     unit?: string;
-    storage?: string; // storage name
-    user?: string; // user name
-    ref?: string; // reference string
+    storage?: string;
+    user?: string;
+    ref?: string;
     companyId?: string;
 }
 
 export interface TransactionItem {
     inventoryId: string;
-    storageId: string; // items need storage
+    storageId: string;
+    locationId?: string;
+    binId?: string;
+    // MOVE destination
+    toStorageId?: string;
+    toLocationId?: string;
+    toBinId?: string;
     current_stock?: number;
     qty: number;
-    unitPrice?: number;
+    amount?: number;
     ref?: string;
-    name?: string; // Added for UI display
-    spec?: string; // Added for UI display
-    unit?: string; // Added for UI display
-    storage?: string; // Added for UI display
+    name?: string;
+    spec?: string;
+    unit?: string;
+    storage?: string;
+}
+
+export interface InventoryStockItem {
+    inventoryId: string;
+    name: string;
+    spec?: string;
+    unit?: string;
+    codeItem?: string;
+    storageId?: string;
+    storageName?: string;
+    binId?: string;
+    binName?: string;
+    locationId?: string;
+    locationName?: string;
+    qty: number;
+    amount: number;
 }
 
 export const inventoryService = {
+    getStock: async (): Promise<InventoryStockItem[]> => {
+        const response = await api.get<InventoryStockItem[]>('/api/inv/stock');
+        return response.data;
+    },
+
     getAllMaterials: async (): Promise<Material[]> => {
-        try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<Material[]>(`/api/master/inventory?companyId=${companyId}`);
-            return response.data;
-        } catch (error) {
-            console.error("Failed to fetch materials", error);
-            return [];
-        }
+        const response = await api.get<Material[]>('/api/master/inventory');
+        return response.data;
     },
 
     getMaterialById: async (id: string): Promise<Material | undefined> => {
-        try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
-            const response = await api.get<Material>(`/api/master/inventory/${companyId}/${id}`);
-            return response.data;
-        } catch (error) {
-            console.error("Failed to fetch material", error);
-            return undefined;
-        }
+        const response = await api.get<Material>(`/api/master/inventory/${id}`);
+        return response.data;
     },
 
     createMaterial: async (material: Material): Promise<Material> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        const payload = { ...material, companyId: companyId };
-        const response = await api.post<Material>('/api/master/inventory', payload);
+        const response = await api.post<Material>('/api/master/inventory', material);
         return response.data;
     },
 
     updateMaterial: async (id: string, updates: Partial<Material>): Promise<Material> => {
-        try {
-            const existing = await inventoryService.getMaterialById(id);
-            if (!existing) throw new Error("Material not found");
-            const merged = { ...existing, ...updates };
-            // Ensure companyId is present
-            if (!merged.companyId) merged.companyId = useAuthStore.getState().user?.companyId ?? '';
-            if (!merged.companyId) throw new Error("User not authenticated");
+        const existing = await inventoryService.getMaterialById(id);
+        if (!existing) throw new Error("Material not found");
+        const merged = { ...existing, ...updates };
 
-            const response = await api.post<Material>('/api/master/inventory', merged);
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
+        const response = await api.post<Material>('/api/master/inventory', merged);
+        return response.data;
     },
 
-    // Transaction Support
     getAllTransactions: async (): Promise<InventoryTransaction[]> => {
-        try {
-            const companyId = useAuthStore.getState().user?.companyId;
-            if (!companyId) throw new Error("User not authenticated");
+        const response = await api.get<any[]>('/api/inv/history');
+        const materials = await inventoryService.getAllMaterials();
 
-            const response = await api.get<any[]>(`/api/inv/history?companyId=${companyId}`);
-
-            // UI를 위해 품목 정보 같이 불러오기 (이름, 규격 등)
-            const materials = await inventoryService.getAllMaterials();
-
-            return response.data.map(item => {
-                const material = materials.find(m => m.inventoryId === item.inventoryId);
-                return {
-                    history_id: item.historyId,
-                    type: item.txType,
-                    date: item.txDate ? item.txDate.replace('T', ' ').substring(0, 16) : '-',
-                    inventoryId: item.inventoryId,
-                    qty: item.qty,
-                    amount: item.amount,
-                    refEntity: item.refEntity,
-                    refId: item.refId,
-
-                    // UI convenience fields
-                    name: material ? material.name : item.inventoryId,
-                    spec: material?.spec || '-',
-                    unit: material?.unit || 'EA',
-                    storage: item.storageId,
-                    user: item.createdBy || 'SYSTEM',
-                    ref: item.refId || '-',
-                    companyId: item.companyId,
-                } as InventoryTransaction;
-            });
-        } catch (error) {
-            console.error("Failed to fetch transactions", error);
-            return [];
-        }
+        return response.data.map(item => {
+            const material = materials.find(m => m.inventoryId === item.inventoryId);
+            return {
+                history_id: item.historyId,
+                type: item.txType,
+                date: item.createdAt ? item.createdAt.replace('T', ' ').substring(0, 16) : '-',
+                inventoryId: item.inventoryId,
+                qty: item.qty,
+                amount: item.amount,
+                refEntity: item.refEntity,
+                refId: item.refId,
+                name: material ? material.name : item.inventoryId,
+                spec: material?.spec || '-',
+                unit: material?.unit || 'EA',
+                storage: item.storageId,
+                user: item.createdBy || 'SYSTEM',
+                ref: item.refId || '-',
+                companyId: item.companyId,
+            } as InventoryTransaction;
+        });
     },
 
     processTransaction: async (type: TransactionType, items: TransactionItem[]): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        const userId = useAuthStore.getState().user?.personId || 'SYSTEM';
-
         const payload = {
-            companyId: companyId,
-            type: type,
-            date: new Date().toISOString(),
+            type,
             refEntity: 'MANUAL',
             refId: items[0]?.ref || '',
-            user: userId,
             items: items.map(item => ({
                 inventoryId: item.inventoryId,
                 storageId: item.storageId || 'STR-001',
+                locationId: item.locationId || '',
+                binId: item.binId || '',
+                toStorageId: item.toStorageId || '',
+                toLocationId: item.toLocationId || '',
+                toBinId: item.toBinId || '',
                 qty: item.qty,
-                unitPrice: item.unitPrice || 0
+                amount: item.amount || 0
             }))
         };
         await api.post('/api/inv/transactions', payload);
     },
 
-    createTransaction: async (): Promise<InventoryTransaction> => {
-        return Promise.resolve({} as InventoryTransaction);
+    deleteMaterial: async (id: string): Promise<void> => {
+        await api.delete(`/api/master/inventory/${id}`);
     },
 
-    deleteMaterial: async (id: string): Promise<void> => {
-        const companyId = useAuthStore.getState().user?.companyId;
-        if (!companyId) throw new Error("User not authenticated");
-        await api.delete(`/api/master/inventory/${companyId}/${id}`);
+    downloadExcel: async (data: Material[]): Promise<void> => {
+        const response = await api.post('/api/master/inventory/download', data, {
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'inventory_list.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     }
 };

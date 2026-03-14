@@ -1,5 +1,7 @@
 package com.cmms.domain;
 
+import com.cmms.common.domain.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "person")
 @IdClass(PersonId.class)
-public class Person {
+public class Person extends BaseEntity {
 
     @Id
     @Column(name = "company_id", length = 20, nullable = false)
@@ -33,6 +35,7 @@ public class Person {
     @Column(name = "dept_id", length = 20)
     private String deptId;
 
+    @JsonIgnore
     @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
@@ -59,7 +62,4 @@ public class Person {
 
     @Column(name = "last_login_plant_id", length = 20)
     private String lastLoginPlantId;
-
-    @Column(name = "delete_mark", length = 1, columnDefinition = "CHAR(1)")
-    private String deleteMark = "N";
 }

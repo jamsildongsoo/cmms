@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(./gradlew compileJava:*)",
+      "WebFetch(domain:www.k-startup.go.kr)",
+      "Bash(xargs grep:*)",
+      "Bash(npm ls:*)",
+      "Bash(./gradlew:*)",
+      "Bash(npx:*)",
+      "Bash(find backend/src -name \"*.java\" -type f -exec grep -l \"Jackson\\\\|JsonProperty\\\\|camelCase\" {} \\\\; | head -5)",
+      "Bash(cd c:/projects/cmms/frontend && tar -cf ../dist.tar dist/)",
+      "Bash(tar -tf c:/projects/cmms/dist.tar)",
+      "Bash(tar -tf /c/projects/cmms/dist.tar)",
+      "Bash(rm \"C:\\\\Users\\\\polkn\\\\.claude\\\\projects\\\\c--projects-cmms\\\\memory\\\\auth-security-review.md\" && rm \"C:\\\\Users\\\\polkn\\\\.claude\\\\projects\\\\c--projects-cmms\\\\memory\\\\system-review-2026-03.md\")"
+    ]
+  }
+}

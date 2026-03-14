@@ -24,22 +24,16 @@ public class DashboardService {
     public DashboardSummaryDto getSummary(String companyId, String month) {
         DashboardSummaryDto summary = new DashboardSummaryDto();
 
-        // 1. Inspection Summary
-        int inspPlan = ((Number) em.createQuery(
-                "SELECT COUNT(i) FROM Inspection i WHERE i.companyId = :cid AND i.deleteMark = 'N' AND i.stage = 'PLN' AND to_char(i.date, 'YYYY-MM') = :month")
-                .setParameter("cid", companyId)
-                .setParameter("month", month)
-                .getSingleResult()).intValue();
+        // 1. Inspection Summary (실적 건수만)
         int inspAct = ((Number) em.createQuery(
-                "SELECT COUNT(i) FROM Inspection i WHERE i.companyId = :cid AND i.deleteMark = 'N' AND i.stage = 'ACT' AND to_char(i.date, 'YYYY-MM') = :month")
+                "SELECT COUNT(i) FROM Inspection i WHERE i.companyId = :cid AND i.deleteMark = 'N' AND i.stage = 'ACT' AND i.status = :status AND to_char(i.date, 'YYYY-MM') = :month")
                 .setParameter("cid", companyId)
+                .setParameter("status", com.cmms.common.domain.CommonStatus.CONFIRMED)
                 .setParameter("month", month)
                 .getSingleResult()).intValue();
 
         DashboardSummaryDto.InspectionSummary inspSum = new DashboardSummaryDto.InspectionSummary();
-        inspSum.setPlanCount(inspPlan);
         inspSum.setCompletedCount(inspAct);
-        inspSum.setCompletionRate(inspPlan > 0 ? (int) Math.round((double) inspAct / inspPlan * 100) : 0);
         summary.setInspection(inspSum);
 
         // 2. Work Order Summary
@@ -49,8 +43,9 @@ public class DashboardService {
                 .setParameter("month", month)
                 .getSingleResult()).intValue();
         int woAct = ((Number) em.createQuery(
-                "SELECT COUNT(w) FROM WorkOrder w WHERE w.companyId = :cid AND w.deleteMark = 'N' AND w.stage = 'ACT' AND to_char(w.date, 'YYYY-MM') = :month")
+                "SELECT COUNT(w) FROM WorkOrder w WHERE w.companyId = :cid AND w.deleteMark = 'N' AND w.stage = 'ACT' AND w.status = :status AND to_char(w.date, 'YYYY-MM') = :month")
                 .setParameter("cid", companyId)
+                .setParameter("status", com.cmms.common.domain.CommonStatus.CONFIRMED)
                 .setParameter("month", month)
                 .getSingleResult()).intValue();
 
@@ -67,8 +62,10 @@ public class DashboardService {
                 .setParameter("month", month)
                 .getSingleResult()).intValue();
         int wpApproved = ((Number) em.createQuery(
-                "SELECT COUNT(w) FROM WorkPermit w WHERE w.companyId = :cid AND w.deleteMark = 'N' AND w.status IN ('C', 'A') AND to_char(w.date, 'YYYY-MM') = :month")
+                "SELECT COUNT(w) FROM WorkPermit w WHERE w.companyId = :cid AND w.deleteMark = 'N' AND w.status IN (:s1, :s2) AND to_char(w.date, 'YYYY-MM') = :month")
                 .setParameter("cid", companyId)
+                .setParameter("s1", com.cmms.common.domain.CommonStatus.CONFIRMED)
+                .setParameter("s2", com.cmms.common.domain.CommonStatus.APPROVAL)
                 .setParameter("month", month)
                 .getSingleResult()).intValue();
 

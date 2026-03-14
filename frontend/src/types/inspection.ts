@@ -1,6 +1,6 @@
 
 export interface InspectionItem {
-    seq: number;
+    lineNo: number; // Renamed from seq to match backend
     name: string; // Used to be check_item
     method: string;
     stdVal?: number; // Used to be criteria

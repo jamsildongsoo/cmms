@@ -60,7 +60,7 @@ export default function UserListPage() {
                                     <th className="px-4 py-3 font-medium text-slate-500">ID</th>
                                     <th className="px-4 py-3 font-medium text-slate-500">이름</th>
                                     <th className="px-4 py-3 font-medium text-slate-500">부서</th>
-                                    <th className="px-4 py-3 font-medium text-slate-500">직급</th>
+                                    <th className="px-4 py-3 font-medium text-slate-500">직급/직책</th>
                                     <th className="px-4 py-3 font-medium text-slate-500">이메일</th>
                                     <th className="px-4 py-3 font-medium text-slate-500">권한</th>
                                     <th className="px-4 py-3 font-medium text-slate-500 text-center">작업</th>

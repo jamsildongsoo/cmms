@@ -1,8 +1,6 @@
 export interface DashboardSummary {
     inspection: {
-        planCount: number;
         completedCount: number;
-        completionRate: number;
     };
     workOrder: {
         planCount: number;

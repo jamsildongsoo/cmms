@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { Bell, Building2, LogOut } from "lucide-react";
+import { Bell, Building2, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import { standardService, type Plant } from "@/services/standardService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export function Header() {
+interface HeaderProps {
+    onMenuClick: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
     const user = useAuthStore((state) => state.user);
     const { currentPlantId, setPlantId, logout } = useAuthStore();
     const navigate = useNavigate();
@@ -31,16 +35,24 @@ export function Header() {
     };
 
     return (
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 print:hidden">
-            <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2 text-slate-600">
+        <header className="flex h-14 lg:h-16 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6 print:hidden">
+            <div className="flex items-center gap-3 lg:gap-6">
+                {/* Hamburger menu - mobile only */}
+                <button onClick={onMenuClick} className="lg:hidden p-1 rounded-md hover:bg-slate-100">
+                    <Menu className="h-6 w-6 text-slate-600" />
+                </button>
+
+                {/* CMMS title - mobile only (since sidebar is hidden) */}
+                <span className="lg:hidden text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">CMMS</span>
+
+                <div className="hidden lg:flex items-center gap-2 text-slate-600">
                     <Building2 className="h-5 w-5 text-blue-600" />
                     <span className="text-sm font-medium text-slate-500">{user?.companyId}</span>
                     <span className="text-sm font-bold text-slate-900 ml-1">{user?.name} 님</span>
                 </div>
 
                 {plants.length > 0 && (
-                    <div className="flex items-center gap-2 ml-8">
+                    <div className="hidden lg:flex items-center gap-2 ml-8">
                         <span className="text-sm font-medium text-slate-600 whitespace-nowrap">플랜트 (근무장소 선택):</span>
                         <Select value={currentPlantId || undefined} onValueChange={setPlantId}>
                             <SelectTrigger className="w-[180px] h-8 text-sm border-none shadow-none focus:ring-0 bg-transparent font-semibold text-blue-700">
@@ -58,8 +70,8 @@ export function Header() {
                     </div>
                 )}
             </div>
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3 mr-2 cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
+            <div className="flex items-center gap-2 lg:gap-4">
+                <div className="flex items-center gap-2 lg:gap-3 cursor-pointer hover:bg-slate-50 p-1 rounded-md transition-colors"
                     onClick={() => navigate('/profile')}
                     title="정보 수정 및 비밀번호 변경">
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
@@ -70,10 +82,10 @@ export function Header() {
                         <p className="text-xs text-slate-500">{user?.deptId || '부서 미지정'}</p>
                     </div>
                 </div>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="h-8 w-8 lg:h-10 lg:w-10">
                     <Bell className="h-5 w-5 text-slate-500" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 lg:h-10 lg:w-10" onClick={handleLogout}>
                     <LogOut className="h-5 w-5 text-slate-500" />
                 </Button>
             </div>
